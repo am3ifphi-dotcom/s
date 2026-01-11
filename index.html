@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CYBER PORTAL</title>
+    <title>CYBER PORTAL - Am3i</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Font Awesome (アイコン用) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* --- 変数定義 (修正.cssより継承) --- */
+        /* --- 変数定義 --- */
         :root {
             --primary-color: #00e6e6;
             --secondary-color: #003333;
@@ -28,7 +28,6 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            user-select: none; /* サイバー感を出すためテキスト選択を禁止 */
         }
 
         body {
@@ -43,6 +42,7 @@
                 linear-gradient(rgba(0, 230, 230, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 230, 230, 0.03) 1px, transparent 1px);
             background-size: 30px 30px;
+            position: relative;
         }
 
         /* --- 背景アニメーション (Scanline) --- */
@@ -56,6 +56,76 @@
             background-size: 100% 4px;
             pointer-events: none;
             z-index: 1000;
+            animation: scanlineMove 8s linear infinite;
+        }
+
+        @keyframes scanlineMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        /* --- マトリックス風背景 --- */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        /* --- 3Dホログラム --- */
+        .hologram-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .hologram-container.active {
+            opacity: 0.3;
+        }
+
+        .hologram-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: holoRotate 10s linear infinite;
+        }
+
+        .hologram-ring:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            animation-duration: 8s;
+        }
+
+        .hologram-ring:nth-child(2) {
+            width: 250px;
+            height: 250px;
+            animation-duration: 12s;
+            animation-direction: reverse;
+        }
+
+        .hologram-ring:nth-child(3) {
+            width: 200px;
+            height: 200px;
+            animation-duration: 15s;
+        }
+
+        @keyframes holoRotate {
+            0% { transform: translate(-50%, -50%) rotateZ(0deg) rotateY(60deg); }
+            100% { transform: translate(-50%, -50%) rotateZ(360deg) rotateY(60deg); }
         }
 
         /* --- レイアウト --- */
@@ -64,6 +134,8 @@
             flex: 1;
             height: 100vh;
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
 
         /* モバイル対応 */
@@ -84,6 +156,7 @@
             gap: 2rem;
             box-shadow: 5px 0 15px rgba(0, 230, 230, 0.1);
             z-index: 10;
+            backdrop-filter: blur(10px);
         }
 
         @media (max-width: 768px) {
@@ -107,6 +180,29 @@
             letter-spacing: 2px;
             margin-bottom: 1rem;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .brand:hover {
+            text-shadow: var(--glow-strong);
+            transform: scale(1.05);
+        }
+
+        .brand::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: width 0.3s;
+        }
+
+        .brand:hover::after {
+            width: 100%;
         }
 
         .nav-menu {
@@ -136,10 +232,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            text-decoration: none; /* リンク用に追加 */
+            text-decoration: none;
         }
         
-        /* 角のデザイン */
         .cyber-button::before {
             content: '';
             position: absolute;
@@ -148,6 +243,24 @@
             width: 10px;
             height: 10px;
             background: linear-gradient(45deg, transparent 50%, var(--primary-color) 50%);
+        }
+
+        .cyber-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 230, 230, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .cyber-button:active::after {
+            width: 300px;
+            height: 300px;
         }
 
         .cyber-button:hover, .cyber-button.active {
@@ -168,7 +281,7 @@
                 flex: 1;
             }
             .cyber-button span {
-                display: none; /* スマホではアイコンのみにする場合 */
+                display: none;
             }
             .cyber-button i {
                 font-size: 1.2rem;
@@ -189,7 +302,6 @@
             }
         }
 
-        /* セクション共通スタイル */
         .section {
             display: none;
             animation: fadeIn 0.5s ease-in-out;
@@ -227,9 +339,10 @@
             gap: 2rem;
             align-items: center;
             position: relative;
+            backdrop-filter: blur(5px);
         }
 
-        .profile-card::after { /* 装飾枠 */
+        .profile-card::after {
             content: '';
             position: absolute;
             bottom: -5px;
@@ -244,19 +357,90 @@
             width: 150px;
             height: 150px;
             border: 2px solid var(--primary-color);
-            border-radius: 50%; /* 円形 */
-            background: #000;
+            border-radius: 50%;
+            background: radial-gradient(circle, #001a1a, #000);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            font-size: 4rem;
             color: var(--primary-color);
             box-shadow: var(--glow-soft);
             overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
         }
         
-        .avatar i {
-             animation: pulse 2s infinite;
+        .avatar:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--glow-strong);
+        }
+
+        .avatar:active {
+            animation: frogJump 0.6s ease-out;
+        }
+
+        @keyframes frogJump {
+            0% { transform: scale(1) translateY(0); }
+            30% { transform: scale(1.2, 0.8) translateY(0); }
+            50% { transform: scale(0.9, 1.1) translateY(-50px) rotate(20deg); }
+            70% { transform: scale(1.1, 0.9) translateY(-20px) rotate(-10deg); }
+            85% { transform: scale(0.95, 1.05) translateY(0); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        .frog-speech {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: rgba(0, 230, 230, 0.9);
+            color: #000;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: all 0.3s;
+            font-family: 'Noto Sans JP', sans-serif;
+            z-index: 100;
+        }
+
+        .frog-speech::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid rgba(0, 230, 230, 0.9);
+        }
+
+        .frog-speech.show {
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* 蛙の波紋エフェクト */
+        .ripple {
+            position: absolute;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            animation: rippleEffect 1s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes rippleEffect {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
         }
 
         .profile-info h2 {
@@ -277,6 +461,33 @@
             padding: 0.2rem 0.8rem;
             font-size: 0.8rem;
             border-radius: 4px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tag::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, var(--primary-color), transparent);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        .tag:hover::before {
+            width: 200px;
+            height: 200px;
+        }
+
+        .tag:hover {
+            background: rgba(0, 230, 230, 0.3);
+            transform: translateY(-2px);
+            box-shadow: var(--glow-soft);
         }
 
         @media (max-width: 768px) {
@@ -293,29 +504,76 @@
         .item-card {
             background: rgba(0, 15, 15, 0.8);
             border: 1px solid #333;
-            transition: 0.3s;
+            transition: all 0.3s;
             position: relative;
             overflow: hidden;
             height: 100%;
             display: flex;
             flex-direction: column;
+            backdrop-filter: blur(5px);
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 230, 230, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .item-card:hover::before {
+            left: 100%;
         }
 
         .item-card:hover {
             border-color: var(--primary-color);
-            transform: translateY(-5px);
-            box-shadow: var(--glow-soft);
+            transform: translateY(-5px) rotateX(2deg);
+            box-shadow: var(--glow-soft), 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .card-image {
             height: 150px;
-            background: #002222;
+            background: linear-gradient(135deg, #002222, #001111);
             display: flex;
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid #333;
             font-size: 3rem;
             color: rgba(0, 230, 230, 0.5);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0, 230, 230, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .item-card:hover .card-image::before {
+            opacity: 1;
+        }
+
+        .item-card:hover .card-image {
+            color: var(--primary-color);
+            font-size: 3.5rem;
+        }
+
+        .item-card:hover .card-image i {
+            animation: iconFloat 2s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         .card-content {
@@ -347,12 +605,29 @@
             color: var(--primary-color);
             padding: 0.5rem;
             text-decoration: none;
-            transition: 0.2s;
+            transition: all 0.2s;
             margin-top: auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-color);
+            transition: left 0.3s;
+            z-index: -1;
+        }
+
+        .card-link:hover::before {
+            left: 0;
         }
 
         .card-link:hover {
-            background: var(--primary-color);
             color: #000;
         }
 
@@ -366,6 +641,13 @@
         .update-item {
             border: 1px solid rgba(0, 230, 230, 0.3);
             background: rgba(0, 10, 10, 0.5);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        .update-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--glow-soft);
         }
 
         .update-summary {
@@ -374,7 +656,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            list-style: none; /* デフォルトの三角を消す */
+            list-style: none;
             transition: 0.2s;
         }
         
@@ -438,6 +720,160 @@
             font-size: 0.8rem;
             opacity: 0.5;
             border-top: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .cyber-footer:hover {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
+        /* --- パーティクル --- */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            font-size: 20px;
+            animation: particleFloat 2s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% { 
+                opacity: 1;
+                transform: translateY(0) scale(1) rotate(0deg);
+            }
+            100% { 
+                opacity: 0;
+                transform: translateY(-100px) scale(0) rotate(360deg);
+            }
+        }
+
+        /* --- 時計とステータス表示 --- */
+        .status-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 20, 20, 0.8);
+            border: 1px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Orbitron';
+            font-size: 0.9rem;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--glow-soft);
+        }
+
+        .status-display div {
+            margin: 5px 0;
+        }
+
+        .status-label {
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        .status-value {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .status-display {
+                top: auto;
+                bottom: 80px;
+                right: 10px;
+                font-size: 0.7rem;
+                padding: 0.5rem;
+            }
+        }
+
+        /* --- コマンドライン風ターミナル --- */
+        .terminal {
+            position: fixed;
+            bottom: -400px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 700px;
+            height: 350px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            z-index: 2000;
+            transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            overflow-y: auto;
+            box-shadow: 0 -10px 50px rgba(0, 230, 230, 0.3);
+        }
+
+        .terminal.show {
+            bottom: 20px;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--primary-color);
+            padding-bottom: 5px;
+        }
+
+        .terminal-close {
+            cursor: pointer;
+            color: var(--accent-color);
+            transition: all 0.2s;
+        }
+
+        .terminal-close:hover {
+            color: #fff;
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .terminal-line {
+            margin: 5px 0;
+            animation: typeIn 0.5s;
+        }
+
+        .terminal-line::before {
+            content: '> ';
+            color: var(--primary-color);
+        }
+
+        @keyframes typeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* --- 訪問者カウンター風演出 --- */
+        .visitor-counter {
+            display: inline-block;
+            font-family: 'Orbitron';
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px 15px;
+            border: 1px solid var(--primary-color);
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+
+        .counter-digit {
+            display: inline-block;
+            min-width: 15px;
+            text-align: center;
+            animation: digitFlip 0.3s;
+        }
+
+        @keyframes digitFlip {
+            0% { transform: rotateX(0deg); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0deg); }
         }
 
         /* --- Animations --- */
@@ -447,9 +883,9 @@
         }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 230, 230, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 230, 230, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 230, 230, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); }
         }
 
         @keyframes glitch {
@@ -461,272 +897,578 @@
             100% { transform: translate(0); }
         }
 
+        .glitch-text {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
         .glitch-text:hover {
             animation: glitch 0.3s infinite;
             color: var(--primary-color);
+        }
+
+        /* --- カーソルトレイル --- */
+        .cursor-trail {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.5;
+            animation: trailFade 0.5s forwards;
+        }
+
+        @keyframes trailFade {
+            to {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* --- スクロールバーカスタマイズ --- */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+            border-left: 1px solid #333;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ffff;
         }
 
     </style>
 </head>
 <body>
 
+    <canvas class="matrix-bg" id="matrixCanvas"></canvas>
     <div class="scanline"></div>
+    
+    <!-- ホログラム演出 -->
+    <div class="hologram-container" id="hologram">
+        <div class="hologram-ring"></div>
+        <div class="hologram-ring"></div>
+        <div class="hologram-ring"></div>
+    </div>
+
+    <!-- ステータス表示 -->
+    <div class="status-display">
+        <div><span class="status-label">SYSTEM TIME</span></div>
+        <div class="status-value" id="currentTime">00:00:00</div>
+        <div style="margin-top: 10px;"><span class="status-label">VISITORS</span></div>
+        <div class="visitor-counter" id="visitorCounter">
+            <span class="counter-digit">0</span>
+            <span class="counter-digit">0</span>
+            <span class="counter-digit">0</span>
+            <span class="counter-digit">0</span>
+        </div>
+    </div>
 
     <div class="main-container">
         <!-- ナビゲーションサイドバー -->
-        <nav class="sidebar">
-            <div class="brand">CYBER<br>PORTAL</div>
-            <div class="nav-menu">
-                <button class="cyber-button active" onclick="showSection('profile')">
-                    <i class="fas fa-id-card"></i> <span>PROFILE</span>
-                </button>
-                <button class="cyber-button" onclick="showSection('tools')">
-                    <i class="fas fa-tools"></i> <span>TOOLS</span>
-                </button>
-                <button class="cyber-button" onclick="showSection('games')">
-                    <i class="fas fa-gamepad"></i> <span>GAMES</span>
-                </button>
-                <button class="cyber-button" onclick="showSection('updates')">
-                    <i class="fas fa-newspaper"></i> <span>UPDATES</span>
-                </button>
+<nav class="sidebar">
+<div class="brand" onclick="brandClick()">CYBER<br>PORTAL</div>
+<div class="nav-menu">
+<button class="cyber-button active" onclick="showSection('profile')">
+<i class="fas fa-id-card"></i> <span>PROFILE</span>
+</button>
+<button class="cyber-button" onclick="showSection('tools')">
+<i class="fas fa-tools"></i> <span>TOOLS</span>
+</button>
+<button class="cyber-button" onclick="showSection('games')">
+<i class="fas fa-gamepad"></i> <span>GAMES</span>
+</button>
+<button class="cyber-button" onclick="showSection('updates')">
+<i class="fas fa-newspaper"></i> <span>UPDATES</span>
+</button>
+</div>
+        <div style="margin-top: auto; font-size: 0.8rem; color: #666;">
+            STATUS: <span style="color: var(--primary-color)">ONLINE</span><br>
+            VER: 3.0.0
+        </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main class="content-area">
+        
+        <!-- 自己紹介セクション -->
+        <section id="profile" class="section active">
+            <h1 class="section-title">USER PROFILE</h1>
+            <div class="profile-card">
+                <div class="avatar" onclick="frogClick(event)">
+                    <div class="frog-speech" id="frogSpeech">ケロケロ🐸</div>
+                    <i class="fas fa-frog"></i>
+                </div>
+                <div class="profile-info">
+                    <h2 class="glitch-text">Am3i (蛙鳴)</h2>
+                    <p>いろいろやります。</p>
+                    <p style="margin-top: 1rem; color: #ccc; line-height: 1.6;">
+                        GitHubにてツールやゲームを公開しています。サイバーパンクなUIと使いやすさの両立を目指して開発中。<br>
+                        音楽、プログラミング、デザイン、ゲーム制作など、興味のあることに手を出していきます。
+                    </p>
+                    <div class="skill-tags">
+                        <span class="tag" onclick="tagClick(event, this)">HTML5</span>
+                        <span class="tag" onclick="tagClick(event, this)">CSS3</span>
+                        <span class="tag" onclick="tagClick(event, this)">JavaScript</span>
+                        <span class="tag" onclick="tagClick(event, this)">Three.js</span>
+                        <span class="tag" onclick="tagClick(event, this)">React</span>
+                        <span class="tag" onclick="tagClick(event, this)">Music</span>
+                        <span class="tag" onclick="tagClick(event, this)">Design</span>
+                    </div>
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                        <a href="#" class="cyber-button" style="width: auto; display: inline-flex;">
+                            <i class="fab fa-github"></i> GitHub
+                        </a>
+                        <a href="#" class="cyber-button" style="width: auto; display: inline-flex;">
+                            <i class="fab fa-twitter"></i> Twitter
+                        </a>
+                    </div>
+                </div>
             </div>
-            
-            <div style="margin-top: auto; font-size: 0.8rem; color: #666;">
-                STATUS: <span style="color: var(--primary-color)">ONLINE</span><br>
-                VER: 2.1.0
+        </section>
+
+        <!-- ツールセクション -->
+        <section id="tools" class="section">
+            <h1 class="section-title">SYSTEM TOOLS</h1>
+            <div class="card-grid">
+                <div class="item-card">
+                    <div class="card-image"><i class="fas fa-calculator"></i></div>
+                    <div class="card-content">
+                        <h3 class="card-title">Cyber Calculator</h3>
+                        <p class="card-desc">素因数分解、乗算、除算を高速に行う多機能計算ユニット。サイバーパンクなUIで数学をサポート。</p>
+                        <a href="./cyber_calculator.html" class="card-link">LAUNCH TOOL</a>
+                    </div>
+                </div>
+                
+                <div class="item-card">
+                    <div class="card-image"><i class="fas fa-cube"></i></div>
+                    <div class="card-content">
+                        <h3 class="card-title">Polyhedra Viewer</h3>
+                        <p class="card-desc">正多面体の描画と変形（切頂）を行う3Dビジュアライザー。</p>
+                        <a href="./polyhedra_viewer.html" class="card-link">LAUNCH TOOL</a>
+                    </div>
+                </div>
+                
+                 <div class="item-card">
+                    <div class="card-image"><i class="fas fa-shapes"></i></div>
+                    <div class="card-content">
+                        <h3 class="card-title">Intersection Lab</h3>
+                        <p class="card-desc">多面体同士の共通部分（交差）をシミュレーションし、結果を可視化する研究用ツール。</p>
+                        <a href="./intersection_lab.html" class="card-link">LAUNCH TOOL</a>
+                    </div>
+                </div>
             </div>
-        </nav>
+        </section>
 
-        <!-- メインコンテンツ -->
-        <main class="content-area">
-            
-            <!-- 自己紹介セクション -->
-            <section id="profile" class="section active">
-                <h1 class="section-title">USER PROFILE</h1>
-                <div class="profile-card">
-                    <div class="avatar">
-                        <i class="fas fa-user-astronaut"></i>
-                    </div>
-                    <div class="profile-info">
-                        <h2 class="glitch-text">YOUR_NAME</h2>
-                        <p>Web Developer / Game Creator</p>
-                        <p style="margin-top: 1rem; color: #ccc; line-height: 1.6;">
-                            GitHubにてツールやゲームを公開しています。サイバーパンクなUIと使いやすさの両立を目指して開発中。
-                        </p>
-                        <div class="skill-tags">
-                            <span class="tag">HTML5</span>
-                            <span class="tag">CSS3</span>
-                            <span class="tag">JavaScript</span>
-                            <span class="tag">Three.js</span>
-                            <span class="tag">React</span>
-                        </div>
-                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                            <a href="#" class="cyber-button" style="width: auto; display: inline-flex;">
-                                <i class="fab fa-github"></i> GitHub
-                            </a>
-                            <a href="#" class="cyber-button" style="width: auto; display: inline-flex;">
-                                <i class="fab fa-twitter"></i> Twitter
-                            </a>
-                        </div>
+        <!-- ゲームセクション -->
+        <section id="games" class="section">
+            <h1 class="section-title">GAMES LIBRARY</h1>
+            <div class="card-grid">
+                <div class="item-card" style="border-color: var(--primary-color); box-shadow: 0 0 10px rgba(0,230,230,0.2);">
+                    <div class="card-image"><i class="fas fa-brain"></i></div>
+                    <div class="card-content">
+                        <h3 class="card-title">数速バトル <span class="new-badge">HOT</span></h3>
+                        <p class="card-desc">制限時間内に計算問題を解き続けるハイスピード脳トレゲーム。サイバーな演出と共に限界に挑め。</p>
+                        <a href="./math_battle.html" class="card-link">PLAY GAME</a>
                     </div>
                 </div>
-            </section>
-
-            <!-- ツールセクション (更新) -->
-            <section id="tools" class="section">
-                <h1 class="section-title">SYSTEM TOOLS</h1>
-                <div class="card-grid">
-                    <!-- Tool 1: Cyber Calculator (統合版) -->
-                    <div class="item-card">
-                        <div class="card-image"><i class="fas fa-calculator"></i></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Cyber Calculator</h3>
-                            <p class="card-desc">素因数分解、乗算、除算を高速に行う多機能計算ユニット。サイバーパンクなUIで数学をサポート。</p>
-                            <!-- リンク先をcyber_calculator.htmlに変更 -->
-                            <a href="./cyber_calculator.html" class="card-link">LAUNCH TOOL</a>
-                        </div>
-                    </div>
-                    
-                    <!-- Tool 2: Polyhedra Viewer -->
-                    <div class="item-card">
-                        <div class="card-image"><i class="fas fa-cube"></i></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Polyhedra Viewer</h3>
-                            <p class="card-desc">正多面体の描画と変形（切頂）を行う3Dビジュアライザー。</p>
-                            <!-- リンク先をpolyhedra_viewer.htmlに変更 -->
-                            <a href="./polyhedra_viewer.html" class="card-link">LAUNCH TOOL</a>
-                        </div>
-                    </div>
-                    
-                     <!-- Tool 3: Intersection Lab -->
-                     <div class="item-card">
-                        <div class="card-image"><i class="fas fa-shapes"></i></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Intersection Lab</h3>
-                            <p class="card-desc">多面体同士の共通部分（交差）をシミュレーションし、結果を可視化する研究用ツール。</p>
-                            <!-- リンク先をintersection_lab.htmlに変更 -->
-                            <a href="./intersection_lab.html" class="card-link">LAUNCH TOOL</a>
-                        </div>
+                
+                <div class="item-card">
+                    <div class="card-image"><i class="fas fa-music"></i></div>
+                    <div class="card-content">
+                        <h3 class="card-title">Rhythm Echo</h3>
+                        <p class="card-desc">音が反響する空間でリズムを刻む。視覚と聴覚で楽しむリズムアクション。</p>
+                        <a href="./rhythm_echo.html" class="card-link">PLAY GAME</a>
                     </div>
                 </div>
-            </section>
 
-            <!-- ゲームセクション -->
-            <section id="games" class="section">
-                <h1 class="section-title">GAMES LIBRARY</h1>
-                <div class="card-grid">
-                    <!-- Game 1: 数速バトル -->
-                    <div class="item-card" style="border-color: var(--primary-color); box-shadow: 0 0 10px rgba(0,230,230,0.2);">
-                        <div class="card-image"><i class="fas fa-brain"></i></div>
-                        <div class="card-content">
-                            <h3 class="card-title">数速バトル <span class="new-badge">HOT</span></h3>
-                            <p class="card-desc">制限時間内に計算問題を解き続けるハイスピード脳トレゲーム。サイバーな演出と共に限界に挑め。</p>
-                            <a href="./math_battle.html" class="card-link">PLAY GAME</a>
-                        </div>
-                    </div>
-                    
-                    <!-- Game 2: Rhythm Echo -->
-                    <div class="item-card">
-                        <div class="card-image"><i class="fas fa-music"></i></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Rhythm Echo</h3>
-                            <p class="card-desc">音が反響する空間でリズムを刻む。視覚と聴覚で楽しむリズムアクション。</p>
-                            <a href="./rhythm_echo.html" class="card-link">PLAY GAME</a>
-                        </div>
-                    </div>
-
-                    <!-- Game 3: Missing Pieces -->
-                    <div class="item-card">
-                        <div class="card-image"><i class="fas fa-book-open"></i></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Missing Pieces</h3>
-                            <p class="card-desc">「娘の手記」と「父の手記」。失われた記憶の断片を読み解くノベルアドベンチャー。</p>
-                            <a href="./missing_pieces.html" class="card-link">READ LOGS</a>
-                        </div>
-                    </div>
-
-                    <!-- Game 4: Last Diary -->
-                    <div class="item-card">
-                        <div class="card-image"><i class="fas fa-skull"></i></div>
-                        <div class="card-content">
-                            <h3 class="card-title">The Last Diary</h3>
-                            <p class="card-desc">終末世界に残された最後の日記。静寂とノイズの中で語られる物語。</p>
-                            <a href="./last_diary.html" class="card-link">READ LOGS</a>
-                        </div>
+                <div class="item-card">
+                    <div class="card-image"><i class="fas fa-book-open"></i></div>
+                    <div class="card-content">
+                        <h3 class="card-title">Missing Pieces</h3>
+                        <p class="card-desc">「娘の手記」と「父の手記」。失われた記憶の断片を読み解くノベルアドベンチャー。</p>
+                        <a href="./missing_pieces.html" class="card-link">READ LOGS</a>
                     </div>
                 </div>
-            </section>
 
-            <!-- アプデ情報セクション -->
-            <section id="updates" class="section">
-                <h1 class="section-title">UPDATE LOGS</h1>
-                <div class="update-list">
-                    
-                    <!-- Update Item 1 -->
-                    <details class="update-item" open>
-                        <summary class="update-summary">
-                            <span class="update-date">2026.01.11</span>
-                            <span class="update-title"><span class="new-badge">NEW</span>ツール・ゲーム追加</span>
-                            <i class="fas fa-chevron-down update-icon"></i>
-                        </summary>
-                        <div class="update-details">
-                            <p>新たなコンテンツをライブラリに追加しました。</p>
-                            <ul>
-                                <li><strong>Cyber Calculator</strong>: 素因数分解・乗除機能の実装</li>
-                                <li><strong>Polyhedra Tools</strong>: 3D図形描画・交差シミュレーション</li>
-                                <li><strong>Game Library</strong>: Rhythm Echo, Missing Pieces, Last Diaryを追加</li>
-                            </ul>
-                        </div>
-                    </details>
-
-                    <!-- Update Item 2 -->
-                    <details class="update-item">
-                        <summary class="update-summary">
-                            <span class="update-date">2026.01.10</span>
-                            <span class="update-title">ポータルサイト公開</span>
-                            <i class="fas fa-chevron-down update-icon"></i>
-                        </summary>
-                        <div class="update-details">
-                            <p>GitHub Pagesにてポートフォリオサイトを正式オープンしました。</p>
-                            <ul>
-                                <li>UIデザインの全面刷新（サイバーテーマ適用）</li>
-                                <li>レスポンシブ対応（スマートフォン表示の最適化）</li>
-                            </ul>
-                        </div>
-                    </details>
+                <div class="item-card">
+                    <div class="card-image"><i class="fas fa-skull"></i></div>
+                    <div class="card-content">
+                        <h3 class="card-title">The Last Diary</h3>
+                        <p class="card-desc">終末世界に残された最後の日記。静寂とノイズの中で語られる物語。</p>
+                        <a href="./last_diary.html" class="card-link">READ LOGS</a>
+                    </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <footer class="cyber-footer">
-                &copy; 2026 CYBER PORTAL. All Systems Operational.
-            </footer>
-        </main>
+        <!-- アプデ情報セクション -->
+        <section id="updates" class="section">
+            <h1 class="section-title">UPDATE LOGS</h1>
+            <div class="update-list">
+                
+                <details class="update-item" open>
+                    <summary class="update-summary">
+                        <span class="update-date">2026.01.11</span>
+                        <span class="update-title"><span class="new-badge">NEW</span>プレミアムギミック実装</span>
+                        <i class="fas fa-chevron-down update-icon"></i>
+                    </summary>
+                    <div class="update-details">
+                        <p>サイトに高度なインタラクティブ要素を追加しました。</p>
+                        <ul>
+                            <li><strong>マトリックス背景</strong>: 動的な文字の雨エフェクト</li>
+                            <li><strong>3Dホログラム</strong>: 回転するサイバーリング演出</li>
+                            <li><strong>リアルタイム時計</strong>: システム時刻とビジター数表示</li>
+                            <li><strong>蛙ジャンプ</strong>: クリックで物理演算付きジャンプ + 波紋</li>
+                            <li><strong>カーソルトレイル</strong>: マウス移動時の軌跡エフェクト</li>
+                            <li><strong>ターミナル</strong>: フッタークリックでシステムログ表示</li>
+                            <li><strong>グリッチテキスト</strong>: ホバーで文字が乱れるエフェクト</li>
+                            <li><strong>カードアニメーション</strong>: 3D変形 + 光走査線</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="update-item">
+                    <summary class="update-summary">
+                        <span class="update-date">2026.01.11</span>
+                        <span class="update-title">ツール・ゲーム追加</span>
+                        <i class="fas fa-chevron-down update-icon"></i>
+                    </summary>
+                    <div class="update-details">
+                        <p>新たなコンテンツをライブラリに追加しました。</p>
+                        <ul>
+                            <li><strong>Cyber Calculator</strong>: 素因数分解・乗除機能の実装</li>
+                            <li><strong>Polyhedra Tools</strong>: 3D図形描画・交差シミュレーション</li>
+                            <li><strong>Game Library</strong>: Rhythm Echo, Missing Pieces, Last Diaryを追加</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="update-item">
+                    <summary class="update-summary">
+                        <span class="update-date">2026.01.10</span>
+                        <span class="update-title">ポータルサイト公開</span>
+                        <i class="fas fa-chevron-down update-icon"></i>
+                    </summary>
+                    <div class="update-details">
+                        <p>GitHub Pagesにてポートフォリオサイトを正式オープンしました。</p>
+                        <ul>
+                            <li>UIデザインの全面刷新（サイバーテーマ適用）</li>
+                            <li>レスポンシブ対応（スマートフォン表示の最適化）</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <footer class="cyber-footer" onclick="toggleTerminal()">
+            &copy; 2026 CYBER PORTAL - Am3i. All Systems Operational.
+        </footer>
+    </main>
+</div>
+
+<!-- ターミナル -->
+<div class="terminal" id="terminal">
+    <div class="terminal-header">
+        <span>SYSTEM.LOG v3.0.0</span>
+        <span class="terminal-close" onclick="toggleTerminal()">[ X ]</span>
     </div>
+    <div class="terminal-line">Initializing CYBER PORTAL v3.0.0...</div>
+    <div class="terminal-line">Loading user profile: Am3i (蛙鳴)</div>
+    <div class="terminal-line">Graphics engine: WebGL 2.0 [OK]</div>
+    <div class="terminal-line">Matrix renderer: Active [OK]</div>
+    <div class="terminal-line">Hologram system: Online [OK]</div>
+    <div class="terminal-line">Particle engine: Initialized [OK]</div>
+    <div class="terminal-line">Audio system: Standby [OK]</div>
+    <div class="terminal-line">Cursor trail: Enabled [OK]</div>
+    <div class="terminal-line">Easter eggs: 7 hidden [CLASSIFIED]</div>
+    <div class="terminal-line" style="color: var(--primary-color); margin-top: 10px; font-weight: bold;">>>> STATUS: ALL SYSTEMS OPERATIONAL <<<</div>
+    <div class="terminal-line" style="color: #666; margin-top: 10px; font-size: 0.8rem;">Tip: Try clicking the frog multiple times...</div>
+</div>
 
-    <script>
-        // セクション切り替え機能
-        function showSection(sectionId) {
-            // 全セクションを非表示
-            document.querySelectorAll('.section').forEach(sec => {
-                sec.classList.remove('active');
-            });
-            // 選択されたセクションを表示
-            const target = document.getElementById(sectionId);
-            if (target) {
-                target.classList.add('active');
-            }
+<script>
+    // --- マトリックス背景 ---
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-            // ナビゲーションボタンのアクティブ状態更新
-            document.querySelectorAll('.cyber-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*アイウエオカキクケコ';
+    const fontSize = 14;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function drawMatrix() {
+        ctx.fillStyle = 'rgba(5, 5, 5, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#00e6e6';
+        ctx.font = fontSize + 'px monospace';
+        
+        for (let i = 0; i < drops.length; i++) {
+            const text = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
             
-            // クリックされたボタンを特定してactiveクラスを付与
-            const buttons = document.querySelectorAll('.nav-menu .cyber-button');
-            const indexMap = { 'profile': 0, 'tools': 1, 'games': 2, 'updates': 3 };
-            if (buttons[indexMap[sectionId]]) {
-                buttons[indexMap[sectionId]].classList.add('active');
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
             }
+            drops[i]++;
+        }
+    }
 
-            // 効果音再生
-            playSound('click-sound');
+    setInterval(drawMatrix, 35);
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    // --- 時計更新 ---
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ja-JP', { hour12: false });
+        document.getElementById('currentTime').textContent = timeString;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- 訪問者カウンター (ランダムアニメーション) ---
+    function animateCounter() {
+        const digits = document.querySelectorAll('.counter-digit');
+        const target = Math.floor(1000 + Math.random() * 9000);
+        const targetStr = target.toString().padStart(4, '0');
+        
+        digits.forEach((digit, index) => {
+            setTimeout(() => {
+                digit.style.animation = 'digitFlip 0.3s';
+                setTimeout(() => {
+                    digit.textContent = targetStr[index];
+                    digit.style.animation = '';
+                }, 150);
+            }, index * 100);
+        });
+    }
+    
+    setTimeout(animateCounter, 1000);
+    setInterval(animateCounter, 30000);
+
+    // --- セクション切り替え ---
+    function showSection(sectionId) {
+        document.querySelectorAll('.section').forEach(sec => {
+            sec.classList.remove('active');
+        });
+        const target = document.getElementById(sectionId);
+        if (target) {
+            target.classList.add('active');
         }
 
-        // 簡易的な効果音再生関数
-        function playSound(id) {
-            const audio = document.getElementById(id);
-            if (audio) {
-                audio.currentTime = 0;
-                audio.play().catch(e => console.log('Audio play failed (interaction required)'));
-            }
+        document.querySelectorAll('.cyber-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const buttons = document.querySelectorAll('.nav-menu .cyber-button');
+        const indexMap = { 'profile': 0, 'tools': 1, 'games': 2, 'updates': 3 };
+        if (buttons[indexMap[sectionId]]) {
+            buttons[indexMap[sectionId]].classList.add('active');
         }
 
-        // デコレーション：ランダムな文字化け演出
-        const glitchTexts = document.querySelectorAll('.glitch-text');
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+        // セクション切り替え時にホログラム表示
+        const hologram = document.getElementById('hologram');
+        hologram.classList.add('active');
+        setTimeout(() => {
+            hologram.classList.remove('active');
+        }, 2000);
+    }
 
-        glitchTexts.forEach(text => {
-            text.addEventListener('mouseover', () => {
-                const original = text.innerText;
-                let iteration = 0;
-                const interval = setInterval(() => {
-                    text.innerText = text.innerText
-                        .split('')
-                        .map((char, index) => {
-                            if(index < iteration) return original[index];
-                            return chars[Math.floor(Math.random() * chars.length)];
-                        })
-                        .join('');
-                    
-                    if(iteration >= original.length) clearInterval(interval);
-                    iteration += 1 / 3;
-                }, 30);
-            });
-        });
+    // --- 蛙クリック ---
+    const frogMessages = [
+        'ケロケロ🐸',
+        'ゲコゲコ！',
+        'ピョン！',
+        '雨が好き☔',
+        'コーディング中💻',
+        'バグ見つけた🐛',
+        'Am3i参上！',
+        'いろいろやります✨'
+    ];
+    let frogClickCount = 0;
 
-        window.addEventListener('load', () => {
-            console.log('SYSTEM INITIATED...');
+    function frogClick(event) {
+        const speech = document.getElementById('frogSpeech');
+        const randomMsg = frogMessages[Math.floor(Math.random() * frogMessages.length)];
+        speech.textContent = randomMsg;
+        speech.classList.add('show');
+        
+        setTimeout(() => {
+            speech.classList.remove('show');
+        }, 2000);
+
+        // 波紋エフェクト
+        const avatar = event.currentTarget;
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        ripple.style.position = 'absolute';
+        ripple.style.top = '0';
+        ripple.style.left = '0';
+        avatar.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 1000);
+
+        // パーティクル生成
+        createParticle('🐸', event.pageX, event.pageY);
+        
+        frogClickCount++;
+        if (frogClickCount === 10) {
+            showAchievement('🐸 Achievement: Frog Master!');
+        }
+        if (frogClickCount === 50) {
+            showAchievement('🎉 Secret Achievement: Frog Whisperer!');
+        }
+    }
+
+    // --- パーティクル生成 ---
+    function createParticle(symbol, x, y) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.textContent = symbol;
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        document.body.appendChild(particle);
+        
+        setTimeout(() => {
+            particle.remove();
+        }, 2000);
+    }
+
+    // --- タグクリック ---
+    function tagClick(event, element) {
+        const symbols = ['✨', '⚡', '🚀', '💎', '🔥', '⭐', '💫'];
+        const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+        createParticle(randomSymbol, event.pageX, event.pageY);
+        
+        // 複数パーティクル
+        for(let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                const offsetX = (Math.random() - 0.5) * 40;
+                const offsetY = (Math.random() - 0.5) * 40;
+                createParticle(randomSymbol, event.pageX + offsetX, event.pageY + offsetY);
+            }, i * 100);
+        }
+    }
+
+    // --- ブランドクリック ---
+    let brandClickCount = 0;
+    function brandClick() {
+        brandClickCount++;
+        createParticle('🎯', event.pageX, event.pageY);
+        
+        if (brandClickCount === 3) {
+            showAchievement('🎨 You found a secret!');
+        }
+    }
+
+    // --- 実績表示 ---
+    function showAchievement(message) {
+        const achievement = document.createElement('div');
+        achievement.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 230, 230, 0.95);
+            color: #000;
+            padding: 2rem 3rem;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 0 50px rgba(0, 230, 230, 0.8);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        `;
+        achievement.textContent = message;
+        document.body.appendChild(achievement);
+        
+        setTimeout(() => {
+            achievement.style.transform = 'translate(-50%, -50%) scale(1)';
+        }, 10);
+        
+        setTimeout(() => {
+            achievement.style.transform = 'translate(-50%, -50%) scale(0)';
+            setTimeout(() => achievement.remove(), 300);
+        }, 3000);
+    }
+
+    // --- グリッチテキスト ---
+    const glitchTexts = document.querySelectorAll('.glitch-text');
+    const glitchChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+
+    glitchTexts.forEach(text => {
+        const original = text.innerText;
+        text.addEventListener('mouseover', () => {
+            let iteration = 0;
+            const interval = setInterval(() => {
+                text.innerText = text.innerText
+                    .split('')
+                    .map((char, index) => {
+                        if(index < iteration) return original[index];
+                        return glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                    })
+                    .join('');
+                
+                if(iteration >= original.length) clearInterval(interval);
+                iteration += 1 / 3;
+            }, 30);
         });
-    </script>
-</body>
-</html>
+    });
+
+    // --- ターミナル切り替え ---
+    function toggleTerminal() {
+        const terminal = document.getElementById('terminal');
+        terminal.classList.toggle('show');
+    }
+
+    // --- カーソルトレイル ---
+    let trailTimeout;
+    document.addEventListener('mousemove', (e) => {
+        clearTimeout(trailTimeout);
+        trailTimeout = setTimeout(() => {
+            if (Math.random() > 0.7) {
+                const trail = document.createElement('div');
+                trail.className = 'cursor-trail';
+                trail.style.left = e.pageX + 'px';
+                trail.style.top = e.pageY + 'px';
+                document.body.appendChild(trail);
+                
+                setTimeout(() => trail.remove(), 500);
+            }
+        }, 50);
+    });
+
+    // --- 初期化 ---
+    window.addEventListener('load', () => {
+        console.log('%c╔═══════════════════════════════════════╗', 'color: #00e6e6; font-size: 12px;');
+        console.log('%c║   CYBER PORTAL v3.0.0 INITIALIZED   ║', 'color: #00e6e6; font-size: 14px; font-weight: bold;');
+        console.log('%c╚═══════════════════════════════════════╝', 'color: #00e6e6; font-size: 12px;');
+        console.log('%c Am3i (蛙鳴) - いろいろやります 🐸 ', 'background: #003333; color: #00e6e6; font-size: 14px; padding: 5px;');
+        console.log('%c Easter Eggs: Try clicking around! ', 'color: #ff0055; font-size: 12px;');
+        
+        // 初回ホログラム表示
+        setTimeout(() => {
+            document.getElementById('hologram').classList.add('active');
+            setTimeout(() => {
+                document.getElementById('hologram').classList.remove('active');
+            }, 3000);
+        }, 500);
+    });
+</script>
