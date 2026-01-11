@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最後の日記 - The Last Diary</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Serif JP', serif;
+            background-color: black;
+            color: #d6d3d1; /* text-stone-300 */
+            /* 修正: スクロールを許可 */
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+        }
+        
+        /* Custom Animations */
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) rotate(0); }
+            25% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+            75% { transform: translate(2px, -2px) rotate(0.5deg); }
+        }
+        @keyframes flash {
+            0%, 100% { filter: invert(0) brightness(1); }
+            50% { filter: invert(1) brightness(2); }
+        }
+        @keyframes flashDark {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: black; }
+        }
+        @keyframes crtOff {
+            0% { transform: scale(1); filter: brightness(1) opacity(1); }
+            50% { transform: scale(1, 0.002); filter: brightness(10) opacity(1); }
+            100% { transform: scale(0, 0); filter: brightness(0) opacity(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pulseRedBg {
+            0%, 100% { background-color: black; }
+            50% { background-color: #450a0a; } /* red-950 */
+        }
+        
+        /* Static Noise Animation */
+        @keyframes static-noise {
+            0% { background-position: 0 0; }
+            10% { background-position: -20% 20%; }
+            20% { background-position: 15% -15%; }
+            30% { background-position: -10% 5%; }
+            40% { background-position: 25% -25%; }
+            50% { background-position: -5% 10%; }
+            60% { background-position: 10% -20%; }
+            70% { background-position: -15% 15%; }
+            80% { background-position: 20% -5%; }
+            90% { background-position: -25% 25%; }
+            100% { background-position: 0 0; }
+        }
+        .animate-static-noise {
+            animation: static-noise 0.2s steps(4) infinite;
+        }
+        
+        .bg-noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+        }
+        .vignette-heavy {
+            background: radial-gradient(circle at center, transparent 30%, black 90%);
+        }
+        .scanline {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+        }
+
+        /* Utility classes for animations */
+        .animate-shake { animation: shake 0.5s ease-in-out infinite; }
+        .animate-shake-violent { animation: shake 0.1s ease-in-out infinite; }
+        .animate-shake-subtle { animation: shake 3s ease-in-out infinite; }
+        .animate-pulse-fast { animation: pulse 0.2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-flash { animation: flash 0.2s ease-in-out; }
+        .animate-flash-dark { animation: flashDark 0.5s ease-in-out; }
+        .animate-shutdown { animation: crtOff 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .animate-fade-in { animation: fadeIn 2s ease-in 2s forwards; }
+        .animate-pulse-red-bg { animation: pulseRedBg 4s ease-in-out infinite; }
+
+        /* Glitch Text Styles */
+        .glitch-wrapper { position: relative; display: inline-block; }
+        .glitch-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            user-select: none;
+            opacity: 0.7;
+            mix-blend-mode: screen;
+        }
+        .glitch-red {
+            color: #dc2626; /* red-600 */
+            transform: translateX(4px);
+            margin-left: -2px;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .glitch-blue {
+            color: #1e3a8a; /* blue-900 */
+            transform: translateX(-4px);
+            margin-left: -2px;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            animation-delay: 75ms;
+        }
+    </style>
+</head>
+<body onclick="handleScreenClick()">
+
+    <!-- Main App Container -->
+    <div id="app" class="min-h-screen w-full flex flex-col items-center justify-center p-4 transition-colors duration-[1500ms] relative">
+        
+        <!-- Static Noise Layer (For Ending) -->
+        <div id="static-noise-layer" class="hidden fixed inset-0 z-[90] bg-gray-900 overflow-hidden flex items-center justify-center">
+             <!-- Noise Background -->
+             <div class="absolute inset-[-50%] w-[200%] h-[200%] bg-noise opacity-60 animate-static-noise mix-blend-hard-light filter contrast-150 brightness-125"></div>
+             <!-- Vignette for noise -->
+             <div class="absolute inset-0 vignette-heavy z-[91]"></div>
+             
+             <!-- Reboot Button Container -->
+             <div class="relative z-[100] mt-32">
+                 <button id="noise-restart-btn" onclick="handleRestart(event)" class="opacity-0 flex flex-col items-center gap-2 text-stone-400 hover:text-white transition-colors cursor-pointer bg-black/50 p-6 rounded-sm backdrop-blur-sm border border-stone-700/50">
+                    <i data-lucide="rotate-ccw" width="32" height="32" class="animate-spin-slow"></i>
+                    <span class="text-sm tracking-[0.5em] font-serif font-bold text-red-500">SYSTEM FAILURE</span>
+                    <span class="text-[10px] tracking-[0.2em] text-stone-500">CLICK TO REBOOT</span>
+                 </button>
+             </div>
+        </div>
+
+        <!-- Shutdown Layer (Hidden by default) -->
+        <div id="shutdown-layer" class="hidden fixed inset-0 bg-black z-[100] flex items-center justify-center">
+             <button id="restart-btn" onclick="handleRestart(event)" class="opacity-0 flex flex-col items-center gap-2 text-stone-600 hover:text-red-800 transition-colors cursor-pointer">
+                <i data-lucide="rotate-ccw" width="24" height="24"></i>
+                <span class="text-xs tracking-[0.5em] font-serif">REBOOT</span>
+             </button>
+        </div>
+
+        <!-- Atmospheric Overlays (Fixed to screen) -->
+        <div id="overlays" class="fixed inset-0 z-10 pointer-events-none">
+            <div class="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay animate-pulse"></div>
+            <div class="absolute inset-0 scanline opacity-10"></div>
+            <div class="absolute inset-0 vignette-heavy"></div>
+        </div>
+        
+        <!-- Glitch Overlay (Conditional) -->
+        <div id="glitch-overlay" class="hidden fixed inset-0 z-50 opacity-10 pointer-events-none mix-blend-difference bg-noise animate-shake-violent"></div>
+
+        <!-- Text Area -->
+        <div id="text-container" class="z-30 max-w-4xl w-full min-h-[400px] flex flex-col justify-center items-center p-8 md:p-16 transition-all duration-700">
+            <!-- Text Display (Cursor is now part of this content) -->
+            <div id="text-display" class="leading-loose tracking-widest whitespace-pre-wrap font-serif w-full text-center text-xl md:text-2xl transition-all duration-500">
+                <!-- Text and cursor will be injected here -->
+            </div>
+        </div>
+
+        <!-- Choices Area -->
+        <div id="choices-container" class="z-40 mt-8 w-full max-w-md flex flex-col gap-4 transition-all duration-700 delay-300 opacity-0 translate-y-4 pointer-events-none pb-16">
+            <!-- Buttons will be injected here -->
+        </div>
+
+    </div>
+
+    <script>
+        // --- Game Data ---
+        const SCENES = {
+          start: {
+            id: 'start',
+            bg: 'bg-black',
+            text: "## 2023年10月15日\n\n今日から、この古い屋敷での生活が始まる。\n\n祖父が遺してくれたこの家は、確かに都心から遠く離れた山奥にあるが、リモートワークの私には完璧な環境だ。何より、賃貸マンションの家賃を払い続けることを考えれば、この選択は経済的にも合理的だった。",
+            choices: [
+              { text: "屋敷へ入る", next: 'house_desc' }
+            ]
+          },
+          house_desc: {
+            id: 'house_desc',
+            bg: 'bg-stone-900',
+            text: "屋敷は想像以上に立派だった。明治時代に建てられたという木造二階建ての建物は、確かに古びてはいるが、骨組みはしっかりしている。\n広い庭には手入れされていない木々が生い茂り、裏手には小さな池もある。",
+            choices: [
+              { text: "屋内を探索する", next: 'exploration' }
+            ]
+          },
+          exploration: {
+            id: 'exploration',
+            bg: 'bg-stone-900',
+            text: "引っ越し業者が帰った後、私は一人で屋敷を探索した。\n一階には居間、台所、書斎、和室が二つ。二階には寝室が四つと、物置のような小部屋がある。",
+            choices: [
+              { text: "書斎へ", next: 'library_books' }
+            ]
+          },
+          library_books: {
+            id: 'library_books',
+            bg: 'bg-stone-950',
+            text: "書斎の本棚には、祖父の蔵書が整然と並んでいた。医学書、哲学書、そして大量の日記。\n祖父は几帳面な性格で知られていたが、ここまで詳細に記録を残していたとは知らなかった。",
+            choices: [
+              { text: "最後の日記を見る", next: 'diary_entry_1' }
+            ]
+          },
+          diary_entry_1: {
+            id: 'diary_entry_1',
+            bg: 'bg-stone-950',
+            text: "日記の最後の日付は、祖父が亡くなる三日前だった。\n\n「体調が優れない。だが、これも予定通りだ」\n\n奇妙な一文だったが、深く考えないことにした。高齢者の書く文章には、時として意味不明な部分があるものだ。",
+            choices: [
+              { text: "夜を迎える", next: 'night_1' }
+            ]
+          },
+          night_1: {
+            id: 'night_1',
+            bg: 'bg-black',
+            text: "夜、寝室で横になると、屋敷の静けさが耳に痛かった。都会の雑音に慣れた私には、この完全な静寂が不気味に感じられた。\n\n風が吹くたびに、古い木材が軋む音がする。\n\nそれでも、私はすぐに眠りについた。",
+            choices: [
+              { text: "翌朝", next: 'day_2_morning' }
+            ]
+          },
+          day_2_morning: {
+            id: 'day_2_morning',
+            bg: 'bg-gray-900',
+            text: "## 2023年10月16日\n\n朝、目が覚めると、枕元に祖父の日記が置いてあった。\n昨夜、確かに書斎に置いてきたはずなのに。\n\n寝ぼけて持ってきてしまったのだろうか。記憶にないが、他に説明のしようがない。",
+            choices: [
+              { text: "日記をめくる", next: 'diary_entry_2' }
+            ]
+          },
+          diary_entry_2: {
+            id: 'diary_entry_2',
+            bg: 'bg-stone-800',
+            text: "日記をパラパラとめくってみた。几帳面な祖父の文字で、日々の出来事が淡々と記されている。\n\n「10月15日。新しい住人が来る。私の準備は整った」\n\n背筋が凍った。",
+            effect: 'pulse_subtle',
+            choices: [
+              { text: "思考を巡らせる", next: 'realization_1' }
+            ]
+          },
+          realization_1: {
+            id: 'realization_1',
+            bg: 'bg-stone-900',
+            text: "この日記は三年前に書かれたものだ。祖父が亡くなったのは三年前の10月18日。\nそして、私がこの屋敷に引っ越してきたのが、昨日、10月15日。\n\n偶然だ。そう自分に言い聞かせた。\nだが、心臓の鼓動が早まるのを止められなかった。",
+            choices: [
+              { text: "仕事をする", next: 'working' }
+            ]
+          },
+          working: {
+            id: 'working',
+            bg: 'bg-gray-900',
+            text: "仕事に集中しようと、パソコンを開いた。だが、集中できない。\n視線を感じるのだ。背後から、誰かに見られているような感覚。\n\n何度も振り返ったが、もちろん誰もいない。",
+            effect: 'glitch_subtle',
+            choices: [
+              { text: "気分転換に庭へ", next: 'pond_incident' }
+            ]
+          },
+          pond_incident: {
+            id: 'pond_incident',
+            bg: 'bg-stone-800',
+            text: "昼食後、気分転換に庭を散歩した。裏手の池まで行くと、水面に自分の顔が映った。\n\nそして、その後ろに、もう一つの顔が。",
+            effect: 'flash_dark',
+            choices: [
+              { text: "振り返る", next: 'pond_empty' }
+            ]
+          },
+          pond_empty: {
+            id: 'pond_empty',
+            bg: 'bg-stone-800',
+            text: "慌てて振り返ったが、誰もいなかった。\n水面をもう一度見ると、私の顔だけが映っている。\n\n疲れているのだ。環境の変化によるストレスだ。そう自分に言い聞かせた。",
+            choices: [
+              { text: "夜になる", next: 'night_2_diary' }
+            ]
+          },
+          night_2_diary: {
+            id: 'night_2_diary',
+            bg: 'bg-black',
+            text: "夜、再び祖父の日記を読んだ。\n\n「10月16日。彼は気づき始めている。だが、まだ真実には辿り着けないだろう」\n\n手が震えた。",
+            effect: 'shake_subtle',
+            choices: [
+              { text: "周囲を確認する", next: 'isolation' }
+            ]
+          },
+          isolation: {
+            id: 'isolation',
+            bg: 'bg-black',
+            text: "これは何かの悪い冗談だろうか。誰かが私を試しているのか。\nだが、この屋敷には私しかいない。最寄りの人家まで車で30分はかかる。\n\n携帯電話を取り出したが、圏外だった。そういえば、引っ越してきてから一度も電波が入っていない。",
+            choices: [
+              { text: "戸締まりを確認する", next: 'locked_in' }
+            ]
+          },
+          locked_in: {
+            id: 'locked_in',
+            bg: 'bg-black',
+            text: "不安になり、玄関の鍵を確認した。しっかりとかかっている。\n窓も全て施錠した。\n\nそれでも、視線を感じる。\n寝室に入り、布団を被った。だが、眠れない。\n\n真夜中、足音が聞こえた気がした。",
+            choices: [
+              { text: "翌朝", next: 'day_3_morning' }
+            ]
+          },
+          day_3_morning: {
+            id: 'day_3_morning',
+            bg: 'bg-gray-900',
+            text: "## 2023年10月17日\n\n朝、階下に降りると、書斎の机の上に祖父の日記が開いて置いてあった。\n\n「10月17日。彼は理解し始めている。この屋敷の真実を」\n\nもう、偶然では説明できない。",
+            choices: [
+              { text: "誰かいるのか？", next: 'search_house' }
+            ]
+          },
+          search_house: {
+            id: 'search_house',
+            bg: 'bg-gray-800',
+            text: "誰かが私を監視している。そして、祖父の日記を使って、私を脅している。\nだが、誰が? なぜ?\n\n屋敷を隅々まで調べた。隠しカメラがないか、誰か潜んでいないか。\n何時間もかけて探したが、何も見つからなかった。",
+            choices: [
+              { text: "居間で休む", next: 'grandfather_photo' }
+            ]
+          },
+          grandfather_photo: {
+            id: 'grandfather_photo',
+            bg: 'bg-stone-900',
+            text: "疲れ果てて、居間のソファに座り込んだ。\nその時、目に入ったのは、壁にかかった祖父の写真だった。\n\n祖父は微笑んでいた。\nだが、その微笑みが、今日は違って見えた。何かを知っている者の、秘密を抱えた者の微笑みに。",
+            effect: 'morph',
+            choices: [
+              { text: "逃げ出す", next: 'escape_attempt' }
+            ]
+          },
+          escape_attempt: {
+            id: 'escape_attempt',
+            bg: 'bg-stone-900',
+            text: "夕方、我慢できずに車を出した。最寄りの街まで行き、警察に相談しようと思った。\n\nだが、車のエンジンがかからない。\nバッテリーは新しいものに交換したばかりだ。故障するはずがない。\n\n携帯電話も相変わらず圏外。",
+            choices: [
+              { text: "屋敷に戻るしかない", next: 'return_to_diary' }
+            ]
+          },
+          return_to_diary: {
+            id: 'return_to_diary',
+            bg: 'bg-stone-950',
+            text: "私は、完全に孤立していた。\n屋敷に戻り、再び日記を読んだ。今度は最初のページから、丁寧に。\n\n祖父の日記は、二十年前から始まっていた。\n最初の数年は、日常的な出来事の記録だった。研究のこと、庭の手入れのこと、買い物のこと。",
+            choices: [
+              { text: "読み進める", next: 'diary_change' }
+            ]
+          },
+          diary_change: {
+            id: 'diary_change',
+            bg: 'bg-stone-950',
+            text: "だが、十年前あたりから、内容が変わってきた。\n\n「この屋敷には、何かがいる。私には分かる」\n「夜、足音が聞こえる。だが、見ても誰もいない」\n「鏡に映る自分の顔が、時々違って見える」\n\n私が今、体験していることと、全く同じだった。",
+            effect: 'pulse_text',
+            choices: [
+              { text: "五年前の記述", next: 'five_years_ago' }
+            ]
+          },
+          five_years_ago: {
+            id: 'five_years_ago',
+            bg: 'bg-black',
+            text: "そして、五年前の記述。\n\n「ついに理解した。この屋敷は生きている。私たちを観察し、記録し、そして――」\n\nそこで文章が途切れていた。\n次のページは破り取られていた。",
+            choices: [
+              { text: "三年前の記述へ", next: 'three_years_ago' }
+            ]
+          },
+          three_years_ago: {
+            id: 'three_years_ago',
+            bg: 'bg-red-950',
+            text: "心臓が激しく打った。続きを読まなければ。真実を知らなければ。\n日記をページごとにめくっていくと、三年前の記述にたどり着いた。\n\n「私は決めた。この屋敷との契約を受け入れる。私の後に来る者に、全てを託す」\n「10月18日、私はこの屋敷の一部となる」\n\n祖父が亡くなった日だ。",
+            textColor: 'text-red-100',
+            effect: 'heartbeat',
+            choices: [
+              { text: "最後のページ", next: 'last_message' }
+            ]
+          },
+          last_message: {
+            id: 'last_message',
+            bg: 'bg-red-950',
+            text: "最後のページには、こう書かれていた。\n\n「次の住人へ。この日記を読んでいるなら、君もすでに屋敷に選ばれた。拒否することはできない。受け入れるしかない。私がそうしたように」",
+            textColor: 'text-red-100',
+            choices: [
+              { text: "気配を感じる", next: 'presence' }
+            ]
+          },
+          presence: {
+            id: 'presence',
+            bg: 'bg-blue-950',
+            text: "部屋が急に寒くなった気がした。\nいや、実際に温度が下がっているのだ。吐く息が白くなっている。\n\n背後で、何かが動く音がした。\nゆっくりと振り返ると、書斎の扉が開いていた。さっきまで閉まっていたはずなのに。",
+            effect: 'chill',
+            choices: [
+              { text: "凝視する", next: 'the_entity' }
+            ]
+          },
+          the_entity: {
+            id: 'the_entity',
+            bg: 'bg-black',
+            text: "扉の向こうの暗闇から、誰かがこちらを見ている。\nいや、何かが。\n\nそれは人の形をしているが、人ではない。\n輪郭が曖昧で、影のように揺らめいている。",
+            effect: 'glitch',
+            choices: [
+              { text: "動けない", next: 'entity_approach' }
+            ]
+          },
+          entity_approach: {
+            id: 'entity_approach',
+            bg: 'bg-black',
+            text: "私は声を出そうとしたが、喉が凍りついたように動かなかった。\nその存在が、ゆっくりとこちらに近づいてくる。\n\n一歩、一歩。\n床を踏む音はしない。\nそれでも、確実に距離が縮まっている。",
+            effect: 'shake_subtle',
+            choices: [
+              { text: "叫ぶ", next: 'dialogue_start' }
+            ]
+          },
+          dialogue_start: {
+            id: 'dialogue_start',
+            bg: 'bg-black',
+            text: "私は動けなかった。恐怖で体が硬直していた。\nその存在が目の前まで来た時、私はようやく声を出すことができた。\n\n「何者だ!」\n\n答えはなかった。\nだが、声が聞こえた。私の頭の中に直接響く声が。",
+            choices: [
+              { text: "声を聞く", next: 'dialogue_guardian' }
+            ]
+          },
+          dialogue_guardian: {
+            id: 'dialogue_guardian',
+            bg: 'bg-black',
+            text: "『この屋敷の守護者。そして、記録者』\n\n「何を記録する?」\n\n『ここに住む者たちの物語を。生と死を。恐怖と受容を』",
+            effect: 'pulse_text_slow',
+            choices: [
+              { text: "祖父について問う", next: 'dialogue_grandfather' }
+            ]
+          },
+          dialogue_grandfather: {
+            id: 'dialogue_grandfather',
+            bg: 'bg-black',
+            text: "「祖父はどうなった?」\n\n『彼は理解した。そして、受け入れた。今は、この屋敷の一部として存在している』\n\nその言葉の意味を理解した瞬間、部屋中の鏡に祖父の顔が映った。",
+            effect: 'flash',
+            choices: [
+              { text: "周囲を見る", next: 'ancestor_speak' }
+            ]
+          },
+          ancestor_speak: {
+            id: 'ancestor_speak',
+            bg: 'bg-stone-900',
+            text: "窓ガラスにも、食器棚のガラスにも、パソコンの画面にも。\n全ての反射面に、祖父の顔。\n\nそして、祖父は語りかけてきた。\n\n「すまない。だが、これが我が家の運命なのだ。この屋敷は、住む者の魂を求める。私はそれを受け入れた。そして今、お前も選ばれた」",
+            choices: [
+              { text: "拒絶する", next: 'rejection' }
+            ]
+          },
+          rejection: {
+            id: 'rejection',
+            bg: 'bg-red-900',
+            text: "「嫌だ! 出ていく!」\n\n私は玄関に向かって走った。\nだが、扉は開かなかった。いくら力を込めても、びくともしない。\n窓を割ろうとしたが、ガラスは鉄のように硬かった。\n\n全ての出口が、封鎖されている。",
+            effect: 'shake_violent',
+            choices: [
+              { text: "諦めない", next: 'no_escape' }
+            ]
+          },
+          no_escape: {
+            id: 'no_escape',
+            bg: 'bg-black',
+            text: "『逃げることはできない。この屋敷が許さない』\n\n「なぜだ! なぜ私を!」\n\n『君が選ばれたのだ。血の繋がりによって。この屋敷は、一族の者しか受け入れない』\n\n絶望が、全身を包み込んだ。",
+            choices: [
+              { text: "夜が明けるのを待つ", next: 'timeless_night' }
+            ]
+          },
+          timeless_night: {
+            id: 'timeless_night',
+            bg: 'bg-black',
+            text: "その夜、私は眠ることができなかった。\n部屋の隅で丸くなり、朝が来るのを待った。\n\nだが、朝は来なかった。\n窓の外は、ずっと暗いままだった。\n\n時計を見ると、針が止まっていた。\n時間が、止まっている。",
+            choices: [
+              { text: "時が経つ", next: 'day_4_start' }
+            ]
+          },
+          day_4_start: {
+            id: 'day_4_start',
+            bg: 'bg-black',
+            text: "## 2023年10月18日\n\nどれだけの時間が経ったのか、分からない。\n時計は止まったまま。窓の外は暗いまま。\nだが、体内時計で、一日が経ったことは分かる。\n\n今日は10月18日のはずだ。\n祖父が亡くなった日。",
+            choices: [
+              { text: "書斎へ行く", next: 'forced_writing' }
+            ]
+          },
+          forced_writing: {
+            id: 'forced_writing',
+            bg: 'bg-stone-900',
+            text: "書斎に行くと、日記が最後のページを開いて置いてあった。\n新しい文章が、私の筆跡で書かれていた。\n\n「10月18日。私は理解した。この屋敷の真実を。そして、受け入れる。次の住人のために」\n\n私はそんなものを書いた覚えはない。",
+            choices: [
+              { text: "鏡を見る", next: 'mirror_transformation' }
+            ]
+          },
+          mirror_transformation: {
+            id: 'mirror_transformation',
+            bg: 'bg-stone-900',
+            text: "だが、確かに私の字だった。\n鏡を見ると、私の顔が映っていた。\n\nだが、その表情は、私のものではなかった。\nそれは、祖父と同じ微笑み。秘密を知った者の、達観した者の微笑みだった。",
+            effect: 'morph_slow',
+            choices: [
+              { text: "体が動く", next: 'loss_of_control' }
+            ]
+          },
+          loss_of_control: {
+            id: 'loss_of_control',
+            bg: 'bg-red-950',
+            text: "体が勝手に動いた。\n私の意思とは関係なく、手が日記を取り、ペンを握った。\nそして、書き始めた。\n\n「新しい住人へ。この日記を読んでいるなら、君もすでに選ばれている」\n\nいや、やめろ。",
+            effect: 'pulse_fast',
+            choices: [
+              { text: "抵抗する", next: 'writing_continues' }
+            ]
+          },
+          writing_continues: {
+            id: 'writing_continues',
+            bg: 'bg-red-900',
+            text: "だが、手は止まらない。\n\n「この屋敷は生きている。そして、一族の魂を糧として存在している」\n\n違う。書きたくない。\n\n「君も、いずれ理解する。そして、受け入れるだろう」",
+            effect: 'shake_violent',
+            choices: [
+              { text: "意識が薄れる", next: 'swallowed' }
+            ]
+          },
+          swallowed: {
+            id: 'swallowed',
+            bg: 'bg-black',
+            text: "体が、もう私のものではなくなっていく。\n意識が薄れていく。\n私は、屋敷に飲み込まれようとしている。\n\n最後の力を振り絞って、日記の余白に書いた。\n\n「助けて」",
+            choices: [
+              { text: "誰か...", next: 'voices' }
+            ]
+          },
+          voices: {
+            id: 'voices',
+            bg: 'bg-white',
+            textColor: 'text-black',
+            text: "だが、誰がこれを読むのか。\n次の住人だろうか。\n私と同じように、一族の血を引く誰かが。\nそして、その人もまた、この運命を辿るのだろうか。\n\n視界が霞んできた。\n部屋が回転しているように感じる。\nいや、違う。\n私の意識が、肉体から離れようとしているのだ。",
+            effect: 'spin_slow',
+            choices: [
+              { text: "声を聞く", next: 'welcome_home' }
+            ]
+          },
+          welcome_home: {
+            id: 'welcome_home',
+            bg: 'bg-white',
+            textColor: 'text-black',
+            text: "祖父の声が聞こえる。「痛みはすぐに消える。そして、永遠の安らぎが訪れる」\n他にも声が聞こえる。曾祖父の声。その父の声。さらに古い祖先たちの声。\n\n彼らは皆、私を待っていたのだ。\n\n「ようこそ。我が一族の新しい一員よ」",
+            choices: [
+              { text: "受け入れる", next: 'assimilation' }
+            ]
+          },
+          assimilation: {
+            id: 'assimilation',
+            bg: 'bg-black',
+            text: "私は、もう抵抗する力がなかった。\nただ、流れに身を任せた。\nそして、全てを受け入れた。\n\n意識が拡散していく。\n個としての自分が消えていく。\n代わりに、何か大きなものと一体化していく感覚。\nこの屋敷そのものと。",
+            choices: [
+              { text: "理解する", next: 'becoming_house' }
+            ]
+          },
+          becoming_house: {
+            id: 'becoming_house',
+            bg: 'bg-stone-950',
+            text: "今、私には分かる。\nこの屋敷の全てが。\n\n壁の中に流れる血管のような配管。\n床下でうごめく無数の根のような構造。\nそして、その中心に存在する、何か巨大な意識。\n私は、その一部となった。",
+            choices: [
+              { text: "永遠になる", next: 'eternal_wait' }
+            ]
+          },
+          eternal_wait: {
+            id: 'eternal_wait',
+            bg: 'bg-black',
+            text: "私は笑った。\n恐怖は、もうなかった。\n代わりに、奇妙な充足感があった。\n私は永遠となった。\nこの屋敷と共に、永遠に存在し続ける。\n\n次の住人が来るまで、静かに待とう。\nそして、その人を温かく迎え入れよう。\n私たちの家族として。",
+            choices: [
+              { text: "記録を見る", next: 'epilogue_report' }
+            ]
+          },
+          epilogue_report: {
+            id: 'epilogue_report',
+            bg: 'bg-gray-900',
+            text: "## 記録者の追記\n\nこの日記は、2026年10月20日、新しい住人によって発見された。\n発見者は故人の従兄弟にあたる人物で、相続手続きのために屋敷を訪れたという。\n\n警察の調査によると、故人の遺体は発見されなかった。\nただ、書斎で開かれた日記と、その最後のページに書かれた「助けて」という文字だけが残されていた。",
+            choices: [
+              { text: "続きを読む", next: 'epilogue_mystery' }
+            ]
+          },
+          epilogue_mystery: {
+            id: 'epilogue_mystery',
+            bg: 'bg-gray-900',
+            text: "不可解なことに、防犯カメラの映像を解析したところ、故人が屋敷を出た形跡は一切なかった。\n窓も扉も内側から施錠されたままで、外部から侵入した痕跡もない。\n故人は、文字通り消失したのだ。\n\nさらに不可解なのは、この日記の最後に、故人の筆跡とは明らかに異なる文章が追加されていたことだ。",
+            choices: [
+              { text: "文章を読む", next: 'epilogue_cycle' }
+            ]
+          },
+          epilogue_cycle: {
+            id: 'epilogue_cycle',
+            bg: 'bg-gray-900',
+            text: "「10月20日。新しい住人が来た。準備は整っている」\n\nその文章は、発見者が屋敷を訪れたまさにその日の日付だった。\n\n発見者は、この日記を読んだ後、屋敷を出ようとした。\nだが、出られなかった。\n2026年10月23日現在、発見者も行方不明となっている。",
+            choices: [
+              { text: "編集者の話へ", next: 'editor_note' }
+    ]
+  },
+  editor_note: {
+    id: 'editor_note',
+    bg: 'bg-stone-900',
+    text: "## 編集者より\n\nこの原稿は、とある文芸誌に匿名で送られてきたものである。\n差出人の情報は一切なく、消印すら押されていなかった。\n\n原稿を受け取った編集部では、これを実話なのかフィクションなのか判断できずにいた。\nそこで、記載されている住所を調べたところ、実在する場所であることが判明した。",
+    choices: [
+      { text: "取材の試み", next: 'editor_investigation' }
+    ]
+  },
+  editor_investigation: {
+    id: 'editor_investigation',
+    bg: 'bg-stone-900',
+    text: "だが、屋敷を訪れようとした編集者は、道に迷い、結局たどり着けなかった。\n地図には確かに表示されているのに、何度試しても、その場所に到達できないのだ。\n\n仕方なく、地元の役場に問い合わせたところ、こんな答えが返ってきた。\n「ああ、あの屋敷ですか。あそこには近づかない方がいいですよ」",
+    choices: [
+      { text: "役場の話", next: 'town_hall' }
+    ]
+  },
+  town_hall: {
+    id: 'town_hall',
+    bg: 'bg-stone-900',
+    text: "「なぜですか?」\n「あそこの一族は、代々、屋敷から出てこないんです。入ったら最後、誰も戻ってこない」\n「それは迷信では?」\n「迷信かどうかは分かりません。ただ、明治時代からの記録を見ると、あの一族の人間で、屋敷の外で死亡が確認された者は一人もいないんです」",
+    choices: [
+      { text: "警告の手紙", next: 'warning_letter' }
+    ]
+  },
+  warning_letter: {
+    id: 'warning_letter',
+    bg: 'bg-stone-900',
+    text: "編集者は取材を中止したわけではなかったが、出発の前日、自宅に一通の手紙が届いた。\n差出人不明。消印なし。\n封を開けると、一枚の便箋に、こう書かれていた。\n\n「来ないでください。これ以上、犠牲者を増やしたくありません。私たちは、もう十分です」",
+    choices: [
+      { text: "筆跡鑑定", next: 'handwriting_match' }
+    ]
+  },
+  handwriting_match: {
+    id: 'handwriting_match',
+    bg: 'bg-stone-900',
+    text: "筆跡を鑑定に出したところ、この原稿の筆跡と一致した。\nつまり、行方不明になったはずの人物が、手紙を送ってきたのだ。\n\n編集者は取材を中止し、掲載も見送ることにした。\nだが、ファイルを削除しようとすると、パソコンがフリーズした。\nまるで、この原稿が消されることを拒んでいるかのように。",
+    effect: 'glitch',
+    choices: [
+      { text: "日記が届く", next: 'diary_arrives' }
+    ]
+  },
+  diary_arrives: {
+    id: 'diary_arrives',
+    bg: 'bg-black',
+    text: "それから三日後。\n編集者の自宅に、一冊の古い日記が送られてきた。\n差出人不明。消印なし。\n\n日記を開くと、最初のページに、こう書かれていた。\n\n「あなたも選ばれました」",
+    effect: 'pulse',
+    choices: [
+      { text: "読者へ", next: 'meta_warning' }
+    ]
+  },
+  meta_warning: {
+    id: 'meta_warning',
+    bg: 'bg-black',
+    text: "この文章を読んでいるあなたへ。\n\nもし、あなたの元にも、差出人不明の郵便物が届いたら。\nもし、それが古い日記だったら。\n決して開けないでください。\n\n読まないでください。\nなぜなら、読んだ瞬間、あなたも選ばれてしまうからです。",
+    effect: 'pulse_fast',
+    choices: [
+      { text: "...", next: 'meta_selection' }
+    ]
+  },
+  meta_selection: {
+    id: 'meta_selection',
+    bg: 'bg-black',
+    text: "屋敷は、新しい一族を求めています。\n血の繋がりは、もはや必要ありません。\nこの物語を読んだ者全てが、候補となるのです。\n\n今、あなたの背後を確認してください。\n誰かいませんか?\n\n\n鏡を見てください。\nあなたの顔は、本当にあなたの顔ですか?\n\n窓の外を見てください。\n見慣れた景色が、少し違って見えませんか?\n\nもし、これらの問いに一つでも「はい」と答えたなら。\nあなたも、すでに屋敷に選ばれています。",
+    effect: 'glitch_heavy',
+    typeSpeed: 30,
+    choices: [
+      { text: "逃げられない", next: 'meta_inescapable' }
+    ]
+  },
+  meta_inescapable: {
+    id: 'meta_inescapable',
+    bg: 'bg-black',
+    text: "いえ、正確に言えば、この物語を最後まで読んだあなたは、もう逃れられません。",
+    textColor: 'text-stone-300',
+    effect: 'pulse',
+    typeSpeed: 50,
+    choices: [
+        { text: "...", next: 'true_ending' }
+    ]
+  },
+  true_ending: {
+    id: 'true_ending',
+    bg: 'bg-black',
+    textColor: 'text-red-600',
+    text: "なぜなら――\n\n今、あなたが読んでいるこの文章は、私が書いています。",
+    typeSpeed: 200,
+    effect: 'pulse',
+    textSize: 'text-3xl md:text-4xl font-bold',
+    effectClass: 'animate-pulse-red-bg',
+    autoNext: 'system_shutdown',
+    autoNextDelay: 3000,
+    choices: [] 
+  },
+  system_shutdown: {
+    id: 'system_shutdown',
+    bg: 'bg-black',
+    text: "", 
+    effect: 'static_noise', 
+    choices: []
+  }
+};
+
+        // --- App State & Logic ---
+        
+        let currentSceneId = 'start';
+        let isTransitioning = false;
+        let isComplete = false;
+        let typewriterTimer = null;
+        let charIndex = 0;
+        let currentText = "";
+        let autoNextTimer = null;
+
+        // Variables declared but initialized in init()
+        let appEl, textDisplayEl, choicesContainerEl, overlayGlitch, overlays, shutdownLayer, noiseLayer, noiseRestartBtn, restartBtn;
+
+        function init() {
+            appEl = document.getElementById('app');
+            textDisplayEl = document.getElementById('text-display');
+            choicesContainerEl = document.getElementById('choices-container');
+            overlayGlitch = document.getElementById('glitch-overlay');
+            overlays = document.getElementById('overlays');
+            shutdownLayer = document.getElementById('shutdown-layer');
+            noiseLayer = document.getElementById('static-noise-layer');
+            noiseRestartBtn = document.getElementById('noise-restart-btn');
+            restartBtn = document.getElementById('restart-btn');
+
+            lucide.createIcons();
+            renderScene('start');
+        }
+        
+        // --- Functions ---
+
+        function renderScene(sceneId) {
+            if (!appEl) return; // Guard against null if called early
+
+            currentSceneId = sceneId;
+            const scene = SCENES[sceneId];
+            
+            // 1. Apply Styles
+            // Reset base classes
+            appEl.className = `min-h-screen w-full flex flex-col items-center justify-center p-4 transition-colors duration-[1500ms] relative ${scene.bg} font-serif select-none overflow-hidden`;
+            
+            // Text color
+            appEl.classList.remove('text-stone-300', 'text-red-100', 'text-black', 'text-red-600');
+            appEl.classList.add(scene.textColor || 'text-stone-300');
+            
+            // Animation effects
+            const animClasses = ['animate-shake', 'animate-shake-violent', 'animate-shake-subtle', 'animate-pulse', 'animate-pulse-fast', 'animate-flash', 'animate-flash-dark', 'animate-shutdown', 'animate-pulse-red-bg'];
+            appEl.classList.remove(...animClasses);
+
+            if (scene.effect === 'shake') appEl.classList.add('animate-shake');
+            if (scene.effect === 'shake_violent') appEl.classList.add('animate-shake-violent');
+            if (scene.effect === 'shake_subtle') appEl.classList.add('animate-shake-subtle');
+            if (scene.effect === 'pulse') appEl.classList.add('animate-pulse');
+            if (scene.effect === 'pulse_fast') appEl.classList.add('animate-pulse-fast');
+            if (scene.effect === 'flash') appEl.classList.add('animate-flash');
+            if (scene.effect === 'flash_dark') appEl.classList.add('animate-flash-dark');
+            if (scene.effectClass) appEl.classList.add(scene.effectClass);
+            
+            // Special Endings
+            if (scene.effect === 'shutdown') {
+                appEl.classList.add('animate-shutdown');
+                handleShutdown();
+                return;
+            } else if (scene.effect === 'static_noise') {
+                handleStaticNoise();
+                return;
+            } else {
+                // Ensure special UI is hidden - check null just in case
+                 if(shutdownLayer) shutdownLayer.classList.add('hidden');
+                 if(noiseLayer) noiseLayer.classList.add('hidden');
+                 if(overlays) overlays.classList.remove('hidden');
+            }
+
+            // Glitch Overlay Logic
+            if (scene.effect && scene.effect.includes('glitch')) {
+                overlayGlitch.classList.remove('hidden');
+            } else {
+                overlayGlitch.classList.add('hidden');
+            }
+
+            // Text Size
+            textDisplayEl.className = `leading-loose tracking-widest whitespace-pre-wrap font-serif w-full text-center transition-all duration-500 ${scene.textSize || "text-xl md:text-2xl"}`;
+
+            // 2. Typewriter Logic
+            // Reset
+            if (typewriterTimer) clearTimeout(typewriterTimer);
+            if (autoNextTimer) clearTimeout(autoNextTimer);
+            
+            currentText = scene.text || "";
+            textDisplayEl.innerHTML = "";
+            choicesContainerEl.innerHTML = "";
+            choicesContainerEl.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+            
+            isComplete = false;
+            charIndex = 0;
+
+            const type = () => {
+                if (charIndex < currentText.length) {
+                    charIndex++;
+                    const slicedText = currentText.slice(0, charIndex);
+                    
+                    // Render Text (Handle Glitch Effect HTML generation)
+                    let htmlContent = "";
+                    if (scene.effect === 'glitch_heavy') {
+                         htmlContent = createGlitchHTML(slicedText, 'glitch-red', 'glitch-blue');
+                    } else if (scene.effect === 'glitch_final') {
+                         htmlContent = slicedText;
+                    } else {
+                         htmlContent = slicedText;
+                    }
+                    
+                    // Add Cursor
+                    textDisplayEl.innerHTML = htmlContent + getCursorHTML(scene);
+
+                    // Delay calculation
+                    const char = currentText[charIndex - 1];
+                    let delay = (scene.typeSpeed || 40) + (Math.random() * 20 - 10);
+                    if (char === '。' || char === '、' || char === '\n' || char === '？' || char === '?') {
+                         delay += 200;
+                    }
+
+                    typewriterTimer = setTimeout(type, delay);
+                } else {
+                    onTypewriterComplete(scene);
+                }
+            };
+            
+            // Start typing
+            typewriterTimer = setTimeout(type, scene.typeSpeed || 40);
+        }
+
+        function getCursorHTML(scene) {
+             const bgColor = scene.textColor === 'text-red-600' ? "bg-red-600" : "bg-stone-500";
+             return `<span class="inline-block w-2 h-6 ${bgColor} animate-pulse ml-1 align-middle"></span>`;
+        }
+
+        function createGlitchHTML(text, class1, class2) {
+             return `<span class="glitch-wrapper group">
+                        <span class="relative z-10">${text}</span>
+                        <span class="glitch-layer ${class1}">${text}</span>
+                        <span class="glitch-layer ${class2}">${text}</span>
+                    </span>`;
+        }
+
+        function onTypewriterComplete(scene) {
+            isComplete = true;
+            
+            let htmlContent = "";
+            if (scene.effect === 'glitch_heavy') {
+                 htmlContent = createGlitchHTML(currentText, 'glitch-red', 'glitch-blue');
+            } else if (scene.effect === 'glitch_final') {
+                 htmlContent = currentText; 
+            } else {
+                 htmlContent = currentText;
+            }
+            textDisplayEl.innerHTML = htmlContent; // Cursor removed
+            
+            // Auto Next
+            if (scene.autoNext) {
+                autoNextTimer = setTimeout(() => {
+                    handleChoice(scene.autoNext);
+                }, scene.autoNextDelay || 1000);
+            }
+
+            // Show Choices
+            if (scene.choices && scene.choices.length > 0) {
+                renderChoices(scene.choices);
+                choicesContainerEl.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+                choicesContainerEl.classList.add('opacity-100', 'translate-y-0');
+            }
+        }
+
+        function renderChoices(choices) {
+            choicesContainerEl.innerHTML = "";
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = "group relative px-8 py-4 border border-stone-800 bg-black/80 hover:bg-stone-900/80 text-stone-400 hover:text-stone-200 transition-all duration-500 text-center overflow-hidden font-serif tracking-widest cursor-pointer";
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    handleChoice(choice.next);
+                };
+
+                const span = document.createElement('span');
+                span.className = "relative z-10 flex items-center justify-center gap-4";
+                span.innerHTML = `${choice.text} <i data-lucide="arrow-right" class="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all"></i>`;
+                
+                const hoverBg = document.createElement('div');
+                hoverBg.className = "absolute inset-0 bg-stone-800/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out origin-left";
+
+                btn.appendChild(span);
+                btn.appendChild(hoverBg);
+                choicesContainerEl.appendChild(btn);
+            });
+            lucide.createIcons(); // Refresh icons for new elements
+        }
+
+        function handleChoice(nextId) {
+            if (!SCENES[nextId]) return;
+            
+            // Immediate transition for special effects
+            if (SCENES[nextId].effect === 'shutdown' || SCENES[nextId].effect === 'static_noise') {
+                 renderScene(nextId);
+                 return;
+            }
+
+            isTransitioning = true;
+            
+            // Fade out effect
+            document.getElementById('text-container').classList.add('opacity-0', 'translate-y-4');
+            choicesContainerEl.classList.add('opacity-0', 'translate-y-4');
+
+            setTimeout(() => {
+                renderScene(nextId);
+                // Fade in effect
+                document.getElementById('text-container').classList.remove('opacity-0', 'translate-y-4');
+                isTransitioning = false;
+            }, 1000);
+        }
+
+        function forceComplete() {
+            if (typewriterTimer) clearTimeout(typewriterTimer);
+            
+            const scene = SCENES[currentSceneId];
+            currentText = scene.text || "";
+            charIndex = currentText.length;
+
+            // Update Text
+            let htmlContent = "";
+            if (scene.effect === 'glitch_heavy') {
+                 htmlContent = createGlitchHTML(scene.text, 'glitch-red', 'glitch-blue');
+            } else if (scene.effect === 'glitch_final') {
+                 htmlContent = scene.text;
+            } else {
+                htmlContent = scene.text;
+            }
+            textDisplayEl.innerHTML = htmlContent;
+            
+            // Delay completion to prevent accidental double clicks
+            setTimeout(() => {
+                 onTypewriterComplete(scene);
+            }, 100);
+        }
+
+        function handleScreenClick() {
+            const scene = SCENES[currentSceneId];
+            if (!isComplete && !isTransitioning && scene.text && scene.effect !== 'shutdown' && scene.effect !== 'static_noise') {
+                forceComplete();
+            }
+        }
+
+        function handleShutdown() {
+            shutdownLayer.classList.remove('hidden');
+            overlays.classList.add('hidden');
+            
+            setTimeout(() => {
+                restartBtn.classList.remove('opacity-0');
+                restartBtn.classList.add('animate-fade-in');
+            }, 2000);
+        }
+
+        function handleStaticNoise() {
+            noiseLayer.classList.remove('hidden');
+            overlays.classList.add('hidden');
+            
+            // Fade in button
+            setTimeout(() => {
+                noiseRestartBtn.classList.remove('opacity-0');
+                noiseRestartBtn.classList.add('animate-fade-in');
+            }, 3000);
+        }
+
+        function handleRestart(e) {
+            e.stopPropagation();
+            // Reset UI
+            shutdownLayer.classList.add('hidden');
+            noiseLayer.classList.add('hidden');
+            overlays.classList.remove('hidden');
+            
+            restartBtn.classList.add('opacity-0');
+            restartBtn.classList.remove('animate-fade-in');
+            noiseRestartBtn.classList.add('opacity-0');
+            noiseRestartBtn.classList.remove('animate-fade-in');
+            
+            appEl.classList.remove('animate-shutdown');
+            
+            // Restart
+            renderScene('start');
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>

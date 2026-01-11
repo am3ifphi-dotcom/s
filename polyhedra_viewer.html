@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>切頂正多面体 (Polyhedra Morph & Truncate)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050510;
+            color: #ffffff;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            user-select: none;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn.active {
+            background: #00e5ff;
+            color: #000;
+            border-color: #00e5ff;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+        }
+
+        .btn-action {
+            background: rgba(255, 100, 100, 0.2);
+            border-color: rgba(255, 100, 100, 0.4);
+        }
+        .btn-action:hover:not(:disabled) {
+            background: rgba(255, 100, 100, 0.4);
+            box-shadow: 0 4px 15px rgba(255, 50, 50, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Controls Panel */
+        #controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 240px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-label {
+            font-size: 12px;
+            color: #ccc;
+            flex-grow: 1;
+        }
+
+        .val-display {
+            font-family: monospace;
+            color: #fff;
+            margin-right: 8px;
+            font-size: 11px;
+        }
+
+        .reset-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #aaa;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.2s;
+        }
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-color: #fff;
+        }
+        
+        .panel-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00e5ff;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            pointer-events: none;
+        }
+    </style>
+    <!-- Import Maps for Three.js modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="ui-container">
+        <!-- Shape Selection -->
+        <div class="row">
+            <button class="btn" onclick="morphTo('tetrahedron', this)">正四面体</button>
+            <button class="btn" onclick="morphTo('cube', this)">正六面体</button>
+            <button class="btn" onclick="morphTo('octahedron', this)">正八面体</button>
+            <button class="btn active" onclick="morphTo('dodecahedron', this)">正十二面体</button>
+            <button class="btn" onclick="morphTo('icosahedron', this)">正二十面体</button>
+        </div>
+        <!-- Truncation Actions -->
+        <div class="row">
+            <button class="btn btn-action" onclick="truncateShape('midpoint')">辺の中点で切頂</button>
+            <button class="btn btn-action" onclick="truncateShape('trisection')">3等分点で切頂</button>
+            <button class="btn" id="undo-btn" onclick="undo()" disabled>⟲ 戻す (Undo)</button>
+        </div>
+    </div>
+
+    <!-- Enhanced Settings Panel -->
+    <div id="controls-panel">
+        <div class="panel-title">View & Appearance</div>
+        
+        <!-- Perspective (FOV) -->
+        <div class="control-group">
+            <div class="control-header">
+                <span class="control-label">遠近感 (Perspective)</span>
+                <span id="fov-val" class="val-display">45°</span>
+                <button class="reset-btn" onclick="resetParam('fov')" title="デフォルトに戻す">↺</button>
+            </div>
+            <!-- 1度(望遠) 〜 120度(超広角) -->
+            <input type="range" id="fov-slider" min="1" max="120" step="1" value="45">
+            <div style="font-size: 9px; color: #888;">
+                ← 望遠 (等角風) | 広角 (パース強) →
+            </div>
+        </div>
+
+        <!-- Zoom (Camera Distance) - Value hidden as requested -->
+        <div class="control-group">
+            <div class="control-header">
+                <span class="control-label">ズーム (Zoom)</span>
+                <!-- 数値表示を削除 -->
+                <button class="reset-btn" onclick="resetParam('zoom')" title="デフォルトに戻す">↺</button>
+            </div>
+            <!-- 対数スケール用に 0.0 ~ 1.0 に正規化。初期値0.236は距離6.0に相当 -->
+            <input type="range" id="zoom-slider" min="0" max="1" step="0.001" value="0.236">
+        </div>
+
+        <!-- Opacity -->
+        <div class="control-group">
+            <div class="control-header">
+                <span class="control-label">透明度 (Opacity)</span>
+                <span id="opacity-val" class="val-display">0.6</span>
+                <button class="reset-btn" onclick="resetParam('opacity')" title="デフォルトに戻す">↺</button>
+            </div>
+            <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.6">
+        </div>
+
+        <!-- Roughness (Reflection) -->
+        <div class="control-group">
+            <div class="control-header">
+                <span class="control-label">表面の粗さ</span>
+                <span id="roughness-val" class="val-display">0.2</span>
+                <button class="reset-btn" onclick="resetParam('roughness')" title="デフォルトに戻す">↺</button>
+            </div>
+            <input type="range" id="roughness-slider" min="0" max="1" step="0.05" value="0.2">
+        </div>
+
+        <div class="panel-title" style="margin-top: 10px;">Details</div>
+
+        <!-- Point Size -->
+        <div class="control-group">
+            <div class="control-header">
+                <span class="control-label">点の大きさ</span>
+                <span id="size-val" class="val-display">0.04</span>
+                <button class="reset-btn" onclick="resetParam('pointSize')" title="デフォルトに戻す">↺</button>
+            </div>
+            <input type="range" id="size-slider" min="0" max="0.15" step="0.005" value="0.04">
+        </div>
+
+        <!-- Edge Angle -->
+        <div class="control-group">
+            <div class="control-header">
+                <span class="control-label">エッジ検出角</span>
+                <span id="edge-angle-val" class="val-display">10°</span>
+                <button class="reset-btn" onclick="resetParam('edgeAngle')" title="デフォルトに戻す">↺</button>
+            </div>
+            <input type="range" id="edge-angle-slider" min="0.1" max="60" step="0.1" value="10">
+            <div style="font-size: 9px; color: #888;">※値を小さくすると細かい線が出ます</div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+    <div id="info">Drag to rotate • Scroll to zoom</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
+        import { ConvexHull } from 'three/addons/math/ConvexHull.js';
+
+        // --- 設定 ---
+        const scene = new THREE.Scene();
+        const initialFogDensity = 0.002; 
+        scene.fog = new THREE.FogExp2(0x050510, initialFogDensity);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.set(0, 0, 6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- ライト ---
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0x00e5ff, 50, 0); // distance 0 = infinite
+        pointLight1.position.set(5, 5, 5);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xff00ff, 50, 0); // distance 0 = infinite
+        pointLight2.position.set(-5, -5, 5);
+        scene.add(pointLight2);
+
+        // --- コントロール ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enablePan = false;
+        controls.minDistance = 1.0;
+        controls.maxDistance = 2000.0;
+
+        // --- ズーム制御用定数 (対数スケール) ---
+        const MIN_ZOOM_DIST = 1.0;
+        const MAX_ZOOM_DIST = 2000.0; // controls.maxDistance と同じにする
+        const ZOOM_LOG_FACTOR = Math.log(MAX_ZOOM_DIST / MIN_ZOOM_DIST);
+
+        // スライダー値(0-1)から距離へ変換
+        function getZoomDistance(sliderValue) {
+            return MIN_ZOOM_DIST * Math.exp(sliderValue * ZOOM_LOG_FACTOR);
+        }
+
+        // 距離からスライダー値(0-1)へ変換
+        function getZoomSliderValue(distance) {
+            const d = Math.max(MIN_ZOOM_DIST, Math.min(MAX_ZOOM_DIST, distance));
+            return Math.log(d / MIN_ZOOM_DIST) / ZOOM_LOG_FACTOR;
+        }
+
+        // --- 数学定数 ---
+        const PHI = (1 + Math.sqrt(5)) / 2;
+
+        // --- ジオメトリ定義 ---
+        function normalizePoints(points) {
+            return points.map(p => p.normalize());
+        }
+
+        const Geometries = {
+            tetrahedron: () => normalizePoints([
+                new THREE.Vector3(1, 1, 1), new THREE.Vector3(1, -1, -1),
+                new THREE.Vector3(-1, 1, -1), new THREE.Vector3(-1, -1, 1)
+            ]),
+            cube: () => {
+                const pts = [];
+                for (let x of [-1, 1]) for (let y of [-1, 1]) for (let z of [-1, 1]) pts.push(new THREE.Vector3(x, y, z));
+                return normalizePoints(pts);
+            },
+            octahedron: () => normalizePoints([
+                new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0),
+                new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)
+            ]),
+            icosahedron: () => {
+                const pts = [];
+                for (let s1 of [-1, 1]) for (let s2 of [-1, 1]) {
+                    pts.push(new THREE.Vector3(0, s1, s2 * PHI));
+                    pts.push(new THREE.Vector3(s1, s2 * PHI, 0));
+                    pts.push(new THREE.Vector3(s2 * PHI, 0, s1));
+                }
+                return normalizePoints(pts);
+            },
+            dodecahedron: () => {
+                const pts = [];
+                for (let x of [-1, 1]) for (let y of [-1, 1]) for (let z of [-1, 1]) pts.push(new THREE.Vector3(x, y, z));
+                const invPhi = 1 / PHI;
+                for (let s1 of [-1, 1]) for (let s2 of [-1, 1]) {
+                    pts.push(new THREE.Vector3(0, s1 * invPhi, s2 * PHI));
+                    pts.push(new THREE.Vector3(s1 * invPhi, s2 * PHI, 0));
+                    pts.push(new THREE.Vector3(s2 * PHI, 0, s1 * invPhi));
+                }
+                return normalizePoints(pts);
+            }
+        };
+
+        // --- システムの状態 ---
+        let particles = [];     // 現在の表示位置
+        let targets = [];       // 目標位置
+        let pointMeshes = [];   // 表示用Sphere Mesh
+        let history = [];       // 履歴
+
+        // グループ
+        const shapeGroup = new THREE.Group();
+        scene.add(shapeGroup);
+
+        // マテリアル
+        const material = new THREE.MeshPhysicalMaterial({
+            color: 0x22aaff,
+            metalness: 0.1, 
+            roughness: 0.2, 
+            transmission: 0.6,
+            thickness: 1.0,
+            side: THREE.DoubleSide,
+            flatShading: true,
+            transparent: true,
+            opacity: 0.6
+        });
+        const mainMesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
+        shapeGroup.add(mainMesh);
+
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+        const wireframeMesh = new THREE.LineSegments(new THREE.BufferGeometry(), lineMaterial);
+        shapeGroup.add(wireframeMesh);
+
+        const sphereGeo = new THREE.SphereGeometry(1, 16, 16); // スケールでサイズ調整するため半径1
+        const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+
+        // --- デフォルト値と現在の状態 ---
+        const defaults = {
+            fov: 45,
+            zoom: 0.236, // 距離6.0に相当する対数スライダー値
+            opacity: 0.6,
+            roughness: 0.2,
+            pointSize: 0.04,
+            edgeAngle: 10
+        };
+
+        let currentPointSize = defaults.pointSize;
+        let currentEdgeThreshold = defaults.edgeAngle;
+
+        // --- リセット機能 ---
+        window.resetParam = (param) => {
+            const val = defaults[param];
+            let sliderId = '';
+            
+            switch(param) {
+                case 'fov': 
+                    sliderId = 'fov-slider';
+                    updateFov(val); 
+                    break;
+                case 'zoom':
+                    sliderId = 'zoom-slider';
+                    updateZoom(val);
+                    break;
+                case 'opacity':
+                    sliderId = 'opacity-slider';
+                    material.opacity = val;
+                    break;
+                case 'roughness':
+                    sliderId = 'roughness-slider';
+                    material.roughness = val;
+                    break;
+                case 'pointSize':
+                    sliderId = 'size-slider';
+                    currentPointSize = val;
+                    updatePointAppearance();
+                    break;
+                case 'edgeAngle':
+                    sliderId = 'edge-angle-slider';
+                    currentEdgeThreshold = val;
+                    updateGeometry();
+                    break;
+            }
+
+            // UI更新
+            if(sliderId) {
+                const slider = document.getElementById(sliderId);
+                const display = document.getElementById(sliderId.replace('slider', 'val') || sliderId.replace('slider', 'value'));
+                
+                if (slider) {
+                    slider.value = val;
+                    slider.dispatchEvent(new Event('input'));
+                }
+                if (display) {
+                    display.textContent = val + (sliderId.includes('angle') || sliderId.includes('fov') ? '°' : '');
+                }
+            }
+        };
+
+
+        // --- UI イベントリスナーヘルパー ---
+        const bindSlider = (id, valId, callback) => {
+            const slider = document.getElementById(id);
+            const valDisplay = document.getElementById(valId);
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (valDisplay) valDisplay.textContent = val + (id.includes('angle') || id.includes('fov') ? '°' : '');
+                callback(val);
+            });
+        };
+
+        // --- フォグ調整ロジック ---
+        // カメラ距離に基づいてFogの濃さを調整する (遠くに行っても暗くなりすぎないように)
+        function updateFogDensity(distance) {
+            const baseDist = 6.0;
+            // 距離が遠くなるほどdensityを下げる
+            // 対数的に減少させるとより自然
+            const newDensity = Math.max(0.00001, initialFogDensity * (baseDist / distance));
+            scene.fog.density = newDensity;
+        }
+
+        // --- FOV (遠近感) ロジック - Dolly Zoom ---
+        function updateFov(val) {
+            const oldFov = camera.fov;
+            const newFov = val;
+
+            // 現在のカメラ距離
+            const dist = camera.position.distanceTo(controls.target);
+            
+            // ドリーズーム計算
+            const oldRad = (oldFov * Math.PI) / 360; 
+            const newRad = (newFov * Math.PI) / 360;
+            const newDist = dist * Math.tan(oldRad) / Math.tan(newRad);
+
+            camera.fov = newFov;
+            camera.updateProjectionMatrix();
+
+            // カメラ位置更新
+            const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+            camera.position.copy(controls.target).add(dir.multiplyScalar(newDist));
+            
+            // Fog調整
+            updateFogDensity(newDist);
+
+            // ズームスライダーの位置も同期 (対数スケールに変換してセット)
+            const zoomSlider = document.getElementById('zoom-slider');
+            if(zoomSlider) {
+                zoomSlider.value = getZoomSliderValue(newDist);
+            }
+            controls.update();
+        }
+
+        bindSlider('fov-slider', 'fov-val', updateFov);
+
+        // --- Opacity ---
+        bindSlider('opacity-slider', 'opacity-val', (val) => {
+            material.opacity = val;
+        });
+
+        // --- Zoom (Distance) ロジック (対数スケール対応) ---
+        function updateZoom(sliderVal) {
+            // スライダー値(0-1)を対数スケールの距離に変換
+            const distance = getZoomDistance(sliderVal);
+
+            const direction = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+            camera.position.copy(controls.target).add(direction.multiplyScalar(distance));
+            controls.update();
+            // Fog調整
+            updateFogDensity(distance);
+        }
+
+        // Zoomスライダー (対数スケール)
+        const zoomSlider = document.getElementById('zoom-slider');
+        zoomSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            updateZoom(val);
+        });
+        
+        // マウス操作でズームした際もスライダーとFogを更新
+        controls.addEventListener('change', () => {
+            const dist = camera.position.distanceTo(controls.target);
+            const slider = document.getElementById('zoom-slider');
+            if (document.activeElement !== slider) {
+                // 実際の距離からスライダー位置(0-1)へ逆変換
+                slider.value = getZoomSliderValue(dist);
+                updateFogDensity(dist);
+            }
+        });
+
+        // --- Roughness ---
+        bindSlider('roughness-slider', 'roughness-val', (val) => {
+            material.roughness = val;
+        });
+
+        // --- Point Size ---
+        bindSlider('size-slider', 'size-val', (val) => {
+            currentPointSize = val;
+            updatePointAppearance();
+        });
+
+        // --- Edge Angle ---
+        bindSlider('edge-angle-slider', 'edge-angle-val', (val) => {
+            currentEdgeThreshold = val;
+            updateGeometry();
+        });
+
+        // --- 関数群 ---
+
+        function updatePointAppearance() {
+             pointMeshes.forEach(mesh => {
+                if(currentPointSize <= 0.001) {
+                    mesh.visible = false;
+                } else {
+                    mesh.visible = true;
+                    mesh.scale.set(currentPointSize, currentPointSize, currentPointSize);
+                }
+            });
+            updateGeometry();
+        }
+
+        function reconcileParticles(newTargetPoints) {
+            const newCount = newTargetPoints.length;
+            const currentCount = particles.length;
+
+            targets = [];
+            for(let i=0; i<newCount; i++) {
+                targets.push(newTargetPoints[i].clone());
+            }
+
+            if (newCount > currentCount) {
+                for (let i = currentCount; i < newCount; i++) {
+                    const p = new THREE.Vector3();
+                    if (currentCount > 0) {
+                        const parentIndex = i % currentCount; 
+                        p.copy(particles[parentIndex]); 
+                    } else {
+                        p.copy(targets[i]);
+                    }
+                    particles.push(p);
+
+                    const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+                    mesh.scale.set(currentPointSize, currentPointSize, currentPointSize);
+                    mesh.position.copy(p);
+                    shapeGroup.add(mesh);
+                    pointMeshes.push(mesh);
+                }
+            } else if (newCount < currentCount) {
+                for (let i = currentCount - 1; i >= newCount; i--) {
+                    shapeGroup.remove(pointMeshes[i]);
+                }
+                particles.splice(newCount);
+                pointMeshes.splice(newCount);
+            }
+        }
+
+        function init(shapeName) {
+            const points = Geometries[shapeName]();
+            reconcileParticles(points);
+            particles.forEach((p, i) => p.copy(targets[i]));
+            updateGeometry();
+            history = []; 
+            updateUndoBtn();
+        }
+
+        function updateGeometry() {
+            if (particles.length < 4) return;
+
+            // 凸包計算
+            const hull = new ConvexHull();
+            hull.setFromPoints(particles);
+
+            // メインメッシュの更新
+            const geometry = new ConvexGeometry(particles);
+            if(mainMesh.geometry) mainMesh.geometry.dispose();
+            mainMesh.geometry = geometry;
+
+            // ワイヤーフレーム更新
+            if(wireframeMesh.geometry) wireframeMesh.geometry.dispose();
+            const edges = new THREE.EdgesGeometry(geometry, currentEdgeThreshold);
+            wireframeMesh.geometry = edges;
+
+            // 頂点の可視性制御
+            const activeVertices = new Set();
+            hull.faces.forEach(face => {
+                let edge = face.edge;
+                do {
+                    activeVertices.add(edge.head().point);
+                    edge = edge.next;
+                } while (edge !== face.edge);
+            });
+
+            particles.forEach((p, i) => {
+                pointMeshes[i].position.copy(p);
+                pointMeshes[i].scale.set(currentPointSize, currentPointSize, currentPointSize);
+                
+                if (currentPointSize > 0.001) {
+                    pointMeshes[i].visible = activeVertices.has(p);
+                } else {
+                    pointMeshes[i].visible = false;
+                }
+            });
+        }
+
+        // --- 切頂ロジック ---
+
+        function getUniqueEdges(points) {
+            const hull = new ConvexHull();
+            hull.setFromPoints(points);
+            
+            const edgeSet = new Set();
+            const uniqueEdges = [];
+            const PRECISION = 4;
+
+            hull.faces.forEach(face => {
+                let edge = face.edge;
+                do {
+                    const v1 = edge.head().point;
+                    const v2 = edge.tail().point;
+                    
+                    const id1 = `${v1.x.toFixed(PRECISION)},${v1.y.toFixed(PRECISION)},${v1.z.toFixed(PRECISION)}`;
+                    const id2 = `${v2.x.toFixed(PRECISION)},${v2.y.toFixed(PRECISION)},${v2.z.toFixed(PRECISION)}`;
+                    
+                    const key = id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
+                    
+                    if (!edgeSet.has(key)) {
+                        edgeSet.add(key);
+                        uniqueEdges.push({ start: v1, end: v2 });
+                    }
+                    
+                    edge = edge.next;
+                } while (edge !== face.edge);
+            });
+            return uniqueEdges;
+        }
+
+        window.truncateShape = (type) => {
+            const currentPoints = targets.map(p => p.clone());
+            history.push(currentPoints);
+            updateUndoBtn();
+
+            const edges = getUniqueEdges(currentPoints);
+            const newPoints = [];
+
+            const exists = (pt) => {
+                for (let existing of newPoints) {
+                    if (existing.distanceToSquared(pt) < 0.0001) return true;
+                }
+                return false;
+            };
+
+            edges.forEach(edge => {
+                const vStart = edge.start;
+                const vEnd = edge.end;
+                const vec = new THREE.Vector3().subVectors(vEnd, vStart);
+                
+                if (type === 'midpoint') {
+                    const mid = new THREE.Vector3().copy(vStart).addScaledVector(vec, 0.5);
+                    if (!exists(mid)) newPoints.push(mid);
+                } else if (type === 'trisection') {
+                    const t1 = new THREE.Vector3().copy(vStart).addScaledVector(vec, 1/3);
+                    const t2 = new THREE.Vector3().copy(vStart).addScaledVector(vec, 2/3);
+                    if (!exists(t1)) newPoints.push(t1);
+                    if (!exists(t2)) newPoints.push(t2);
+                }
+            });
+
+            reconcileParticles(newPoints);
+        };
+
+        window.undo = () => {
+            if (history.length === 0) return;
+            const prevPoints = history.pop();
+            reconcileParticles(prevPoints);
+            updateUndoBtn();
+        };
+
+        function updateUndoBtn() {
+            const btn = document.getElementById('undo-btn');
+            btn.disabled = history.length === 0;
+            btn.style.opacity = history.length === 0 ? '0.3' : '1';
+        }
+
+        window.morphTo = (shape, btnElement) => {
+            history = [];
+            updateUndoBtn();
+
+            if(btnElement) {
+                document.querySelectorAll('.row .btn').forEach(b => {
+                    if(b.onclick && b.onclick.toString().includes('morphTo')) {
+                        b.classList.remove('active');
+                    }
+                });
+                btnElement.classList.add('active');
+            }
+
+            const newPoints = Geometries[shape]();
+            reconcileParticles(newPoints);
+        };
+
+        const LERP_SPEED = 0.1;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            let needsUpdate = false;
+
+            for (let i = 0; i < particles.length; i++) {
+                if (!targets[i]) continue;
+                
+                const dist = particles[i].distanceTo(targets[i]);
+                if (dist > 0.001) {
+                    particles[i].lerp(targets[i], LERP_SPEED);
+                    needsUpdate = true;
+                } else {
+                    particles[i].copy(targets[i]);
+                }
+            }
+
+            if (needsUpdate || particles.length > 0) {
+                updateGeometry();
+            }
+
+            shapeGroup.rotation.y += 0.005;
+            shapeGroup.rotation.x += 0.002;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        init('dodecahedron');
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

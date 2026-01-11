@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Calculator</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #00e6e6;
+            --secondary-color: #003333;
+            --accent-color: #ff0055;
+            --bg-color: #050505;
+            --text-color: #ffffff;
+            --glass-bg: rgba(0, 30, 30, 0.85);
+            --glow-strong: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
+            --glow-soft: 0 0 5px var(--primary-color);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                linear-gradient(rgba(0, 230, 230, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 230, 230, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* --- Header --- */
+        .header {
+            padding: 1rem 2rem;
+            background: rgba(0, 10, 10, 0.9);
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-shadow: var(--glow-soft);
+        }
+
+        .back-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border: 1px solid var(--primary-color);
+            padding: 0.5rem 1rem;
+            transition: 0.3s;
+        }
+        
+        .back-link:hover {
+            background: var(--primary-color);
+            color: #000;
+        }
+
+        /* --- Tabs --- */
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 1rem 2rem;
+            font-family: 'Orbitron';
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background: rgba(0, 230, 230, 0.2);
+            box-shadow: var(--glow-strong);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-color);
+        }
+
+        /* --- Content --- */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tool-panel {
+            display: none;
+            background: var(--glass-bg);
+            border: 2px solid var(--primary-color);
+            padding: 2rem;
+            box-shadow: var(--glow-soft);
+            animation: fadeIn 0.5s;
+        }
+
+        .tool-panel.active {
+            display: block;
+        }
+
+        h2 {
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 1px solid rgba(0,230,230,0.3);
+            padding-bottom: 1rem;
+        }
+
+        /* --- Forms & Inputs --- */
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary-color);
+            color: white;
+            padding: 1rem;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            box-shadow: var(--glow-soft);
+            background: rgba(0, 20, 20, 0.8);
+        }
+
+        .action-btn {
+            width: 100%;
+            background: var(--secondary-color);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 1rem;
+            font-family: 'Orbitron';
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: var(--glow-strong);
+        }
+
+        /* --- Result Area --- */
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            min-height: 100px;
+            display: none;
+        }
+        
+        .result-box.visible {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+
+        .result-label {
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-family: 'Orbitron', monospace;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+        
+        .error-msg {
+            color: var(--accent-color);
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        /* --- Radio Custom --- */
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .radio-label {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border: 1px solid #555;
+            transition: 0.3s;
+        }
+        
+        input[type="radio"] { display: none; }
+        
+        input[type="radio"]:checked + span {
+            color: var(--primary-color);
+            text-shadow: 0 0 5px var(--primary-color);
+        }
+        
+        .radio-label:has(input:checked) {
+            border-color: var(--primary-color);
+            background: rgba(0,230,230,0.1);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="title">CYBER CALCULATOR</div>
+        <a href="./index.html" class="back-link"><i class="fas fa-arrow-left"></i> RETURN TO PORTAL</a>
+    </header>
+
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="switchTab('factor')">素因数分解</button>
+        <button class="tab-btn" onclick="switchTab('calc')">乗算・除算</button>
+    </div>
+
+    <div class="main-content">
+        
+        <!-- 素因数分解ツール -->
+        <div id="panel-factor" class="tool-panel active">
+            <h2><i class="fas fa-atom"></i> PRIME FACTORIZATION</h2>
+            
+            <div class="input-group">
+                <label>素因数の個数 (MAX 15)</label>
+                <input type="number" id="factor-count" placeholder="Random if empty" max="15">
+            </div>
+            
+            <div class="input-group">
+                <label>桁数 (MAX 18)</label>
+                <input type="number" id="digit-count" placeholder="Random if empty" max="18">
+            </div>
+
+            <button class="action-btn" onclick="runFactorization()">GENERATE & FACTORIZE</button>
+            <div id="error-factor" class="error-msg"></div>
+
+            <div id="result-factor" class="result-box">
+                <div class="result-label">TARGET NUMBER</div>
+                <div class="result-value" id="factor-target" style="color: #fff; margin-bottom: 1rem;">-</div>
+                <div class="result-label">PRIME FACTORS</div>
+                <div class="result-value" id="factor-result" style="color: var(--primary-color);">-</div>
+            </div>
+        </div>
+
+        <!-- 乗除ツール -->
+        <div id="panel-calc" class="tool-panel">
+            <h2><i class="fas fa-times-circle"></i> MULTIPLY & DIVIDE</h2>
+            
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="op-mode" value="multiply" checked onchange="updateCalcUI()">
+                    <span>掛け算 (Multiply)</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="op-mode" value="divide" onchange="updateCalcUI()">
+                    <span>割り算 (Divide)</span>
+                </label>
+            </div>
+
+            <div class="input-group">
+                <label id="label-1">桁数 A</label>
+                <input type="number" id="calc-digits-1" value="2" min="1" max="15">
+            </div>
+            
+            <div class="input-group">
+                <label id="label-2">桁数 B</label>
+                <input type="number" id="calc-digits-2" value="2" min="1" max="15">
+            </div>
+
+            <button class="action-btn" onclick="runCalculation()">GENERATE PROBLEM</button>
+            <div id="error-calc" class="error-msg"></div>
+
+            <div id="result-calc" class="result-box">
+                <div class="result-label">PROBLEM</div>
+                <div class="result-value" id="calc-problem" style="color: #fff; margin-bottom: 1rem;">-</div>
+                <div class="result-label">ANSWER</div>
+                <div class="result-value" id="calc-answer" style="color: var(--primary-color);">-</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Tab Switching ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('panel-' + tabId).classList.add('active');
+            // Find button by onclick attribute (simple way)
+            const btns = document.querySelectorAll('.tab-btn');
+            if(tabId === 'factor') btns[0].classList.add('active');
+            else btns[1].classList.add('active');
+        }
+
+        // --- Logic: Factorization (移植版) ---
+        function runFactorization() {
+            const countInput = document.getElementById('factor-count').value;
+            const digitInput = document.getElementById('digit-count').value;
+            const errorDiv = document.getElementById('error-factor');
+            const resultBox = document.getElementById('result-factor');
+
+            const count = parseInt(countInput) || null;
+            const digits = parseInt(digitInput) || null;
+
+            errorDiv.textContent = '';
+            resultBox.classList.remove('visible');
+
+            if ((count !== null && count > 15) || (digits !== null && digits > 18)) {
+                errorDiv.textContent = 'ERROR: Input exceeds limits (Count: 15, Digits: 18).';
+                return;
+            }
+
+            try {
+                const num = generateNumber(count, digits);
+                if (num > 0n) {
+                    const factors = getPrimeFactors(num);
+                    document.getElementById('factor-target').textContent = num.toString();
+                    document.getElementById('factor-result').innerHTML = formatPrimeFactors(factors);
+                    resultBox.classList.add('visible');
+                } else {
+                    errorDiv.textContent = 'ERROR: Generation failed. Try different params.';
+                }
+            } catch (e) {
+                console.error(e);
+                errorDiv.textContent = 'SYSTEM ERROR';
+            }
+        }
+
+        function generateNumber(factorCount, digitCount) {
+            const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71];
+            let num = 1n;
+            let currentFactors = 0;
+
+            // Random generation logic
+            const targetFactors = factorCount || Math.floor(Math.random() * 5) + 2; 
+            
+            for (let i = 0; i < targetFactors; i++) {
+                const p = BigInt(primes[Math.floor(Math.random() * primes.length)]);
+                num *= p;
+            }
+            
+            // Adjust digits if specified (simple adjustment)
+            if (digitCount) {
+                // Keep multiplying random primes until length matches
+                let safeGuard = 0;
+                while (num.toString().length < digitCount && safeGuard < 100) {
+                     const p = BigInt(primes[Math.floor(Math.random() * primes.length)]);
+                     num *= p;
+                     safeGuard++;
+                }
+                // If exceeded, this simple logic doesn't trim, but it's "at least" logic usually
+            }
+            return num;
+        }
+
+        function getPrimeFactors(n) {
+            const factors = {};
+            let d = 2n;
+            let temp = n;
+            
+            while (d * d <= temp) {
+                while (temp % d === 0n) {
+                    factors[d] = (factors[d] || 0) + 1;
+                    temp /= d;
+                }
+                d++;
+            }
+            if (temp > 1n) {
+                factors[temp] = (factors[temp] || 0) + 1;
+            }
+            return factors;
+        }
+
+        function formatPrimeFactors(factors) {
+            return Object.entries(factors)
+                .map(([base, exp]) => `${base}${exp > 1 ? `<sup>${exp}</sup>` : ''}`)
+                .join(' × ');
+        }
+
+
+        // --- Logic: Multiply & Divide (移植版) ---
+        function updateCalcUI() {
+            const mode = document.querySelector('input[name="op-mode"]:checked').value;
+            if (mode === 'multiply') {
+                document.getElementById('label-1').textContent = '掛けられる数の桁数';
+                document.getElementById('label-2').textContent = '掛ける数の桁数';
+            } else {
+                document.getElementById('label-1').textContent = '割られる数の桁数';
+                document.getElementById('label-2').textContent = '割る数の桁数';
+            }
+        }
+
+        function runCalculation() {
+            const mode = document.querySelector('input[name="op-mode"]:checked').value;
+            const d1 = parseInt(document.getElementById('calc-digits-1').value) || 2;
+            const d2 = parseInt(document.getElementById('calc-digits-2').value) || 2;
+            
+            const resultBox = document.getElementById('result-calc');
+            resultBox.classList.remove('visible');
+            
+            let problem = '', answer = '';
+
+            if (mode === 'multiply') {
+                const n1 = generateRandomByDigits(d1);
+                const n2 = generateRandomByDigits(d2);
+                problem = `${n1} × ${n2}`;
+                answer = (BigInt(n1) * BigInt(n2)).toString();
+            } else {
+                // Divide: Ensure clean division
+                // Generate Divisor (d2) and Quotient (d1 - d2 approx, or just random)
+                // Actually user asks for Dividend Digits(d1) and Divisor Digits(d2)
+                const divisor = generateRandomByDigits(d2);
+                // Quotient digits should be d1 - d2 roughly
+                let qDigits = d1 - d2;
+                if (qDigits < 1) qDigits = 1;
+                
+                const quotient = generateRandomByDigits(qDigits);
+                const dividend = BigInt(divisor) * BigInt(quotient);
+                
+                problem = `${dividend} ÷ ${divisor}`;
+                answer = quotient.toString();
+            }
+
+            document.getElementById('calc-problem').textContent = problem;
+            document.getElementById('calc-answer').textContent = answer;
+            resultBox.classList.add('visible');
+        }
+
+        function generateRandomByDigits(digits) {
+            if (digits <= 0) return 1;
+            const min = BigInt(10 ** (digits - 1));
+            const max = BigInt(10 ** digits) - 1n;
+            // Simple random for BigInt range
+            const range = max - min;
+            const rand = BigInt(Math.floor(Math.random() * Number(range))); // Approx for JS Number safety
+            // For truly large numbers, string construction is better, but this suffices for tool demo
+            
+            // Fallback for large digits > 15
+            if (digits > 15) {
+                let s = Math.floor(Math.random() * 9 + 1).toString();
+                for(let i=1; i<digits; i++) s += Math.floor(Math.random()*10);
+                return s;
+            }
+            
+            return (min + rand).toString();
+        }
+
+        // Init
+        updateCalcUI();
+    </script>
+</body>
+</html>

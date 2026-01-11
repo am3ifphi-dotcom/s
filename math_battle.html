@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数速バトル</title>
+<!-- 修正.htmlの<head>タグ内に追加 --><audio id="result-sound" src="データ表示3.mp3" preload="auto"></audio>
+<!-- 他のaudioタグの下に追加 -->
+<!-- 他のaudioタグの下に追加 -->
+<audio id="warning-sound" src="メニューを開く2.mp3" preload="auto"></audio>
+
+<audio id="keypress-sound" src="選択3.mp3" preload="auto"></audio>
+<audio id="glitch-sound" src="glitch-177348.mp3" preload="auto"></audio>
+<audio id="countdown-sound" src="robotic-countdown-43935.mp3" preload="auto"></audio>
+<audio id="hover-sound" src="Cyber14-2.mp3" preload="auto"></audio>
+<audio id="click-sound" src="gun-trigger-click-without-bullet-fascinatedsound-2-2-00-00.mp3" preload="auto"></audio>
+<audio id="cancel-sound" src="キャンセル2.mp3" preload="auto"></audio>
+<audio id="sci-fi-click-sound" src="sci-fi-weapon-single-shot-warped-06-316417.mp3" preload="auto"></audio>
+<!-- 新しく追加する音声ファイル -->
+<audio id="error-sound" src="ビープ音1.mp3" preload="auto"></audio>
+<audio id="correct-sound" src="決定ボタンを押す7.mp3" preload="auto"></audio>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="修正.css">
+    <link rel="icon" href="suusoku.png">
+</head>
+<body>
+    <div id="game-container">
+        <div class="math-background" id="math-background"></div>
+        <div class="dynamic-light"></div>
+        <div class="dynamic-light secondary"></div>
+        
+        <div id="countdown-overlay">
+            <span id="countdown-number" class="countdown-number">3</span>
+        </div>
+
+        <div id="title-screen">
+            <h1 class="cyber-title">数速バトル</h1>
+            <div class="subtitle">- <ruby>極限<rt>limit</rt></ruby><ruby>発散<rt>break</rt></ruby>せよ -</div>
+            <button class="start-button" onclick="startGameTransition()">ACCESS</button>
+        </div>
+        
+        <div id="game-screen">
+            <div class="game-board-wrapper">
+<div class="game-board-smart">
+
+                    <div class="cyber-grid"></div>
+                    <div class="scanlines"></div>
+
+                    
+                    <div class="game-header-smart">
+                        <h1 class="cyber-title-small">数速バトル</h1>
+                        <div class="subtitle-small">- <ruby>極限<rt>limit</rt></ruby><ruby>発散<rt>break</rt></ruby>せよ -</div>
+                    </div>
+                    
+                    <div class="game-main-smart" id="setting-screen">
+                        <p class="game-content">ゲーム設定</p>
+                        <div class="game-info-wrapper">
+                            <div class="game-options">
+                                <label>モード選択:</label>
+                                <div class="button-group" id="mode-buttons">
+                                    <button class="option-button active" data-mode="coop">協力</button>
+                                    <button class="option-button" data-mode="battle">対戦</button>
+                                </div>
+                            </div>
+                            
+                            <div class="game-options">
+                                <label>難易度:</label>
+                                <div class="button-group" id="difficulty-buttons">
+                                    <button class="option-button active" data-difficulty="easy">Easy</button>
+                                    <button class="option-button" data-difficulty="normal">Normal</button>
+                                    <button class="option-button" data-difficulty="hard">Hard</button>
+                                </div>
+                            </div>
+                            
+                            <div class="game-options coop-options">
+                                <label>制限時間:</label>
+                                <select class="option-select" id="time-limit-select">
+                                    <option value="60">60秒</option>
+                                    <option value="120">120秒</option>
+                                    <option value="180">180秒</option>
+                                </select>
+                            </div>
+                            
+                            <div class="game-options battle-options" style="display:none;">
+                                <label>問題数:</label>
+                                <select class="option-select" id="question-count-select">
+                                    <option value="5">5問</option>
+                                    <option value="10">10問</option>
+                                    <option value="20">20問</option>
+                                </select>
+                            </div>
+                            
+                            <div class="game-options field-options">
+                                <label>分野:</label>
+                                <select class="option-select" id="field-select">
+                                    <option value="arithmetic">四則演算</option>
+                                    <option value="factorization">因数分解</option>
+                                    <option value="equations">方程式</option>
+                                    <option value="geometry">図形</option>
+                                    <option value="probability">確率</option>
+                                    <option value="prime-factorization">素因数分解</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="start-game-button-wrapper">
+                            <button class="start-game-button" id="start-game-button">START</button>
+                        </div>
+                    </div>
+
+                    
+
+                    <div class="game-main-smart" id="play-screen">
+<button class="return-button" id="return-to-settings-button" aria-label="設定に戻る"></button>
+                        <div class="game-status" id="game-status"></div>
+                        <div class="timer-display" id="timer-display" style="display:none;"></div>
+                        <div class="question-counter" id="question-counter" style="display:none;"></div>
+                        <div class="coop-score-display" id="coop-score-display"></div>
+                        
+                        <div class="problem-display" id="problem-display"></div>
+                        
+                        <input type="text" id="answer-input" placeholder="解答を入力" autocomplete="off">
+                        <div id="answer-status" class="answer-status"></div>
+                        
+                        <div class="button-group">
+                            <button class="next-problem-button" id="next-problem-button" style="display:none;">次の問題</button>
+                            </div>
+                    </div>
+                    
+<!-- 結果画面部分を以下のように変更 -->
+<div class="game-main-smart" id="result-screen" style="display:none;">
+    <div class="cyber-widget-container">
+        <div class="cyber-widget-frame">
+            <!-- ヘッダー -->
+            <div class="cyber-widget-header">RESULT</div>
+            
+            <!-- コンテンツ（動的に生成） -->
+            <div class="cyber-widget-content" id="result-message"></div>
+            
+            <!-- フッター -->
+            <div class="cyber-widget-footer">
+                <div class="cyber-title-box" id="result-title"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ボタングループ -->
+    <div class="result-buttons">
+        <button class="return-button" id="return-from-result-button">設定に戻る</button>
+        <button class="return-button" id="retry-button">リトライ</button>
+    </div>
+</div>
+
+                    </div>
+                </div>
+            </div>
+            
+            <div id="confirmation-modal" class="modal-overlay">
+                <div class="modal-content">
+                    <h3>以下の設定でゲームを開始しますか？</h3>
+                    <div id="settings-list-container" class="settings-list-container"></div>
+                    <div class="button-group">
+                        <button class="modal-button confirm-yes" id="confirm-yes-button">YES</button>
+                        <button class="modal-button confirm-no" id="confirm-no-button">NO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<div id="end-animation-overlay">
+  <div class="end-wave"></div>
+  <div class="end-wave"></div>
+  <div class="end-wave"></div>
+  <div class="end-animation-text">MISSION COMPLETE</div>
+</div>
+
+
+    
+    <script src="script.js"></script>
+</body>
+</html>

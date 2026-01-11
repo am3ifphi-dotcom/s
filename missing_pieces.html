@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missing Pieces - 娘の日記、父の手記</title>
+    
+    <!-- Google Fonts: 雰囲気のある明朝体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Zen+Old+Mincho&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Shippori Mincho', serif;
+            background-color: #050505;
+            color: #e0e0e0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* テキストのフェードアニメーション */
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+        }
+        .fade-exit {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .fade-exit-active {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.5s ease-in, transform 0.5s ease-in;
+        }
+
+        /* 視点ごとのスタイル */
+        .style-yuuka {
+            color: #f0f0f0;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+        }
+        .style-father {
+            color: #d4d4d8; /* 少し灰色 */
+            font-family: 'Zen Old Mincho', serif;
+        }
+        .style-medical {
+            font-family: 'Courier New', monospace;
+            color: #a0aec0;
+            border-left: 2px solid #a0aec0;
+            padding-left: 1rem;
+        }
+        .style-doctor-note {
+            color: #ffcccc; /* 淡い赤 */
+            font-weight: bold;
+        }
+
+        /* 粒子キャンバス */
+        #particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* クリック待ちカーソル */
+        .cursor-blink {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: blink 1.5s infinite;
+            opacity: 0;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.7; }
+        }
+
+        #game-container {
+            z-index: 10;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center cursor-pointer" onclick="advanceStory()">
+
+    <!-- 背景エフェクト -->
+    <canvas id="particles"></canvas>
+
+    <!-- メインコンテンツ -->
+    <div id="game-container" class="w-full max-w-2xl p-8 min-h-[60vh] flex flex-col justify-center">
+        
+        <!-- 日付・話者表示 -->
+        <div id="header-display" class="text-sm text-gray-500 mb-6 tracking-widest h-6 border-b border-gray-800 w-fit fade-enter">
+            <!-- JSで挿入 -->
+        </div>
+
+        <!-- 本文表示 -->
+        <div id="text-display" class="text-xl md:text-2xl leading-relaxed tracking-wide whitespace-pre-wrap min-h-[200px]">
+            <div class="h-full flex items-center justify-center text-center text-gray-400 text-sm animate-pulse">
+                画面をタップして物語を始めてください...
+            </div>
+        </div>
+
+        <!-- クリック待ちインジケータ -->
+        <div class="mt-4 h-4 flex justify-end">
+            <span id="next-indicator" class="cursor-blink"></span>
+        </div>
+    </div>
+
+    <script>
+        // 物語データ
+        const storyData = [
+            { text: "娘の日記\n\n2024年3月1日", type: "yuuka", header: "プロローグ" },
+            { text: "お父さんへ", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "この日記を読んでいるということは、\n私はもういないんだと思います。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "でも心配しないでください。\n私は幸せです。本当に。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "最初から書きますね。\nお父さんが知らないこと、全部。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            
+            { text: "2023年8月15日\n\n私が白血病だと診断されたあの日。\nお父さん、覚えてますか？", type: "yuuka", header: "回想 - 2023/08/15" },
+            { text: "先生が「治療法はあります」って言った時、\nお父さんの顔がパッと明るくなって。", type: "yuuka", header: "回想 - 2023/08/15" },
+            { text: "でも私には聞こえてたんです。\n診察室を出た後、先生が看護師さんに言った言葉。", type: "yuuka", header: "回想 - 2023/08/15" },
+            { text: "「五年生存率は20パーセント未満だ。\nあの子には厳しいだろう」", type: "yuuka", header: "回想 - 2023/08/15" },
+            { text: "私、その日から決めたんです。\nお父さんを悲しませたくないって。", type: "yuuka", header: "回想 - 2023/08/15" },
+            { text: "だから毎日笑顔で過ごしました。\n痛くても、吐き気がしても、髪が抜けても。\nずっと元気なフリをしてました。", type: "yuuka", header: "回想 - 2023/08/15" },
+
+            { text: "2023年10月3日\n\n抗がん剤治療が始まって二ヶ月。", type: "yuuka", header: "回想 - 2023/10/03" },
+            { text: "体重は10キロ落ちました。\n鏡を見ると、別人みたいです。", type: "yuuka", header: "回想 - 2023/10/03" },
+            { text: "でもお父さんは毎日、\n「頑張ってるね」「すぐ良くなるよ」\nって言ってくれました。", type: "yuuka", header: "回想 - 2023/10/03" },
+            { text: "お父さん、あの時気づいてましたか？", type: "yuuka", header: "回想 - 2023/10/03" },
+            { text: "私が夜中、一人で泣いていたこと。\n死ぬのが怖くて、声を殺して泣いていたこと。", type: "yuuka", header: "回想 - 2023/10/03" },
+            { text: "でも朝になると、また笑顔を作るんです。\nお父さんを安心させるために。", type: "yuuka", header: "回想 - 2023/10/03" },
+
+            { text: "2023年12月24日\n\nクリスマスイブ。", type: "yuuka", header: "回想 - 2023/12/24" },
+            { text: "お父さんがケーキを買ってきてくれました。\n私の好きなイチゴのショートケーキ。", type: "yuuka", header: "回想 - 2023/12/24" },
+            { text: "でも私、食べられませんでした。\n吐き気がひどくて。", type: "yuuka", header: "回想 - 2023/12/24" },
+            { text: "その夜、お父さんが寝た後、リビングに降りていきました。\nそしたらお父さん、ソファで泣いてたんです。", type: "yuuka", header: "回想 - 2023/12/24" },
+            { text: "声を押し殺して。両手で顔を覆って。", type: "yuuka", header: "回想 - 2023/12/24" },
+            { text: "その姿を見て、私は決めました。\nもう、これ以上お父さんを苦しめたくない。", type: "yuuka", header: "回想 - 2023/12/24" },
+
+            { text: "2024年1月10日\n\n担当医の先生が、お父さんに告げました。", type: "yuuka", header: "回想 - 2024/01/10" },
+            { text: "「残念ですが、治療の効果が見られません。\nこのまま続けても...」", type: "yuuka", header: "回想 - 2024/01/10" },
+            { text: "お父さんは何も言わずに、ただ頷いていました。\nでも、手が震えていました。", type: "yuuka", header: "回想 - 2024/01/10" },
+            { text: "その日の夜、私はネットで色々調べました。\n「末期がん」「余命」「安楽死」", type: "yuuka", header: "回想 - 2024/01/10" },
+            { text: "そして見つけたんです。\n「最期を自分で選ぶ方法」", type: "yuuka", header: "回想 - 2024/01/10" },
+            { text: "「12歳です。家族を楽にしてあげたい」\nそう書き込むと、すぐに返信が来ました。\n「君は勇敢だね。方法を教えよう」", type: "yuuka", header: "回想 - 2024/01/10" },
+
+            { text: "2024年1月28日\n\n病院から、在宅療養を提案されました。", type: "yuuka", header: "回想 - 2024/01/28" },
+            { text: "つまり、もう打つ手がないということです。", type: "yuuka", header: "回想 - 2024/01/28" },
+            { text: "お父さんは会社を休んで、私の看病をしてくれました。\n毎日、絵本を読んでくれました。小さい頃みたいに。", type: "yuuka", header: "回想 - 2024/01/28" },
+            { text: "お父さんの声が震えていることに、私は気づいていました。\nでも何も言いませんでした。", type: "yuuka", header: "回想 - 2024/01/28" },
+            { text: "私も、お父さんの隣で笑っていました。\n最期まで、笑顔でいようって決めたから。", type: "yuuka", header: "回想 - 2024/01/28" },
+
+            { text: "2024年2月14日\n\nバレンタインデー。", type: "yuuka", header: "回想 - 2024/02/14" },
+            { text: "私、チョコレート作りました。お父さんのために。\n体はもう、ほとんど動かないけど、\n看護師さんに手伝ってもらって。", type: "yuuka", header: "回想 - 2024/02/14" },
+            { text: "お父さん、すごく喜んでくれました。\n「ありがとう。一生の宝物にする」って。", type: "yuuka", header: "回想 - 2024/02/14" },
+            { text: "でも私、知ってました。", type: "yuuka", header: "回想 - 2024/02/14" },
+            { text: "お父さんが夜な夜な、私の医療費のために借金を重ねていること。\nおばあちゃんの形見の指輪まで、質に入れたこと。", type: "yuuka", header: "回想 - 2024/02/14" },
+            { text: "全部、私のせいです。\n私が病気にならなければ。\nお父さんは、もっと幸せだったはずです。", type: "yuuka", header: "回想 - 2024/02/14" },
+
+            { text: "2024年2月20日\n\nもう、時間がありません。", type: "yuuka", header: "回想 - 2024/02/20" },
+            { text: "先生は「あと数週間」と言いました。\nでもその数週間が、お父さんをさらに苦しめます。", type: "yuuka", header: "回想 - 2024/02/20" },
+            { text: "医療費も、借金も、どんどん膨らみます。\nそして最後には、私は苦しみながら死んでいく。", type: "yuuka", header: "回想 - 2024/02/20" },
+            { text: "お父さんの目の前で。\nそれを見せるくらいなら。\nそれなら、私は――", type: "yuuka", header: "回想 - 2024/02/20" },
+
+            { text: "2024年2月28日\n\n準備ができました。", type: "yuuka", header: "回想 - 2024/02/28" },
+            { text: "フォーラムで教えてもらった方法。\n痛くない方法。", type: "yuuka", header: "回想 - 2024/02/28" },
+            { text: "お父さんが買い物に行っている間に、全部準備します。\nお父さんが帰ってきたら、いつも通り笑顔で迎えます。", type: "yuuka", header: "回想 - 2024/02/28" },
+            { text: "そして、夜。\nお父さんが寝た後。\n私は、そっと終わらせます。", type: "yuuka", header: "回想 - 2024/02/28" },
+            { text: "朝、お父さんが起きた時には、私はもう苦しんでいません。\n安らかに眠っている私を見て、お父さんは泣くかもしれません。", type: "yuuka", header: "回想 - 2024/02/28" },
+            { text: "でも、それは何週間も看取りに苦しむよりは、ずっといい。\nそう信じています。", type: "yuuka", header: "回想 - 2024/02/28" },
+
+            { text: "2024年3月1日（午前2時）\n\n今、書いています。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "お父さんは隣の部屋で寝ています。\nもうすぐ、私は薬を飲みます。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "お父さん、ごめんなさい。\nそして、ありがとう。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "私を産んでくれて。\n私を育ててくれて。\n私を愛してくれて。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "12年間、本当に幸せでした。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "来世では、もっと健康な体で生まれてきます。\nそして、またお父さんの娘になりたいです。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "さようなら。\n大好きなお父さん。\n愛してます。", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+            { text: "優香より", type: "yuuka", header: "優香の日記 - 2024/03/01" },
+
+            // 切り替え
+            { text: " ", type: "system", header: "" }, 
+            
+            { text: "【父の手記】2024年3月2日", type: "father", header: "父の手記" },
+            { text: "昨日の朝、娘が冷たくなっているのを見つけた。\n枕元には、この日記が置かれていた。", type: "father", header: "父の手記" },
+            { text: "最初から最後まで読んだ。\n何度も、何度も。\nそして、理解した。", type: "father", header: "父の手記" },
+            { text: "娘が何をしたのか。\nなぜ、それをしたのか。", type: "father", header: "父の手記" },
+            { text: "警察が来た。検視の結果、睡眠薬の過剰摂取。\n自殺として処理された。", type: "father", header: "父の手記" },
+            { text: "葬儀には、たくさんの人が来てくれた。\nみんな「勇敢な子だった」「最期まで明るかった」と褒めてくれた。", type: "father", header: "父の手記" },
+            { text: "そうだ。優香は、最期まで笑っていた。\n私のために。\n私を苦しませないために。", type: "father", header: "父の手記" },
+            { text: "でも、優香。\nお前は知らなかったんだ。", type: "father", header: "父の手記" },
+            { text: "本当のことを。", type: "father", header: "父の手記" },
+
+            { text: "【父の告白】\n\n優香へ", type: "father", header: "父の手記 - 告白" },
+            { text: "お前が読むことのないこの手紙を、\nそれでも書かずにはいられない。", type: "father", header: "父の手記 - 告白" },
+            { text: "優香、お前は勘違いしていた。", type: "father", header: "父の手記 - 告白" },
+            { text: "あの借金。\nあの質に入れた指輪。\nあの夜中の涙。", type: "father", header: "父の手記 - 告白" },
+            { text: "全て、お前の医療費のためではなかった。", type: "father", header: "父の手記 - 告白" },
+            { text: "私は、半年前から別の病院にも通っていた。\n膵臓がん。ステージ4。", type: "father", header: "父の手記 - 告白" },
+            { text: "自覚症状が出た時には、もう手遅れだった。\n医者には「あと数ヶ月」と言われていた。", type: "father", header: "父の手記 - 告白" },
+            { text: "私は決めていたんだ。\nお前を看取った後、すぐに後を追おうと。", type: "father", header: "父の手記 - 告白" },
+            { text: "でも、お前が先に死んでしまったら、私も安心して逝ける。\nだから私は、お前に嘘をついていた。", type: "father", header: "父の手記 - 告白" },
+            { text: "「治る」と。「大丈夫」と。", type: "father", header: "父の手記 - 告白" },
+            { text: "本当は、医者から聞いていたんだ。\nお前の生存率が極めて低いことを。\nおそらく、年を越せないだろうと。", type: "father", header: "父の手記 - 告白" },
+            { text: "あの借金は、私の葬儀費用を前払いするためのものだった。\n質に入れた指輪は、お前の母さんの形見だ。", type: "father", header: "父の手記 - 告白" },
+            { text: "それを換金して、お前と母さんが眠る墓を買った。\n隣には、私のスペースも確保してある。", type: "father", header: "父の手記 - 告白" },
+            { text: "私たちは、すぐに一緒になれるはずだった。\nでも、優香。", type: "father", header: "父の手記 - 告白" },
+            { text: "お前は私より先に逝ってしまった。\n自分から。\n私を楽にするために。", type: "father", header: "父の手記 - 告白" },
+            { text: "なんてことだ。", type: "father", header: "父の手記 - 告白" },
+            { text: "私は、お前を楽にするために嘘をついていた。\nお前は、私を楽にするために命を絶った。", type: "father", header: "父の手記 - 告白" },
+            { text: "私たちは、お互いを守ろうとして。\nお互いに嘘をついて。\nそして、こんな結末を迎えてしまった。", type: "father", header: "父の手記 - 告白" },
+            { text: "優香、ごめん。\nもっと早く、本当のことを話すべきだった。", type: "father", header: "父の手記 - 告白" },
+            { text: "そうすれば、お前は自分から逝くことはなかったかもしれない。\n私たちは、最期の時間を、本当に一緒に過ごせたかもしれない。", type: "father", header: "父の手記 - 告白" },
+
+            { text: "今日、医者から最終通告を受けた。\n「あと二週間程度でしょう」", type: "father", header: "父の手記 - 告白" },
+            { text: "ちょうどいい。\nもう、この世界に用はない。", type: "father", header: "父の手記 - 告白" },
+            { text: "すぐに、お前のところに行く。\n待っていてくれ、優香。", type: "father", header: "父の手記 - 告白" },
+
+            { text: "【最終手記】2024年3月15日", type: "father", header: "父の手記 - 最期" },
+            { text: "体が、もう動かない。\n病院のベッドで、この手記を書いている。", type: "father", header: "父の手記 - 最期" },
+            { text: "看護師に頼んで、優香の日記と一緒に、\nこれを保管してもらうことにした。", type: "father", header: "父の手記 - 最期" },
+            { text: "もし誰かが読むことがあれば。\n教訓にしてほしい。", type: "father", header: "父の手記 - 最期" },
+            { text: "愛する者を守ろうとして、嘘をついてはいけない。\n真実を隠して、相手を思いやることは。\n時に、最悪の結末を招く。", type: "father", header: "父の手記 - 最期" },
+            { text: "もし、私たちが正直に話していれば。\n「お父さんも余命わずかなんだ」\n「優香も、もう長くないんだ」", type: "father", header: "父の手記 - 最期" },
+            { text: "「だから、残された時間を、一緒に大切に過ごそう」", type: "father", header: "父の手記 - 最期" },
+            { text: "そう言い合えていれば。\n優香は自ら命を絶つことはなかっただろう。", type: "father", header: "父の手記 - 最期" },
+            { text: "でも、もう遅い。\n意識が遠のいていく。", type: "father", header: "父の手記 - 最期" },
+            { text: "もうすぐ、優香に会える。\n優香、待っていてくれ。", type: "father", header: "父の手記 - 最期" },
+            { text: "今度こそ、本当のことを全部話すから。\n嘘は、もうつかない。\n本当の気持ちを、全部伝えるから。", type: "father", header: "父の手記 - 最期" },
+            { text: "愛してる。\n優香。\n私の、大切な娘。", type: "father", header: "父の手記 - 最期" },
+            { text: "さようなら。", type: "father", header: "父の手記 - 最期" },
+
+            // 切り替え
+            { text: " ", type: "system", header: "" },
+
+            { text: "【病院記録】\n\n患者：佐藤健一（享年38歳）\n死亡日時：2024年3月15日 午後11時42分\n死因：膵臓がん末期による多臓器不全", type: "medical", header: "記録" },
+            { text: "備考：\n患者の枕元から、娘の日記と患者自身の手記が発見された。\n内容から、父娘共に相手を思いやって真実を隠していたことが判明。\n娘は父を苦しませないために自殺。\n父は娘の死後、急速に容態が悪化し死亡。", type: "medical", header: "記録" },
+            { text: "遺書により、両者の遺体は妻の眠る墓に埋葬された。", type: "medical", header: "記録" },
+
+            { text: " ", type: "system", header: "" },
+
+            { text: "【医療記録の追記】2024年3月20日\n担当医・山下", type: "medical", header: "CONFIDENTIAL" },
+            { text: "この記録を残すべきか悩んだが、真実は記録されるべきだと判断した。", type: "medical", header: "CONFIDENTIAL" },
+            { text: "佐藤優香さんの最終診断結果について。", type: "medical", header: "CONFIDENTIAL" },
+            { text: "彼女の白血病は、実は寛解に向かっていた。", type: "medical", header: "CONFIDENTIAL" },
+            { text: "最後の血液検査で、腫瘍マーカーが劇的に改善していたのだ。", type: "medical", header: "CONFIDENTIAL" },
+            { text: "次回の診察で、父親に告げるつもりだった。\n「奇跡的ですが、娘さんの病状は改善しています。\nこのまま行けば、完治も夢ではありません」", type: "medical", header: "CONFIDENTIAL" },
+            { text: "その診察予定日は、2024年3月3日だった。\n優香さんが自ら命を絶った、二日後。", type: "doctor-note", header: "CONFIDENTIAL" },
+            { text: "もし、あと二日待っていてくれれば。\nもし、私がもっと早く結果を伝えられていれば。", type: "doctor-note", header: "CONFIDENTIAL" },
+            { text: "優香さんは死ななかった。\n父親の佐藤さんも、希望を持って治療を続けられたかもしれない。", type: "doctor-note", header: "CONFIDENTIAL" },
+            { text: "優香さんは、自分が治る可能性があることを知らずに死んだ。\n父親は、娘が治る可能性があったことを知らずに死んだ。", type: "doctor-note", header: "CONFIDENTIAL" },
+            { text: "二人とも、お互いを思いやるあまり、真実を語らなかった。\nそして、両者とも、最も重要な真実を知らないまま逝った。", type: "doctor-note", header: "CONFIDENTIAL" },
+            { text: "終\n\n- Missing Pieces -", type: "medical", header: "End of File" }
+        ];
+
+        let currentIndex = -1;
+        let isAnimating = false;
+        const textDisplay = document.getElementById('text-display');
+        const headerDisplay = document.getElementById('header-display');
+        const indicator = document.getElementById('next-indicator');
+
+        function advanceStory() {
+            if (isAnimating) return;
+            
+            currentIndex++;
+
+            if (currentIndex >= storyData.length) {
+                // リセット（最初に戻る場合）
+                // currentIndex = 0;
+                return; // ここで終了
+            }
+
+            const data = storyData[currentIndex];
+            isAnimating = true;
+            indicator.style.opacity = '0';
+
+            // フェードアウト
+            textDisplay.classList.remove('fade-enter-active');
+            textDisplay.classList.add('fade-exit-active');
+            headerDisplay.style.opacity = '0';
+
+            setTimeout(() => {
+                // テキスト更新
+                textDisplay.innerText = data.text;
+                headerDisplay.innerText = data.header;
+
+                // スタイルリセットと適用
+                textDisplay.className = 'text-xl md:text-2xl leading-relaxed tracking-wide whitespace-pre-wrap min-h-[200px] fade-enter';
+                headerDisplay.className = 'text-sm text-gray-500 mb-6 tracking-widest h-6 border-b border-gray-800 w-fit transition-opacity duration-500';
+
+                if (data.type === 'yuuka') {
+                    textDisplay.classList.add('style-yuuka');
+                } else if (data.type === 'father') {
+                    textDisplay.classList.add('style-father');
+                } else if (data.type === 'medical') {
+                    textDisplay.classList.add('style-medical');
+                    textDisplay.classList.remove('text-xl', 'md:text-2xl');
+                    textDisplay.classList.add('text-base', 'md:text-lg');
+                } else if (data.type === 'doctor-note') {
+                    textDisplay.classList.add('style-medical', 'style-doctor-note');
+                    textDisplay.classList.remove('text-xl', 'md:text-2xl');
+                    textDisplay.classList.add('text-base', 'md:text-lg');
+                } else if (data.type === 'system') {
+                    textDisplay.innerText = '';
+                }
+
+                // 強制的なリフロー
+                void textDisplay.offsetWidth;
+
+                // フェードイン
+                textDisplay.classList.remove('fade-enter');
+                textDisplay.classList.add('fade-enter-active');
+                headerDisplay.style.opacity = '1';
+
+                setTimeout(() => {
+                    isAnimating = false;
+                    if (currentIndex < storyData.length - 1) {
+                        indicator.style.opacity = '1';
+                    }
+                }, 1000); // フェードイン完了待ち
+
+            }, 500); // フェードアウト待ち
+        }
+
+
+        // 背景の粒子アニメーション
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 0.2;
+                this.speedY = Math.random() * 0.5 + 0.1;
+                this.opacity = Math.random() * 0.5;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(150, 150, 150, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let p of particles) {
+                p.update();
+                p.draw();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+
+    </script>
+</body>
+</html>

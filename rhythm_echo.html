@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rhythm Echo - リズムの反響</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #e94560;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        canvas {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            background: #fffff0; /* 楽譜らしいクリーム色 */
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(26, 26, 46, 0.98);
+            z-index: 10;
+            transition: opacity 0.3s;
+        }
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        /* 汎用ボタンスタイル */
+        .btn {
+            background: #e94560;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+            text-transform: uppercase;
+        }
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(233, 69, 96, 0.4);
+        }
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+        
+        /* Mode Select Buttons */
+        .mode-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .mode-btn {
+            padding: 8px 16px;
+            border: 2px solid #555;
+            border-radius: 25px;
+            color: #aaa;
+            background: transparent;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            border-color: #e94560;
+            color: #fff;
+            background: #e94560;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+
+        /* Stage Select Buttons */
+        .stage-btn {
+            background: #16213e;
+            border: 2px solid #e94560;
+            color: #e94560;
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stage-btn:hover {
+            background: #e94560;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+        }
+        .stage-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Key Config Slots */
+        .key-slot {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            background: #333;
+        }
+        .key-slot.active {
+            border-color: #e94560;
+            background: #e94560;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Result Grid */
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            text-align: left;
+            width: 80%;
+            max-width: 400px;
+        }
+        .result-item {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.5rem;
+        }
+        .result-label { color: #aaa; }
+        .perf { color: #fbbf24; }
+        .good { color: #4ade80; }
+        .ok { color: #60a5fa; }
+        .miss { color: #ef4444; }
+
+        #feedback {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+        .anim-pop {
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center">
+
+    <!-- Game Canvas -->
+    <div class="relative w-full max-w-4xl aspect-[16/9] px-4">
+        <canvas id="gameCanvas" class="w-full h-full"></canvas>
+        <div id="feedback"></div>
+        
+        <!-- Start/Menu Overlay (Stage Select) -->
+        <div id="menuOverlay" class="overlay">
+            <h1 class="text-4xl md:text-5xl mb-2 text-white font-bold tracking-wider">RHYTHM ECHO</h1>
+            
+            <!-- Mode Selection -->
+            <div class="mode-container">
+                <button class="mode-btn active" id="modeNormal" onclick="window.game.setMode('NORMAL')">NORMAL</button>
+                <button class="mode-btn" id="modeHard" onclick="window.game.setMode('HARD')">HARD</button>
+                <button class="mode-btn" id="modeSpeed" onclick="window.game.setMode('SPEED_UP')">SPEED UP</button>
+                <button class="mode-btn" id="modeNoRest" onclick="window.game.setMode('NO_REST')">NO REST</button>
+            </div>
+
+            <p class="text-gray-300 mb-4 text-lg">SELECT STAGE (MAX 25)</p>
+            
+            <!-- Stage Select Grid -->
+            <div id="stageGrid" class="grid grid-cols-5 gap-2 mb-6 max-w-lg">
+                <!-- JS will populate buttons 1-25 -->
+            </div>
+
+            <div class="flex flex-col items-center gap-2">
+                <p id="currentKeysDisplay" class="text-gray-400 text-sm font-mono border border-gray-600 px-4 py-2 rounded-full">
+                    Keys: [D] [F] [J] [K] or Tap
+                </p>
+                <button id="configBtn" class="text-xs text-[#e94560] underline hover:text-white mt-1">
+                    CHANGE KEY BINDINGS
+                </button>
+            </div>
+        </div>
+
+        <!-- Key Config Overlay -->
+        <div id="configOverlay" class="overlay hidden">
+            <h2 class="text-3xl text-white mb-4 font-bold">KEY CONFIG</h2>
+            <p class="text-gray-300 mb-8">Press any 4 keys in order</p>
+            
+            <div class="flex gap-4 mb-8">
+                <div id="keySlot0" class="key-slot active">?</div>
+                <div id="keySlot1" class="key-slot">?</div>
+                <div id="keySlot2" class="key-slot">?</div>
+                <div id="keySlot3" class="key-slot">?</div>
+            </div>
+
+            <button id="cancelConfigBtn" class="btn btn-small bg-gray-600" style="background-color: #555;">CANCEL</button>
+        </div>
+
+        <!-- Stage Clear Overlay (Result) -->
+        <div id="stageOverlay" class="overlay hidden">
+            <h2 id="stageTitle" class="text-4xl mb-6 text-white font-bold">STAGE CLEAR</h2>
+            
+            <div class="result-grid">
+                <div class="result-item"><span class="result-label perf">PERFECT</span> <span id="resPerf">0</span></div>
+                <div class="result-item"><span class="result-label good">GOOD</span> <span id="resGood">0</span></div>
+                <div class="result-item"><span class="result-label ok">OK</span> <span id="resOk">0</span></div>
+                <div class="result-item"><span class="result-label miss">MISS</span> <span id="resMiss">0</span></div>
+            </div>
+
+            <div class="flex gap-4">
+                <button id="titleBtn" class="btn" style="background: #333;">TITLE</button>
+                <button id="nextStageBtn" class="btn">NEXT</button>
+            </div>
+        </div>
+
+        <!-- All Clear Overlay -->
+        <div id="resultOverlay" class="overlay hidden">
+            <h2 id="resultTitle" class="text-4xl mb-4 text-white font-bold">ALL STAGES CLEARED!</h2>
+            <p class="text-xl text-gray-300 mb-4">Total Results</p>
+            <div class="result-grid" id="finalResultGrid">
+                <!-- Populated by JS -->
+            </div>
+            <button id="retryBtn" class="btn">TITLE</button>
+        </div>
+    </div>
+
+    <!-- UI Info -->
+    <div class="mt-4 flex justify-between w-full max-w-4xl px-4 text-white font-mono text-xl">
+        <div id="levelDisplay">STAGE 1 - 1/5</div>
+        <div id="modeDisplay" class="text-gray-400">NORMAL</div>
+        <div id="bpmDisplay">BPM: 100</div>
+    </div>
+
+<script>
+/**
+ * AUDIO SYSTEM
+ */
+class AudioController {
+    constructor() {
+        this.ctx = null;
+        this.gainNode = null;
+        this.noiseBuffer = null;
+    }
+
+    init() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.gainNode = this.ctx.createGain();
+            this.gainNode.gain.value = 0.3; 
+            this.gainNode.connect(this.ctx.destination);
+            this.createNoiseBuffer();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    createNoiseBuffer() {
+        const bufferSize = this.ctx.sampleRate * 2.0; 
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        this.noiseBuffer = buffer;
+    }
+
+    playDrum(type, time) {
+        if (!this.ctx) return;
+        const gain = this.ctx.createGain();
+        gain.connect(this.gainNode);
+
+        if (type === 'kick') {
+            const osc = this.ctx.createOscillator();
+            osc.frequency.setValueAtTime(150, time);
+            osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+            gain.gain.setValueAtTime(0.8, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
+            osc.connect(gain);
+            osc.start(time);
+            osc.stop(time + 0.5);
+        } else if (type === 'snare') {
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = this.noiseBuffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 1000;
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.gain.setValueAtTime(0.6, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+            noise.start(time);
+            noise.stop(time + 0.2);
+            
+            const osc = this.ctx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(100, time);
+            const snapGain = this.ctx.createGain();
+            snapGain.gain.setValueAtTime(0.3, time);
+            snapGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+            osc.connect(snapGain);
+            snapGain.connect(this.gainNode);
+            osc.start(time);
+            osc.stop(time + 0.1);
+        } else if (type === 'hihat') {
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = this.noiseBuffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 5000;
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.gain.setValueAtTime(0.2, time); 
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+            noise.start(time);
+            noise.stop(time + 0.05);
+        }
+    }
+
+    playNote(time, type = 'high') {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.gainNode);
+
+        if (type === 'high') { 
+            osc.frequency.value = 880; 
+            osc.type = 'sine';
+        } else if (type === 'hit') { 
+            osc.frequency.value = 1174.66; 
+            osc.type = 'triangle';
+        }
+
+        const duration = 0.05;
+        osc.start(time);
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.8, time + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        osc.stop(time + duration + 0.05);
+    }
+
+    getCurrentTime() {
+        return this.ctx ? this.ctx.currentTime : 0;
+    }
+}
+
+/**
+ * RHYTHM GENERATOR
+ */
+class RhythmGenerator {
+    constructor() {
+        this.cells = {
+            // Basic
+            quarter:      { id: 'q',    offsets: [0], draw: 'quarter' },
+            rest:         { id: 'r',    offsets: [], draw: 'rest_q' },
+            eighths:      { id: '88',   offsets: [0, 0.5], draw: 'eighths' },
+            triplets:     { id: '333',  offsets: [0, 1/3, 2/3], draw: 'triplets' }, 
+            sixteenths:   { id: '16',   offsets: [0, 0.25, 0.5, 0.75], draw: 'sixteenths' },
+            
+            // 6-tuplets
+            sextuplets:   { id: '666666', offsets: [0, 1/6, 2/6, 3/6, 4/6, 5/6], draw: 'sextuplets' },
+            sextuplets_4: { id: '6_4', offsets: [0, 1/6, 2/6, 3/6], draw: 'sextuplets_4' }, 
+            
+            // 32nd notes
+            thirtyseconds:{ id: '32',   offsets: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875], draw: 'thirtyseconds' },
+            thirtyseconds_5: { id: '32_5', offsets: [0, 0.125, 0.25, 0.375, 0.5], draw: 'thirtyseconds_5' }, 
+            
+            // 48th notes (12-tuplets)
+            fortyeighths_7: { id: '48_7', offsets: [0, 1/12, 2/12, 3/12, 4/12, 5/12, 6/12], draw: 'fortyeighths_7' },
+
+            // 64th notes (16-tuplets)
+            // 1拍に16個 = 0.0625間隔
+            // 前半9個 (0~0.5) で裏拍頭に着地
+            sixtyfourths_9: { 
+                id: '64_9', 
+                offsets: [0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5], 
+                draw: 'sixtyfourths_9' 
+            },
+
+            // Syncopated
+            e_ss:         { id: '8ss',offsets: [0, 0.5, 0.75], draw: 'eighth_two16' }, 
+            ss_e:         { id: 'ss8',offsets: [0, 0.25, 0.5], draw: 'two16_eighth' }, 
+        };
+    }
+
+    // Determine Pattern Pool based on Stage & Mode
+    getPool(stage, mode) {
+        let pool = [];
+        
+        // --- BASE POOLS (Difficulty based) ---
+        let easy = ['quarter', 'eighths'];
+        if (mode !== 'NO_REST') easy.push('rest');
+
+        let medium = ['eighths', 'sixteenths', 'e_ss', 'ss_e'];
+        let hard = ['sixteenths', 'triplets', 'sextuplets', 'sextuplets_4'];
+        let expert = ['sixteenths', 'sextuplets', 'thirtyseconds', 'thirtyseconds_5'];
+        let master = ['thirtyseconds', 'fortyeighths_7', 'sextuplets', 'sextuplets_4'];
+        
+        // SPECIAL POOL FOR SPEED UP (Limits density to allow high BPM)
+        if (mode === 'SPEED_UP') {
+            if (stage <= 5) pool = easy;
+            else if (stage <= 10) pool = [...easy, ...medium];
+            else pool = ['eighths', 'sixteenths', 'triplets', 'e_ss', 'ss_e'];
+            
+            // Add rest spacing occasionally
+            if (mode !== 'NO_REST') pool.push('rest', 'quarter');
+            return pool;
+        }
+
+        // NORMAL / HARD Logic
+        let effectiveStage = stage;
+        if (mode === 'HARD') effectiveStage = stage + 5; 
+
+        if (effectiveStage <= 3) {
+            pool = easy;
+        } else if (effectiveStage <= 7) {
+            pool = [...easy, ...medium];
+        } else if (effectiveStage <= 12) {
+            pool = [...easy, ...medium, 'triplets'];
+        } else if (effectiveStage <= 17) {
+            pool = [...medium, ...hard];
+            if (mode !== 'NO_REST') pool.push('rest', 'quarter'); 
+        } else if (effectiveStage <= 21) {
+            pool = [...hard, ...expert];
+            if (mode !== 'NO_REST') pool.push('rest', 'quarter');
+        } else {
+            pool = [...expert, ...master];
+            if (mode !== 'NO_REST') pool.push('rest', 'quarter');
+        }
+
+        // HARD MODE: 64th notes unlock at high stages
+        if (mode === 'HARD' && effectiveStage >= 28) { 
+             pool.push('sixtyfourths_9');
+        }
+        // Very high stage in Normal
+        if (stage >= 24) {
+             pool.push('sixtyfourths_9');
+        }
+
+        // NO REST MODE: Remove any accidental rests
+        if (mode === 'NO_REST') {
+            pool = pool.filter(p => p !== 'rest');
+        }
+
+        return pool;
+    }
+
+    // Ensure at least one difficult pattern exists in high stages
+    ensureDifficulty(beatPatterns, stage, mode) {
+        if (mode === 'SPEED_UP') return beatPatterns; // SPEED UP relies on BPM, not pattern complexity
+
+        let difficultSet = [];
+        let effectiveStage = (mode === 'HARD') ? stage + 5 : stage;
+
+        if (effectiveStage >= 24) difficultSet = ['sixtyfourths_9', 'fortyeighths_7'];
+        else if (effectiveStage >= 22) difficultSet = ['fortyeighths_7', 'thirtyseconds', 'thirtyseconds_5'];
+        else if (effectiveStage >= 18) difficultSet = ['thirtyseconds', 'thirtyseconds_5', 'sextuplets', 'sextuplets_4'];
+        else if (effectiveStage >= 13) difficultSet = ['sextuplets', 'sextuplets_4', 'triplets'];
+        else if (effectiveStage >= 8) difficultSet = ['triplets', 'sixteenths'];
+        
+        if (difficultSet.length === 0) return beatPatterns; 
+
+        const hasDifficulty = beatPatterns.some(cell => difficultSet.includes(cell.id) || difficultSet.some(ds => cell.draw.includes(ds.split('_')[0])));
+
+        if (!hasDifficulty) {
+            const replaceIndex = Math.floor(Math.random() * 3) + 1; 
+            if (difficultSet.length > 0) {
+                const targetKey = difficultSet[Math.floor(Math.random() * difficultSet.length)];
+                if (this.cells[targetKey]) {
+                    beatPatterns[replaceIndex] = this.cells[targetKey];
+                }
+            }
+        }
+        return beatPatterns;
+    }
+
+    generate(stage, mode) {
+        const beatPatterns = [];
+        const pool = this.getPool(stage, mode);
+
+        for(let i=0; i<4; i++) {
+            let choice;
+            let stabilizationLimit = 20;
+            if (mode === 'HARD') stabilizationLimit = 15;
+            
+            // SPEED_UP: 1st beat stabilization is less strict
+            if (mode === 'SPEED_UP') stabilizationLimit = 5;
+
+            if (i === 0 && stage < stabilizationLimit) {
+                const safePool = ['quarter', 'eighths', 'sixteenths'].filter(k => pool.includes(k) || k==='quarter');
+                choice = safePool[Math.floor(Math.random() * safePool.length)];
+                if(!choice) choice = 'quarter';
+            } else {
+                choice = pool[Math.floor(Math.random() * pool.length)];
+            }
+            beatPatterns.push(this.cells[choice]);
+        }
+
+        const finalPatterns = this.ensureDifficulty(beatPatterns, stage, mode);
+
+        const notes = [];
+        finalPatterns.forEach((cell, beatIndex) => {
+            cell.offsets.forEach((offset) => {
+                notes.push({
+                    beat: beatIndex + offset,
+                    hit: false,
+                    type: 'note'
+                });
+            });
+        });
+
+        return { notes, structure: finalPatterns };
+    }
+}
+
+/**
+ * GAME ENGINE
+ */
+class Game {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.audio = new AudioController();
+        this.generator = new RhythmGenerator();
+        
+        // Settings
+        this.keyConfig = ['KeyD', 'KeyF', 'KeyJ', 'KeyK']; 
+        this.keyLabels = ['D', 'F', 'J', 'K'];
+        this.mode = 'NORMAL'; 
+
+        // State
+        this.state = 'MENU';
+        this.stage = 1;
+        this.round = 1;
+        this.maxRounds = 5;
+        this.maxStages = 25; 
+        
+        this.bpm = 100;
+        this.startTime = 0;
+        this.patternData = null; 
+        this.userInputs = [];
+        this.judgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+        this.totalJudgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+
+        this.handleInput = this.handleInput.bind(this);
+        this.setupInputs();
+        this.setupUI();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        this.loop = this.loop.bind(this);
+        requestAnimationFrame(this.loop);
+    }
+
+    setupInputs() {
+        document.addEventListener('keydown', (e) => {
+            if (this.isConfiguring) {
+                e.preventDefault();
+                this.handleConfigInput(e);
+            } else if (this.state === 'PLAY' || this.state === 'LISTEN') { 
+                if (this.keyConfig.includes(e.code)) {
+                    if(e.code === 'Space') e.preventDefault();
+                    this.handleInput();
+                }
+            }
+        });
+        document.addEventListener('touchstart', (e) => {
+             if (this.state === 'PLAY' || this.state === 'LISTEN' || e.target === this.canvas) {
+                 e.preventDefault();
+                 this.handleInput();
+             }
+        }, { passive: false });
+        document.addEventListener('mousedown', (e) => {
+            if (e.target === this.canvas && (this.state === 'PLAY' || this.state === 'LISTEN')) {
+                this.handleInput();
+            }
+        });
+    }
+
+    setupUI() {
+        this.initStageButtons();
+        document.getElementById('nextStageBtn').onclick = () => this.nextStage();
+        document.getElementById('titleBtn').onclick = () => this.resetToTitle();
+        document.getElementById('retryBtn').onclick = () => this.resetToTitle();
+        document.getElementById('configBtn').onclick = () => this.startKeyConfig();
+        document.getElementById('cancelConfigBtn').onclick = () => this.cancelKeyConfig();
+        this.updateKeyDisplay();
+    }
+
+    setMode(mode) {
+        this.mode = mode;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        if(mode === 'NORMAL') document.getElementById('modeNormal').classList.add('active');
+        if(mode === 'HARD') document.getElementById('modeHard').classList.add('active');
+        if(mode === 'NO_REST') document.getElementById('modeNoRest').classList.add('active');
+        if(mode === 'SPEED_UP') document.getElementById('modeSpeed').classList.add('active');
+    }
+
+    initStageButtons() {
+        const grid = document.getElementById('stageGrid');
+        grid.innerHTML = '';
+        for (let i = 1; i <= this.maxStages; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'stage-btn';
+            btn.innerText = i;
+            btn.onclick = () => this.startGame(i);
+            grid.appendChild(btn);
+        }
+    }
+
+    // --- KEY CONFIG ---
+    startKeyConfig() {
+        this.isConfiguring = true;
+        this.tempKeys = [];
+        this.tempLabels = [];
+        document.getElementById('menuOverlay').classList.add('hidden');
+        document.getElementById('configOverlay').classList.remove('hidden');
+        for(let i=0; i<4; i++) {
+            const slot = document.getElementById(`keySlot${i}`);
+            slot.innerText = '?';
+            slot.classList.remove('active');
+            if(i===0) slot.classList.add('active');
+        }
+    }
+    cancelKeyConfig() {
+        this.isConfiguring = false;
+        document.getElementById('configOverlay').classList.add('hidden');
+        document.getElementById('menuOverlay').classList.remove('hidden');
+    }
+    handleConfigInput(e) {
+        if (!this.isConfiguring) return;
+        const index = this.tempKeys.length;
+        if (index < 4) {
+            this.tempKeys.push(e.code);
+            let label = e.key.toUpperCase();
+            if (e.code === 'Space') label = 'SPC';
+            if (label.length > 3) label = label.substring(0, 3);
+            this.tempLabels.push(label);
+            document.getElementById(`keySlot${index}`).innerText = label;
+            document.getElementById(`keySlot${index}`).classList.remove('active');
+            if (index + 1 < 4) document.getElementById(`keySlot${index+1}`).classList.add('active');
+            else setTimeout(() => { this.finishKeyConfig(); }, 300);
+        }
+    }
+    finishKeyConfig() {
+        this.keyConfig = [...this.tempKeys];
+        this.keyLabels = [...this.tempLabels];
+        this.isConfiguring = false;
+        this.updateKeyDisplay();
+        document.getElementById('configOverlay').classList.add('hidden');
+        document.getElementById('menuOverlay').classList.remove('hidden');
+    }
+    updateKeyDisplay() {
+        document.getElementById('currentKeysDisplay').innerText = `Keys: [${this.keyLabels.join('] [')}] or Tap`;
+    }
+
+    // --- GAME LOGIC ---
+    resize() {
+        this.canvas.width = this.canvas.clientWidth * window.devicePixelRatio;
+        this.canvas.height = this.canvas.clientHeight * window.devicePixelRatio;
+        this.width = this.canvas.width;
+        this.height = this.canvas.height;
+        this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        this.virtualWidth = this.canvas.clientWidth;
+        this.virtualHeight = this.canvas.clientHeight;
+    }
+
+    resetToTitle() {
+        this.state = 'MENU';
+        document.getElementById('menuOverlay').classList.remove('hidden');
+        document.getElementById('resultOverlay').classList.add('hidden');
+        document.getElementById('stageOverlay').classList.add('hidden');
+        this.totalJudgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+    }
+
+    startGame(selectedStage) {
+        this.audio.init();
+        this.stage = selectedStage;
+        this.judgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+        this.round = 1;
+        this.updateUI();
+        document.getElementById('menuOverlay').classList.add('hidden');
+        document.getElementById('resultOverlay').classList.add('hidden');
+        document.getElementById('stageOverlay').classList.add('hidden');
+        this.startRound();
+    }
+
+    calculateBPM(stage) {
+        // SPECIAL LOGIC FOR SPEED UP MODE
+        if (this.mode === 'SPEED_UP') {
+            // Start at 120, increase by 5 per stage. Max 240.
+            // Pattern density is limited in getPool so this is safe.
+            return Math.min(120 + ((stage - 1) * 5), 240);
+        }
+
+        // NORMAL / HARD Logic
+        let base = 90 + ((stage - 1) * 2); 
+        if (this.mode === 'HARD') base += 10; 
+
+        // Cap BPM for high density notes (Safety mechanism for Non-Speed Up modes)
+        let hasUltraFast = false;
+        if ((this.mode === 'HARD' && stage >= 23) || stage >= 24) hasUltraFast = true;
+        
+        if (hasUltraFast) {
+            base = Math.min(base, 90); 
+        } else if (stage >= 22) { // 48th notes
+            base = Math.min(base, 100);
+        } else if (stage >= 18) { // 32nd notes
+            base = Math.min(base, 110);
+        }
+
+        return base;
+    }
+
+    startRound() {
+        this.state = 'IDLE';
+        this.userInputs = [];
+        this.bpm = this.calculateBPM(this.stage);
+        this.measureDuration = (60 / this.bpm) * 4;
+        
+        // Generate with Mode
+        this.patternData = this.generator.generate(this.stage, this.mode);
+        this.updateUI();
+        
+        setTimeout(() => {
+            this.startTime = this.audio.getCurrentTime() + 0.5;
+            this.state = 'LISTEN';
+            this.scheduleDemonstration();
+            this.scheduleBackingTrack();
+        }, 500);
+    }
+
+    scheduleDemonstration() {
+        this.patternData.notes.forEach(note => {
+            const time = this.startTime + (note.beat * (60 / this.bpm));
+            this.audio.playNote(time, 'high');
+        });
+    }
+
+    scheduleBackingTrack() {
+        const beatTime = 60 / this.bpm;
+        for(let i = 0; i < 8; i++) {
+            const t = this.startTime + (i * beatTime);
+            this.audio.playDrum('kick', t);
+            if (i % 4 === 1 || i % 4 === 3) this.audio.playDrum('snare', t);
+            this.audio.playDrum('hihat', t); 
+            this.audio.playDrum('hihat', t + (beatTime / 2)); 
+        }
+    }
+
+    handleInput() {
+        if (this.state !== 'PLAY' && this.state !== 'LISTEN') return;
+        const now = this.audio.getCurrentTime();
+        const playPhaseStart = this.startTime + this.measureDuration;
+        const relativeTime = now - playPhaseStart;
+        const beatPos = relativeTime / (60 / this.bpm);
+
+        if (this.state === 'LISTEN') {
+            if (beatPos < -0.25) return; 
+        }
+        
+        this.userInputs.push({ beat: beatPos, time: now });
+        this.judgeInput(beatPos);
+    }
+
+    judgeInput(beatPos) {
+        const tolerance = 0.16; 
+        let hit = false;
+        let diff = 0;
+
+        for (let note of this.patternData.notes) {
+            if (note.hit) continue;
+            diff = Math.abs(note.beat - beatPos);
+            if (diff < tolerance) {
+                note.hit = true;
+                hit = true;
+                this.audio.playNote(this.audio.getCurrentTime(), 'hit');
+                
+                let text = "";
+                let color = "";
+                
+                if (diff < 0.05) {
+                    this.judgeCounts.perfect++;
+                    text = "PERFECT"; color = "#fbbf24";
+                } else if (diff < 0.10) {
+                    this.judgeCounts.good++;
+                    text = "GOOD"; color = "#4ade80";
+                } else {
+                    this.judgeCounts.ok++;
+                    text = "OK"; color = "#60a5fa";
+                }
+                
+                this.showFeedback(text, color);
+                break;
+            }
+        }
+    }
+
+    showFeedback(text, color) {
+        const el = document.getElementById('feedback');
+        el.innerText = text;
+        el.style.color = color;
+        el.classList.remove('anim-pop');
+        void el.offsetWidth;
+        el.classList.add('anim-pop');
+    }
+
+    nextStage() {
+        this.totalJudgeCounts.perfect += this.judgeCounts.perfect;
+        this.totalJudgeCounts.good += this.judgeCounts.good;
+        this.totalJudgeCounts.ok += this.judgeCounts.ok;
+        this.totalJudgeCounts.miss += this.judgeCounts.miss;
+
+        if (this.stage >= this.maxStages) {
+            this.showAllClear();
+            return;
+        }
+        
+        this.stage++;
+        this.round = 1;
+        this.judgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+        document.getElementById('stageOverlay').classList.add('hidden');
+        this.updateUI();
+        this.startRound();
+    }
+
+    showAllClear() {
+        document.getElementById('stageOverlay').classList.add('hidden');
+        document.getElementById('resultOverlay').classList.remove('hidden');
+        
+        const grid = document.getElementById('finalResultGrid');
+        grid.innerHTML = `
+            <div class="result-item"><span class="result-label perf">PERFECT</span> <span>${this.totalJudgeCounts.perfect}</span></div>
+            <div class="result-item"><span class="result-label good">GOOD</span> <span>${this.totalJudgeCounts.good}</span></div>
+            <div class="result-item"><span class="result-label ok">OK</span> <span>${this.totalJudgeCounts.ok}</span></div>
+            <div class="result-item"><span class="result-label miss">MISS</span> <span>${this.totalJudgeCounts.miss}</span></div>
+        `;
+    }
+
+    updateUI() {
+        document.getElementById('levelDisplay').innerText = `STAGE ${this.stage} - LOOP ${this.round}/${this.maxRounds}`;
+        document.getElementById('bpmDisplay').innerText = `BPM: ${this.bpm}`;
+        document.getElementById('modeDisplay').innerText = this.mode.replace('_', ' ');
+    }
+
+    loop() {
+        this.updateLogic();
+        this.draw();
+        requestAnimationFrame(this.loop);
+    }
+
+    updateLogic() {
+        if (this.state === 'MENU' || this.state === 'RESULT') return;
+        if (this.state === 'IDLE') return;
+
+        const now = this.audio.getCurrentTime();
+        const cycleDuration = this.measureDuration * 2;
+        const timeInCycle = now - this.startTime;
+
+        if (this.state === 'LISTEN') {
+            if (timeInCycle >= this.measureDuration) {
+                this.state = 'PLAY';
+            }
+        } else if (this.state === 'PLAY') {
+            if (timeInCycle >= cycleDuration) {
+                this.endRound();
+            }
+        }
+    }
+
+    endRound() {
+        this.state = 'IDLE';
+        const missedNotes = this.patternData.notes.filter(n => !n.hit).length;
+        if (missedNotes > 0) {
+            this.judgeCounts.miss += missedNotes;
+            this.showFeedback("MISS", "#ef4444");
+        }
+
+        setTimeout(() => {
+            this.round++;
+            if (this.round > this.maxRounds) {
+                document.getElementById('stageTitle').innerText = `STAGE ${this.stage} CLEAR`;
+                document.getElementById('resPerf').innerText = this.judgeCounts.perfect;
+                document.getElementById('resGood').innerText = this.judgeCounts.good;
+                document.getElementById('resOk').innerText = this.judgeCounts.ok;
+                document.getElementById('resMiss').innerText = this.judgeCounts.miss;
+                document.getElementById('stageOverlay').classList.remove('hidden');
+            } else {
+                this.startRound();
+            }
+        }, 1000);
+    }
+
+    draw() {
+        const ctx = this.ctx;
+        const w = this.virtualWidth;
+        const h = this.virtualHeight;
+
+        ctx.fillStyle = '#fffff0';
+        ctx.fillRect(0, 0, w, h);
+
+        if (this.state === 'MENU') return;
+
+        const centerY = h / 2;
+        const staffWidth = w * 0.9; 
+        const startX = (w - staffWidth) / 2;
+        const endX = startX + staffWidth;
+
+        // Staff
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+        for (let i = -2; i <= 2; i++) {
+            const y = centerY + (i * 12); ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(endX, y); ctx.stroke();
+        }
+        ctx.fillStyle = '#000'; ctx.font = '70px serif'; ctx.fillText('𝄞', startX - 45, centerY + 25);
+        ctx.font = 'bold 30px serif'; ctx.fillText('4', startX + 10, centerY - 5); ctx.fillText('4', startX + 10, centerY + 25);
+        ctx.beginPath(); ctx.moveTo(startX, centerY - 24); ctx.lineTo(startX, centerY + 24); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(endX, centerY - 24); ctx.lineTo(endX, centerY + 24); ctx.lineWidth = 4; ctx.stroke(); ctx.lineWidth = 1.5;
+
+        if (this.patternData && this.patternData.structure) {
+            ctx.save(); ctx.translate(0, centerY + 6);
+            this.patternData.structure.forEach((cell, i) => {
+                const drawX = startX + 60 + (i * ((staffWidth - 60)/4)); 
+                const drawW = (staffWidth - 60)/4;
+                if (cell.draw === 'rest_q') this.drawQuarterRest(ctx, drawX + drawW/2 - 10, 0);
+                else this.drawBeamGroup(ctx, drawX, drawW, cell.draw, '#000');
+            });
+            ctx.restore();
+            this.patternData.notes.forEach(note => {
+                if (note.hit) {
+                    const drawW = (staffWidth - 60)/4;
+                    const noteX = startX + 60 + (note.beat * drawW); 
+                    this.drawNoteHead(ctx, noteX, centerY + 6, '#4ade80');
+                }
+            });
+        }
+
+        const now = this.audio.getCurrentTime();
+        let timeInCycle = now - this.startTime;
+        let cursorProgress = 0;
+        if (this.state === 'LISTEN') cursorProgress = timeInCycle / this.measureDuration;
+        else if (this.state === 'PLAY') cursorProgress = (timeInCycle - this.measureDuration) / this.measureDuration;
+        
+        if (cursorProgress < 0) cursorProgress = 0;
+        if (cursorProgress > 1) cursorProgress = 1;
+
+        const drawStart = startX + 60;
+        const drawEnd = endX;
+        const cursorX = drawStart + (cursorProgress * (drawEnd - drawStart));
+
+        ctx.strokeStyle = this.state === 'LISTEN' ? '#4ade80' : '#e94560';
+        ctx.lineWidth = 3; ctx.globalAlpha = 0.7;
+        ctx.beginPath(); ctx.moveTo(cursorX, centerY - 60); ctx.lineTo(cursorX, centerY + 60); ctx.stroke();
+        ctx.globalAlpha = 1.0;
+
+        ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+        if (this.state === 'LISTEN') { ctx.fillStyle = '#4ade80'; ctx.fillText('LISTEN', w / 2, centerY - 100); }
+        else if (this.state === 'PLAY') { ctx.fillStyle = '#e94560'; ctx.fillText('PLAY', w / 2, centerY - 100); }
+        else { ctx.fillStyle = '#888'; ctx.fillText('READY...', w / 2, centerY - 100); }
+    }
+
+    drawNoteHead(ctx, x, y, color) { ctx.save(); ctx.translate(x, y); ctx.rotate(-0.2); ctx.scale(1.2, 1); ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.restore(); }
+    drawQuarterRest(ctx, x, y) { ctx.save(); ctx.translate(x, y); ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-6, -10); ctx.lineTo(6, -2); ctx.lineTo(-6, 6); ctx.quadraticCurveTo(0, 15, -4, 20); ctx.stroke(); ctx.restore(); }
+    drawEighthRest(ctx, x, y) { ctx.save(); ctx.translate(x, y); ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(-2, -5, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2.5; ctx.moveTo(-2, -5); ctx.bezierCurveTo(2, -2, 5, 5, -4, 12); ctx.stroke(); ctx.restore(); }
+    drawBeamGroup(ctx, startX, width, type, color) {
+        const stemHeight = 45; const noteY = 0; ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2;
+        const drawStem = (bx) => { this.drawNoteHead(ctx, bx, noteY, color); ctx.beginPath(); ctx.moveTo(bx + 9, noteY); ctx.lineTo(bx + 9, noteY - stemHeight); ctx.stroke(); };
+        const drawBeam = (xStart, xEnd, yOffset) => { ctx.beginPath(); ctx.moveTo(xStart + 9, noteY - stemHeight + yOffset); ctx.lineTo(xEnd + 9, noteY - stemHeight + yOffset); ctx.stroke(); };
+        if (type === 'quarter') drawStem(startX);
+        else if (type === 'eighths') { const x2 = startX + width/2; drawStem(startX); drawStem(x2); ctx.lineWidth = 6; drawBeam(startX, x2, 0); }
+        else if (type === 'triplets') { const s = width/3; drawStem(startX); drawStem(startX+s); drawStem(startX+2*s); ctx.lineWidth = 6; drawBeam(startX, startX+2*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('3', startX+s+9, noteY-stemHeight-10); }
+        else if (type === 'sixteenths') { const s = width/4; for(let i=0;i<4;i++) drawStem(startX+i*s); ctx.lineWidth = 5; drawBeam(startX, startX+3*s, 0); drawBeam(startX, startX+3*s, 8); }
+        else if (type === 'sextuplets') { const s = width/6; for(let i=0;i<6;i++) drawStem(startX+i*s); ctx.lineWidth = 5; drawBeam(startX, startX+5*s, 0); drawBeam(startX, startX+5*s, 8); ctx.font = 'bold 20px serif'; ctx.fillText('6', startX+2.5*s+5, noteY-stemHeight-10); }
+        else if (type === 'sextuplets_4') { const s = width/6; for(let i=0;i<4;i++) drawStem(startX+i*s); ctx.lineWidth = 5; drawBeam(startX, startX+3*s, 0); drawBeam(startX, startX+3*s, 8); this.drawEighthRest(ctx, startX+5*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('6', startX+1.5*s+5, noteY-stemHeight-10); }
+        else if (type === 'thirtyseconds') { const s = width/8; for(let i=0;i<8;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+7*s, 0); drawBeam(startX, startX+7*s, 7); drawBeam(startX, startX+7*s, 14); }
+        else if (type === 'thirtyseconds_5') { const s = width/8; for(let i=0;i<5;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+4*s, 0); drawBeam(startX, startX+4*s, 7); drawBeam(startX, startX+4*s, 14); this.drawEighthRest(ctx, startX+6.5*s, 0); }
+        else if (type === 'fortyeighths_7') { const s = width/12; for(let i=0;i<7;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+6*s, 0); drawBeam(startX, startX+6*s, 6); drawBeam(startX, startX+6*s, 12); drawBeam(startX, startX+6*s, 18); this.drawEighthRest(ctx, startX+9*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('12', startX+3*s+5, noteY-stemHeight-10); }
+        else if (type === 'sixtyfourths_9') { const s = width/16; for(let i=0;i<9;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+8*s, 0); drawBeam(startX, startX+8*s, 6); drawBeam(startX, startX+8*s, 12); drawBeam(startX, startX+8*s, 18); this.drawEighthRest(ctx, startX+11*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('16', startX+4*s+5, noteY-stemHeight-10); }
+        else if (type === 'eighth_two16') { const s = width/4; drawStem(startX); drawStem(startX+2*s); drawStem(startX+3*s); ctx.lineWidth = 5; drawBeam(startX, startX+3*s, 0); drawBeam(startX+2*s, startX+3*s, 8); }
+        else if (type === 'two16_eighth') { const s = width/4; drawStem(startX); drawStem(startX+s); drawStem(startX+2*s); ctx.lineWidth = 5; drawBeam(startX, startX+2*s, 0); drawBeam(startX, startX+s, 8); }
+    }
+}
+
+window.onload = () => {
+    window.game = new Game();
+};
+</script>
+</body>
+</html>

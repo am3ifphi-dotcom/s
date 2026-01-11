@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多面体の交差(Polyhedra Intersection)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050510;
+            color: #ffffff;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* --- UI Layout --- */
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+            z-index: 10;
+            max-height: 95vh;
+            overflow-y: auto;
+            /* Scrollbar styling for webkit */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
+            padding-right: 5px; /* Scrollbar space */
+        }
+        
+        #ui-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #ui-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #ui-container::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        .panel {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #00e5ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- Buttons --- */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3列 */
+            gap: 6px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ccc;
+            padding: 6px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 10px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #fff;
+        }
+
+        .btn.active {
+            background: rgba(0, 229, 255, 0.2);
+            border-color: #00e5ff;
+            color: #00e5ff;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+        }
+        
+        .btn.active-inner {
+            background: rgba(255, 0, 128, 0.2);
+            border-color: #ff0080;
+            color: #ff0080;
+            box-shadow: 0 0 10px rgba(255, 0, 128, 0.2);
+        }
+
+        .btn-small {
+            padding: 2px 8px;
+            font-size: 9px;
+            height: 18px;
+            line-height: 12px;
+        }
+
+        /* --- Sliders --- */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 5px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #00e5ff;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            appearance: none;
+            margin: 6px 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00e5ff;
+            font-size: 24px;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            z-index: 20;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+
+    <!-- Import Maps: Three.js + three-bvh-csg + three-mesh-bvh -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "three-bvh-csg": "https://cdn.jsdelivr.net/npm/three-bvh-csg@0.0.16/build/index.module.js",
+                "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.6.8/build/index.module.js"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="loading">Generating Geometry...</div>
+
+    <div id="ui-container">
+        <!-- Selection Panel -->
+        <div class="panel">
+            <div class="panel-title">
+                1. Outer Shape (外側)
+                <span class="dot" style="background: rgba(0, 229, 255, 0.5); width:8px; height:8px; border-radius:50%; display:inline-block; border: 1px solid #00e5ff;"></span>
+            </div>
+            <div class="btn-grid" id="outer-selector">
+                <button class="btn" onclick="setOuter('tetrahedron', this)">正四面体</button>
+                <button class="btn active" onclick="setOuter('cube', this)">正六面体</button>
+                <button class="btn" onclick="setOuter('octahedron', this)">正八面体</button>
+                <button class="btn" onclick="setOuter('dodecahedron', this)">正十二面体</button>
+                <button class="btn" onclick="setOuter('icosahedron', this)">正二十面体</button>
+            </div>
+
+            <div class="panel-title" style="margin-top: 10px;">
+                2. Inner Shape (内側)
+                <span class="dot" style="background: rgba(255, 0, 128, 0.5); width:8px; height:8px; border-radius:50%; display:inline-block; border: 1px solid #ff0080;"></span>
+            </div>
+            <div class="btn-grid" id="inner-selector">
+                <button class="btn" onclick="setInner('tetrahedron', this)">正四面体</button>
+                <button class="btn" onclick="setInner('cube', this)">正六面体</button>
+                <button class="btn active-inner" onclick="setInner('octahedron', this)">正八面体</button>
+                <button class="btn" onclick="setInner('dodecahedron', this)">正十二面体</button>
+                <button class="btn" onclick="setInner('icosahedron', this)">正二十面体</button>
+            </div>
+        </div>
+
+        <!-- Transform Panel -->
+        <div class="panel">
+            <div class="panel-title">
+                3. Inner Rotation
+                <button class="btn btn-small" onclick="resetRotation()">Reset</button>
+            </div>
+
+            <!-- Inner Rotation -->
+            <div class="control-group">
+                <div class="control-header"><span>Rotation X</span> <span id="val-rot-x">0°</span></div>
+                <input type="range" id="rot-x" min="0" max="360" value="0" step="0.01">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><span>Rotation Y</span> <span id="val-rot-y">0°</span></div>
+                <input type="range" id="rot-y" min="0" max="360" value="0" step="0.01">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><span>Rotation Z</span> <span id="val-rot-z">0°</span></div>
+                <input type="range" id="rot-z" min="0" max="360" value="0" step="0.01">
+            </div>
+        </div>
+
+        <!-- Scale Panel -->
+        <div class="panel">
+            <div class="panel-title">
+                4. Scale & View
+            </div>
+            <!-- Inner Scale -->
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Inner Scale (Ratio)</span>
+                    <span id="scale-val">1.00</span>
+                </div>
+                <!-- Updated Max to 2.5 -->
+                <input type="range" id="scale-slider" min="0.1" max="2.5" value="1.0" step="0.01">
+                <div style="font-size: 9px; color: #888; text-align: right;">1.00 = Auto Fit</div>
+            </div>
+
+            <!-- Camera Zoom Slider -->
+            <div class="control-group" style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:8px;">
+                <div class="control-header"><span>Camera Zoom (Distance)</span></div>
+                <!-- Logarithmic slider logic implemented in JS -->
+                <input type="range" id="zoom-slider" min="0" max="1" step="0.001" value="0.5">
+            </div>
+        </div>
+
+        <!-- Appearance Panel (Surface Opacity) -->
+        <div class="panel">
+            <div class="panel-title">
+                5. Appearance (透明度・質感)
+            </div>
+            
+            <!-- Global Roughness Control -->
+            <div class="control-group" style="margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div class="control-header"><span>Surface Roughness (表面の粗さ)</span></div>
+                <input type="range" id="roughness-global" min="0" max="1" step="0.01" value="0.2">
+                <div style="font-size: 9px; color: #888; text-align: right;">ツルツル (Glass) ↔ ザラザラ (Matte)</div>
+            </div>
+
+            <div style="font-size: 10px; color: #00e5ff; font-weight:bold; margin-bottom:2px;">■ Intersection (共通部分)</div>
+            <div class="control-group">
+                <div class="control-header"><span>Surface Opacity</span></div>
+                <input type="range" id="opacity-result" min="0" max="1" step="0.01" value="1.0">
+            </div>
+
+            <div style="font-size: 10px; color: #00e5ff; font-weight:bold; margin-top:5px; margin-bottom:2px;">■ Outer Shape (外側)</div>
+            <div class="control-group">
+                <div class="control-header"><span>Surface Opacity</span></div>
+                <input type="range" id="opacity-outer-surf" min="0" max="1" step="0.01" value="0.0">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><span>Wireframe Opacity</span></div>
+                <input type="range" id="opacity-outer" min="0" max="0.5" step="0.01" value="0.15">
+            </div>
+
+            <div style="font-size: 10px; color: #ff0080; font-weight:bold; margin-top:5px; margin-bottom:2px;">■ Inner Shape (内側)</div>
+            <div class="control-group">
+                <div class="control-header"><span>Surface Opacity</span></div>
+                <input type="range" id="opacity-inner-surf" min="0" max="1" step="0.01" value="0.0">
+            </div>
+            <div class="control-group">
+                <div class="control-header"><span>Wireframe Opacity</span></div>
+                <input type="range" id="opacity-inner" min="0" max="0.5" step="0.01" value="0.15">
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+    <div id="info">
+        <span style="color:#fbbf24">■ Intersection</span> • 
+        <span style="color:#00e5ff">■ Outer</span> • 
+        <span style="color:#ff0080">■ Inner</span><br>
+        Drag to Rotate • Scroll/Pinch to Zoom
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { SUBTRACTION, INTERSECTION, ADDITION, Brush, Evaluator } from 'three-bvh-csg';
+
+        // --- Configuration ---
+        const config = {
+            outerShape: 'cube',
+            innerShape: 'octahedron',
+            innerRotation: new THREE.Euler(0, 0, 0),
+            fitScale: 1.0,  // User adjustable multiplier
+            autoFitScale: 1.0 // Calculated scale
+        };
+
+        // --- Scene Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(4, 3, 5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- Lights ---
+        const ambientLight = new THREE.AmbientLight(0x404040, 3);
+        scene.add(ambientLight);
+
+        const mainLight = new THREE.DirectionalLight(0xffffff, 2);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        scene.add(mainLight);
+
+        const backLight = new THREE.DirectionalLight(0x00e5ff, 1);
+        backLight.position.set(-5, -2, -5);
+        scene.add(backLight);
+
+        // --- Controls ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // FIX: Prevent panning to keep the object centered
+        controls.enablePan = false;
+        
+        // FIX: Limit zoom range so users don't get lost
+        controls.minDistance = 1.5;
+        controls.maxDistance = 20;
+
+        // FIX: Slower zoom speed for touchpads
+        controls.zoomSpeed = 0.5;
+
+        // --- Zoom Slider Logic (Logarithmic for smooth control) ---
+        const MIN_ZOOM_DIST = controls.minDistance;
+        const MAX_ZOOM_DIST = controls.maxDistance;
+        const ZOOM_LOG_FACTOR = Math.log(MAX_ZOOM_DIST / MIN_ZOOM_DIST);
+
+        function getZoomDistance(sliderValue) {
+            // Slider 0 (Right/Close) -> minDistance
+            // Slider 1 (Left/Far) -> maxDistance
+            // We want Slider 1 (Right) to be "Zoom In" usually? 
+            // Standard UI: Right = More Value.
+            // Let's make Right (1.0) = Close (Zoom In), Left (0.0) = Far (Zoom Out)
+            
+            // Invert slider for calculation: 0(Right) -> 0(MinDist), 1(Left) -> 1(MaxDist)
+            // Wait, slider value 1 = Zoom In (Distance Small)
+            // Slider value 0 = Zoom Out (Distance Large)
+            
+            const v = 1.0 - sliderValue; // 0.0(Close) to 1.0(Far)
+            return MIN_ZOOM_DIST * Math.exp(v * ZOOM_LOG_FACTOR);
+        }
+
+        function getZoomSliderValue(distance) {
+            const d = Math.max(MIN_ZOOM_DIST, Math.min(MAX_ZOOM_DIST, distance));
+            const v = Math.log(d / MIN_ZOOM_DIST) / ZOOM_LOG_FACTOR; // 0 to 1
+            return 1.0 - v; // Invert so Right is Close
+        }
+
+        function updateZoomFromSlider(val) {
+            const dist = getZoomDistance(val);
+            const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+            camera.position.copy(controls.target).add(dir.multiplyScalar(dist));
+            controls.update();
+        }
+
+        const zoomSlider = document.getElementById('zoom-slider');
+        zoomSlider.addEventListener('input', (e) => {
+            updateZoomFromSlider(parseFloat(e.target.value));
+        });
+
+        // Sync Slider when zooming with Mouse/Touch
+        controls.addEventListener('change', () => {
+            const dist = camera.position.distanceTo(controls.target);
+            if (document.activeElement !== zoomSlider) {
+                zoomSlider.value = getZoomSliderValue(dist);
+            }
+        });
+
+        // Initial Slider Set
+        zoomSlider.value = getZoomSliderValue(camera.position.distanceTo(controls.target));
+
+        // --- Materials ---
+        // Z-fighting & Visibility Fix:
+        // Order: Wireframe (-1) < Result Mesh (0) < Original Surfaces (1)
+        // This ensures Lines are always on top, and Result is on top of Original Surfaces.
+        
+        const matOuterWire = new THREE.LineBasicMaterial({ 
+            color: 0x00e5ff, 
+            transparent: true, 
+            opacity: 0.15,
+            polygonOffset: true,
+            polygonOffsetFactor: -1, // Most front
+            polygonOffsetUnits: -1
+        });
+        
+        const matInnerWire = new THREE.LineBasicMaterial({ 
+            color: 0xff0080, 
+            transparent: true, 
+            opacity: 0.15,
+            polygonOffset: true,
+            polygonOffsetFactor: -1, // Most front
+            polygonOffsetUnits: -1
+        });
+        
+        // Result Material (Intersection) - Surface
+        const matResult = new THREE.MeshStandardMaterial({
+            color: 0xfbbf24,
+            metalness: 0.3,
+            roughness: 0.2, // Default will be overwritten by slider
+            flatShading: true,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 1.0,
+            polygonOffset: true,
+            polygonOffsetFactor: 0, // Middle
+            polygonOffsetUnits: 0
+        });
+
+        // New Materials for Outer/Inner Surfaces
+        // Pushed back to prevent z-fighting with Result
+        const matOuterSurface = new THREE.MeshStandardMaterial({
+            color: 0x00e5ff,
+            metalness: 0.1,
+            roughness: 0.2, // Default will be overwritten by slider
+            flatShading: true,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.0,
+            depthWrite: false, // Helps with transparency ordering when overlapping
+            polygonOffset: true,
+            polygonOffsetFactor: 1, // Back
+            polygonOffsetUnits: 1
+        });
+
+        const matInnerSurface = new THREE.MeshStandardMaterial({
+            color: 0xff0080,
+            metalness: 0.1,
+            roughness: 0.2, // Default will be overwritten by slider
+            flatShading: true,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.0,
+            depthWrite: false,
+            polygonOffset: true,
+            polygonOffsetFactor: 1, // Back
+            polygonOffsetUnits: 1
+        });
+
+        // --- Objects Container ---
+        const shapesGroup = new THREE.Group();
+        scene.add(shapesGroup);
+
+        let outerWire = null;
+        let innerWire = null;
+        let outerSurface = null;
+        let innerSurface = null;
+        let resultMesh = null;
+
+        const evaluator = new Evaluator();
+
+        // --- Geometry Factory ---
+        function createGeometry(type) {
+            let geo;
+            // Create roughly size 1 geometry
+            switch (type) {
+                case 'tetrahedron': geo = new THREE.TetrahedronGeometry(1); break;
+                case 'cube': geo = new THREE.BoxGeometry(1, 1, 1); break; 
+                case 'octahedron': geo = new THREE.OctahedronGeometry(1); break;
+                case 'dodecahedron': geo = new THREE.DodecahedronGeometry(1); break;
+                case 'icosahedron': geo = new THREE.IcosahedronGeometry(1); break;
+                default: geo = new THREE.BoxGeometry(1,1,1);
+            }
+            
+            // Normalize Geometry: Scale so that Circumradius = 1.0
+            geo.computeBoundingSphere();
+            const radius = geo.boundingSphere.radius;
+            if (radius > 0) {
+                const s = 1.0 / radius;
+                geo.scale(s, s, s);
+            }
+            
+            return geo;
+        }
+
+        // --- Scale Calculations ---
+        // Inscribed Logic: Vertices of inner mesh must be inside outer mesh planes
+        function calculateMaxInscribedScale(outerGeo, innerGeo, innerRot) {
+            // Re-generate outer geometry planes
+            if (!outerGeo.index && !outerGeo.attributes.normal) outerGeo.computeVertexNormals();
+            const tempOuter = outerGeo.toNonIndexed();
+            const pPos = tempOuter.attributes.position;
+            const planesData = [];
+            
+            for(let i=0; i < pPos.count; i+=3) {
+                const a = new THREE.Vector3().fromBufferAttribute(pPos, i);
+                const b = new THREE.Vector3().fromBufferAttribute(pPos, i+1);
+                const c = new THREE.Vector3().fromBufferAttribute(pPos, i+2);
+                const cb = new THREE.Vector3().subVectors(c, b);
+                const ab = new THREE.Vector3().subVectors(a, b);
+                const n = new THREE.Vector3().crossVectors(cb, ab).normalize();
+                const d = n.dot(a); // Plane distance from origin
+                planesData.push({ n, d });
+            }
+
+            // Get rotated inner vertices (Base Scale = 1)
+            const tempInner = innerGeo.clone();
+            tempInner.rotateX(innerRot.x);
+            tempInner.rotateY(innerRot.y);
+            tempInner.rotateZ(innerRot.z);
+            
+            const iPos = tempInner.attributes.position;
+            const innerVerts = [];
+            for(let i=0; i<iPos.count; i++) {
+                innerVerts.push(new THREE.Vector3().fromBufferAttribute(iPos, i));
+            }
+
+            // Find Max Scale
+            let minAllowedScale = Infinity;
+            
+            for (let v of innerVerts) {
+                for (let plane of planesData) {
+                    const dot = v.dot(plane.n);
+                    if (dot > 0.000001) { 
+                        const allowed = plane.d / dot;
+                        if (allowed < minAllowedScale) minAllowedScale = allowed;
+                    }
+                }
+            }
+            if (minAllowedScale === Infinity) minAllowedScale = 1.0;
+            // Clamp
+            return Math.max(0.001, minAllowedScale);
+        }
+
+        // --- Main Update Function ---
+        function updateObjects() {
+            document.getElementById('loading').style.opacity = 1;
+
+            setTimeout(() => {
+                shapesGroup.clear();
+
+                const geoOuterRaw = createGeometry(config.outerShape);
+                const geoInnerRaw = createGeometry(config.innerShape);
+
+                // --- 1. Prepare Outer Brush ---
+                const BASE_SCALE = 1.5;
+                const brushOuter = new Brush(geoOuterRaw, matResult);
+                brushOuter.scale.set(BASE_SCALE, BASE_SCALE, BASE_SCALE);
+                brushOuter.updateMatrixWorld();
+
+                // --- 2. Calculate Scale ---
+                // Always use Inscribed logic now, considering rotation
+                config.autoFitScale = calculateMaxInscribedScale(
+                    geoOuterRaw, 
+                    geoInnerRaw, 
+                    config.innerRotation
+                );
+
+                // --- 3. Prepare Inner Brush ---
+                const brushInner = new Brush(geoInnerRaw, matResult);
+                brushInner.rotation.copy(config.innerRotation);
+                
+                // Apply scales
+                const finalScale = BASE_SCALE * config.autoFitScale * config.fitScale;
+                brushInner.scale.set(finalScale, finalScale, finalScale);
+                brushInner.updateMatrixWorld();
+
+                // --- 4. CSG Evaluation ---
+                try {
+                    resultMesh = evaluator.evaluate(brushOuter, brushInner, INTERSECTION);
+                    resultMesh.material = matResult;
+                    resultMesh.castShadow = true;
+                    resultMesh.receiveShadow = true;
+                    shapesGroup.add(resultMesh);
+                } catch (e) {
+                    console.error("CSG Error", e);
+                }
+
+                // --- 5. Surfaces & Wireframes ---
+                
+                // Outer Surface
+                outerSurface = new THREE.Mesh(geoOuterRaw, matOuterSurface);
+                outerSurface.scale.set(BASE_SCALE, BASE_SCALE, BASE_SCALE);
+                shapesGroup.add(outerSurface);
+
+                // Outer Wire
+                const edgesOuter = new THREE.EdgesGeometry(geoOuterRaw);
+                outerWire = new THREE.LineSegments(edgesOuter, matOuterWire);
+                outerWire.scale.set(BASE_SCALE, BASE_SCALE, BASE_SCALE);
+                shapesGroup.add(outerWire);
+
+                // Inner Surface
+                innerSurface = new THREE.Mesh(geoInnerRaw, matInnerSurface);
+                innerSurface.rotation.copy(config.innerRotation);
+                innerSurface.scale.set(finalScale, finalScale, finalScale);
+                shapesGroup.add(innerSurface);
+
+                // Inner Wire
+                const edgesInner = new THREE.EdgesGeometry(geoInnerRaw);
+                innerWire = new THREE.LineSegments(edgesInner, matInnerWire);
+                innerWire.rotation.copy(config.innerRotation);
+                innerWire.scale.set(finalScale, finalScale, finalScale);
+                shapesGroup.add(innerWire);
+
+                updateOpacities(); // Also updates roughness
+                document.getElementById('loading').style.opacity = 0;
+            }, 10);
+        }
+
+        function updateOpacities() {
+            // Roughness
+            const roughness = parseFloat(document.getElementById('roughness-global').value);
+            if(matResult) matResult.roughness = roughness;
+            if(matOuterSurface) matOuterSurface.roughness = roughness;
+            if(matInnerSurface) matInnerSurface.roughness = roughness;
+
+            // Surface Opacities
+            const opRes = parseFloat(document.getElementById('opacity-result').value);
+            const opOutSurf = parseFloat(document.getElementById('opacity-outer-surf').value);
+            const opInSurf = parseFloat(document.getElementById('opacity-inner-surf').value);
+            
+            if (resultMesh) {
+                matResult.opacity = opRes;
+                matResult.visible = opRes > 0.01;
+            }
+            
+            if (outerSurface) {
+                matOuterSurface.opacity = opOutSurf;
+                matOuterSurface.visible = opOutSurf > 0.01;
+            }
+            
+            if (innerSurface) {
+                matInnerSurface.opacity = opInSurf;
+                matInnerSurface.visible = opInSurf > 0.01;
+            }
+
+            // Wireframe Opacities
+            const opOutWire = parseFloat(document.getElementById('opacity-outer').value);
+            const opInWire = parseFloat(document.getElementById('opacity-inner').value);
+            
+            if (outerWire) {
+                outerWire.material.opacity = opOutWire;
+                outerWire.visible = opOutWire > 0.01;
+            }
+            if (innerWire) {
+                innerWire.material.opacity = opInWire;
+                innerWire.visible = opInWire > 0.01;
+            }
+        }
+
+        // --- UI Event Handlers ---
+        window.setOuter = (shape, btn) => {
+            config.outerShape = shape;
+            document.querySelectorAll('#outer-selector .btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateObjects();
+        };
+
+        window.setInner = (shape, btn) => {
+            config.innerShape = shape;
+            document.querySelectorAll('#inner-selector .btn').forEach(b => b.classList.remove('active-inner'));
+            btn.classList.add('active-inner');
+            updateObjects();
+        };
+
+        // Rotation
+        const onRotChange = () => {
+            const rx = parseFloat(document.getElementById('rot-x').value);
+            const ry = parseFloat(document.getElementById('rot-y').value);
+            const rz = parseFloat(document.getElementById('rot-z').value);
+            
+            document.getElementById('val-rot-x').textContent = rx.toFixed(1) + '°';
+            document.getElementById('val-rot-y').textContent = ry.toFixed(1) + '°';
+            document.getElementById('val-rot-z').textContent = rz.toFixed(1) + '°';
+
+            config.innerRotation.x = THREE.MathUtils.degToRad(rx);
+            config.innerRotation.y = THREE.MathUtils.degToRad(ry);
+            config.innerRotation.z = THREE.MathUtils.degToRad(rz);
+            updateObjects();
+        };
+
+        ['rot-x', 'rot-y', 'rot-z'].forEach(id => {
+            document.getElementById(id).addEventListener('input', onRotChange);
+        });
+
+        window.resetRotation = () => {
+            ['rot-x', 'rot-y', 'rot-z'].forEach(id => document.getElementById(id).value = 0);
+            onRotChange();
+        };
+
+        document.getElementById('scale-slider').addEventListener('input', (e) => {
+            config.fitScale = parseFloat(e.target.value);
+            document.getElementById('scale-val').textContent = config.fitScale.toFixed(2);
+            updateObjects();
+        });
+
+        // Opacity & Roughness Listeners
+        const opacityIds = [
+            'roughness-global',
+            'opacity-result', 
+            'opacity-outer-surf', 'opacity-outer', 
+            'opacity-inner-surf', 'opacity-inner'
+        ];
+        opacityIds.forEach(id => {
+            document.getElementById(id).addEventListener('input', updateOpacities);
+        });
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        updateObjects();
+        animate();
+    </script>
+</body>
+</html>
