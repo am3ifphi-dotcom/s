@@ -850,32 +850,6 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        /* --- 訪問者カウンター風演出 --- */
-        .visitor-counter {
-            display: inline-block;
-            font-family: 'Orbitron';
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 5px 15px;
-            border: 1px solid var(--primary-color);
-            border-radius: 3px;
-            margin-top: 10px;
-        }
-
-        .counter-digit {
-            display: inline-block;
-            min-width: 15px;
-            text-align: center;
-            animation: digitFlip 0.3s;
-        }
-
-        @keyframes digitFlip {
-            0% { transform: rotateX(0deg); }
-            50% { transform: rotateX(90deg); }
-            100% { transform: rotateX(0deg); }
-        }
-
         /* --- Animations --- */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -945,6 +919,59 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #00ffff;
         }
+        
+        /* --- 隠し要素: Akira Reveal --- */
+        .secret-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            perspective: 1500px; /* 3D効果用 */
+        }
+        
+        .secret-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .secret-page {
+            width: 80%;
+            max-width: 600px;
+            height: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            transform-origin: left center;
+            transform: rotateY(-90deg); /* 閉じた本のように初期状態は横向き */
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 50px rgba(0, 230, 230, 0.2);
+            position: relative;
+        }
+        
+        .secret-overlay.active .secret-page {
+            transform: rotateY(0deg); /* ページが開く */
+        }
+        
+        /* ページめくり効果のディテール */
+        .secret-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
+            pointer-events: none;
+        }
 
     </style>
 </head>
@@ -960,17 +987,10 @@
         <div class="hologram-ring"></div>
     </div>
 
-    <!-- ステータス表示 -->
+    <!-- ステータス表示 (VISITORS削除) -->
     <div class="status-display">
         <div><span class="status-label">SYSTEM TIME</span></div>
         <div class="status-value" id="currentTime">00:00:00</div>
-        <div style="margin-top: 10px;"><span class="status-label">VISITORS</span></div>
-        <div class="visitor-counter" id="visitorCounter">
-            <span class="counter-digit">0</span>
-            <span class="counter-digit">0</span>
-            <span class="counter-digit">0</span>
-            <span class="counter-digit">0</span>
-        </div>
     </div>
 
     <div class="main-container">
@@ -1010,7 +1030,10 @@
                 </div>
                 <div class="profile-info">
                     <h2 class="glitch-text">Am3i (蛙鳴)</h2>
-                    <p>Special thanks - Akira(shotacon)</p>
+                    <!-- 隠し要素トリガー -->
+                    <p id="special-thanks-trigger" style="cursor: help; transition: color 0.3s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color=''">
+                        Special thanks - Akira(shotacon)
+                    </p>
                     <p style="margin-top: 1rem; color: #ccc; line-height: 1.6;">
                         GitHubにてツールやゲームを公開しています。サイバーパンクなUIと使いやすさの両立を目指して開発中。<br>
                         音楽、プログラミング、デザイン、ゲーム制作など、興味のあることに手を出していきます。
@@ -1127,12 +1150,11 @@
                         <ul>
                             <li><strong>マトリックス背景</strong>: 動的な文字の雨エフェクト</li>
                             <li><strong>3Dホログラム</strong>: 回転するサイバーリング演出</li>
-                            <li><strong>リアルタイム時計</strong>: システム時刻とビジター数表示</li>
+                            <li><strong>リアルタイム時計</strong>: システム時刻表示</li>
                             <li><strong>蛙ジャンプ</strong>: クリックで物理演算付きジャンプ + 波紋</li>
                             <li><strong>カーソルトレイル</strong>: マウス移動時の軌跡エフェクト</li>
                             <li><strong>ターミナル</strong>: フッタークリックでシステムログ表示</li>
-                            <li><strong>グリッチテキスト</strong>: ホバーで文字が乱れるエフェクト</li>
-                            <li><strong>カードアニメーション</strong>: 3D変形 + 光走査線</li>
+                            <li><strong>隠しファイル</strong>: 特定のテキストに秘密のアクセス権を付与</li>
                         </ul>
                     </div>
                 </details>
@@ -1174,6 +1196,19 @@
             &copy; 2026 CYBER PORTAL - Am3i. All Systems Operational.
         </footer>
     </main>
+</div>
+
+<!-- 隠し画像オーバーレイ -->
+<div id="secret-overlay" class="secret-overlay" onclick="closeSecret()">
+    <div class="secret-page" onclick="event.stopPropagation()">
+        <img src="akira.png" alt="Akira" style="width: 100%; height: auto; border-radius: 5px; display: block;">
+        <div style="text-align: center; margin-top: 15px; color: #333; font-family: serif; font-style: italic;">
+            "SECRET ARCHIVE ACCESSED"
+        </div>
+        <div style="text-align: center; margin-top: 10px;">
+            <button onclick="closeSecret()" style="background: #333; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px;">CLOSE</button>
+        </div>
+    </div>
 </div>
 
 <!-- ターミナル -->
@@ -1240,26 +1275,6 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
-
-    // --- 訪問者カウンター (ランダムアニメーション) ---
-    function animateCounter() {
-        const digits = document.querySelectorAll('.counter-digit');
-        const target = Math.floor(1000 + Math.random() * 9000);
-        const targetStr = target.toString().padStart(4, '0');
-        
-        digits.forEach((digit, index) => {
-            setTimeout(() => {
-                digit.style.animation = 'digitFlip 0.3s';
-                setTimeout(() => {
-                    digit.textContent = targetStr[index];
-                    digit.style.animation = '';
-                }, 150);
-            }, index * 100);
-        });
-    }
-    
-    setTimeout(animateCounter, 1000);
-    setInterval(animateCounter, 30000);
 
     // --- セクション切り替え ---
     function showSection(sectionId) {
@@ -1455,13 +1470,25 @@
         }, 50);
     });
 
+    // --- 隠し要素制御 (Akira Reveal) ---
+    const thanksTrigger = document.getElementById('special-thanks-trigger');
+    const secretOverlay = document.getElementById('secret-overlay');
+
+    thanksTrigger.addEventListener('click', function() {
+        secretOverlay.classList.add('active');
+        createParticle('🔓', event.pageX, event.pageY);
+    });
+
+    function closeSecret() {
+        secretOverlay.classList.remove('active');
+    }
+
     // --- 初期化 ---
     window.addEventListener('load', () => {
         console.log('%c╔═══════════════════════════════════════╗', 'color: #00e6e6; font-size: 12px;');
         console.log('%c║   CYBER PORTAL v3.0.0 INITIALIZED   ║', 'color: #00e6e6; font-size: 14px; font-weight: bold;');
         console.log('%c╚═══════════════════════════════════════╝', 'color: #00e6e6; font-size: 12px;');
         console.log('%c Am3i (蛙鳴) - いろいろやります🐸 ', 'background: #003333; color: #00e6e6; font-size: 14px; padding: 5px;');
-        console.log('%c Easter Eggs: Try clicking around! ', 'color: #ff0055; font-size: 12px;');
         
         // 初回ホログラム表示
         setTimeout(() => {
@@ -1474,6 +1501,3 @@
 </script>
 </body>
 </html>
-
-
-
