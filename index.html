@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER PORTAL</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome (アイコン用) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- 変数定義 (修正.cssより継承) --- */
+        :root {
+            --primary-color: #00e6e6;
+            --secondary-color: #003333;
+            --accent-color: #ff0055;
+            --bg-color: #050505;
+            --text-color: #ffffff;
+            --glass-bg: rgba(0, 30, 30, 0.85);
+            --border-width: 2px;
+            --glow-strong: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
+            --glow-soft: 0 0 5px var(--primary-color);
+        }
+
+        /* --- 基本設定 --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* サイバー感を出すためテキスト選択を禁止 */
+        }
+
+        body {
+            font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                linear-gradient(rgba(0, 230, 230, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 230, 230, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* --- 背景アニメーション (Scanline) --- */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 230, 230, 0.02) 51%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* --- レイアウト --- */
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+        }
+
+        /* --- サイドバー (ナビゲーション) --- */
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 10, 10, 0.9);
+            border-right: 1px solid var(--primary-color);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            box-shadow: 5px 0 15px rgba(0, 230, 230, 0.1);
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                padding: 1rem;
+                overflow-x: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--primary-color);
+                gap: 1rem;
+            }
+        }
+
+        .brand {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-shadow: var(--glow-soft);
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .brand { display: none; }
+            .nav-menu { flex-direction: row; width: 100%; justify-content: space-around; }
+        }
+
+        /* --- サイバーボタン --- */
+        .cyber-button {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 1rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none; /* リンク用に追加 */
+        }
+        
+        /* 角のデザイン */
+        .cyber-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(45deg, transparent 50%, var(--primary-color) 50%);
+        }
+
+        .cyber-button:hover, .cyber-button.active {
+            background: rgba(0, 230, 230, 0.2);
+            box-shadow: var(--glow-strong);
+            transform: translateX(5px);
+            text-shadow: 0 0 5px #fff;
+        }
+
+        @media (max-width: 768px) {
+            .cyber-button:hover, .cyber-button.active {
+                transform: translateY(-2px);
+            }
+            .cyber-button {
+                justify-content: center;
+                padding: 0.8rem;
+                font-size: 0.8rem;
+                flex: 1;
+            }
+            .cyber-button span {
+                display: none; /* スマホではアイコンのみにする場合 */
+            }
+            .cyber-button i {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* --- コンテンツエリア --- */
+        .content-area {
+            flex: 1;
+            padding: 3rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                padding: 1.5rem;
+            }
+        }
+
+        /* セクション共通スタイル */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            text-shadow: var(--glow-soft);
+            position: relative;
+        }
+
+        .section-title::after {
+            content: ' // SYSTEM.LOADED';
+            font-size: 1rem;
+            opacity: 0.7;
+            margin-left: 1rem;
+        }
+
+        /* --- Profile Section --- */
+        .profile-card {
+            background: rgba(0, 20, 20, 0.6);
+            border: 1px solid var(--primary-color);
+            padding: 2rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            position: relative;
+        }
+
+        .profile-card::after { /* 装飾枠 */
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            border-right: 2px solid var(--primary-color);
+        }
+
+        .avatar {
+            width: 150px;
+            height: 150px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%; /* 円形 */
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--primary-color);
+            box-shadow: var(--glow-soft);
+            overflow: hidden;
+        }
+        
+        .avatar i {
+             animation: pulse 2s infinite;
+        }
+
+        .profile-info h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skill-tags {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: rgba(0, 230, 230, 0.1);
+            border: 1px solid var(--primary-color);
+            padding: 0.2rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-card { flex-direction: column; text-align: center; }
+        }
+
+        /* --- Grid Layout (Tools & Games) --- */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .item-card {
+            background: rgba(0, 15, 15, 0.8);
+            border: 1px solid #333;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: var(--glow-soft);
+        }
+
+        .card-image {
+            height: 150px;
+            background: #002222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #333;
+            font-size: 3rem;
+            color: rgba(0, 230, 230, 0.5);
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        .card-link {
+            display: inline-block;
+            text-align: center;
+            background: rgba(0, 230, 230, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem;
+            text-decoration: none;
+            transition: 0.2s;
+            margin-top: auto;
+        }
+
+        .card-link:hover {
+            background: var(--primary-color);
+            color: #000;
+        }
+
+        /* --- Update Logs (Accordion) --- */
+        .update-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .update-item {
+            border: 1px solid rgba(0, 230, 230, 0.3);
+            background: rgba(0, 10, 10, 0.5);
+        }
+
+        .update-summary {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            list-style: none; /* デフォルトの三角を消す */
+            transition: 0.2s;
+        }
+        
+        .update-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .update-summary:hover {
+            background: rgba(0, 230, 230, 0.1);
+        }
+
+        .update-date {
+            font-family: 'Orbitron';
+            color: var(--primary-color);
+            min-width: 120px;
+        }
+        
+        .update-title {
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .update-icon {
+            transition: transform 0.3s;
+        }
+
+        details[open] .update-icon {
+            transform: rotate(180deg);
+        }
+
+        details[open] .update-summary {
+            border-bottom: 1px solid rgba(0, 230, 230, 0.3);
+            background: rgba(0, 230, 230, 0.05);
+        }
+
+        .update-details {
+            padding: 1.5rem;
+            line-height: 1.6;
+            color: #ddd;
+            animation: fadeIn 0.3s;
+        }
+
+        .update-details ul {
+            padding-left: 1.5rem;
+        }
+
+        .new-badge {
+            background: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            border-radius: 2px;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- Footer --- */
+        .cyber-footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            border-top: 1px solid #333;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 230, 230, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 230, 230, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 230, 230, 0); }
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        .glitch-text:hover {
+            animation: glitch 0.3s infinite;
+            color: var(--primary-color);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="scanline"></div>
+
+    <div class="main-container">
+        <!-- ナビゲーションサイドバー -->
+        <nav class="sidebar">
+            <div class="brand">CYBER<br>PORTAL</div>
+            <div class="nav-menu">
+                <button class="cyber-button active" onclick="showSection('profile')">
+                    <i class="fas fa-id-card"></i> <span>PROFILE</span>
+                </button>
+                <button class="cyber-button" onclick="showSection('tools')">
+                    <i class="fas fa-tools"></i> <span>TOOLS</span>
+                </button>
+                <button class="cyber-button" onclick="showSection('games')">
+                    <i class="fas fa-gamepad"></i> <span>GAMES</span>
+                </button>
+                <button class="cyber-button" onclick="showSection('updates')">
+                    <i class="fas fa-newspaper"></i> <span>UPDATES</span>
+                </button>
+            </div>
+            
+            <div style="margin-top: auto; font-size: 0.8rem; color: #666;">
+                STATUS: <span style="color: var(--primary-color)">ONLINE</span><br>
+                VER: 2.1.0
+            </div>
+        </nav>
+
+        <!-- メインコンテンツ -->
+        <main class="content-area">
+            
+            <!-- 自己紹介セクション -->
+            <section id="profile" class="section active">
+                <h1 class="section-title">USER PROFILE</h1>
+                <div class="profile-card">
+                    <div class="avatar">
+                        <i class="fas fa-user-astronaut"></i>
+                    </div>
+                    <div class="profile-info">
+                        <h2 class="glitch-text">YOUR_NAME</h2>
+                        <p>Web Developer / Game Creator</p>
+                        <p style="margin-top: 1rem; color: #ccc; line-height: 1.6;">
+                            GitHubにてツールやゲームを公開しています。サイバーパンクなUIと使いやすさの両立を目指して開発中。
+                        </p>
+                        <div class="skill-tags">
+                            <span class="tag">HTML5</span>
+                            <span class="tag">CSS3</span>
+                            <span class="tag">JavaScript</span>
+                            <span class="tag">Three.js</span>
+                            <span class="tag">React</span>
+                        </div>
+                        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                            <a href="#" class="cyber-button" style="width: auto; display: inline-flex;">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                            <a href="#" class="cyber-button" style="width: auto; display: inline-flex;">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ツールセクション (更新) -->
+            <section id="tools" class="section">
+                <h1 class="section-title">SYSTEM TOOLS</h1>
+                <div class="card-grid">
+                    <!-- Tool 1: Cyber Calculator (統合版) -->
+                    <div class="item-card">
+                        <div class="card-image"><i class="fas fa-calculator"></i></div>
+                        <div class="card-content">
+                            <h3 class="card-title">Cyber Calculator</h3>
+                            <p class="card-desc">素因数分解、乗算、除算を高速に行う多機能計算ユニット。サイバーパンクなUIで数学をサポート。</p>
+                            <!-- リンク先をcyber_calculator.htmlに変更 -->
+                            <a href="./cyber_calculator.html" class="card-link">LAUNCH TOOL</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Tool 2: Polyhedra Viewer -->
+                    <div class="item-card">
+                        <div class="card-image"><i class="fas fa-cube"></i></div>
+                        <div class="card-content">
+                            <h3 class="card-title">Polyhedra Viewer</h3>
+                            <p class="card-desc">正多面体の描画と変形（切頂）を行う3Dビジュアライザー。</p>
+                            <!-- リンク先をpolyhedra_viewer.htmlに変更 -->
+                            <a href="./polyhedra_viewer.html" class="card-link">LAUNCH TOOL</a>
+                        </div>
+                    </div>
+                    
+                     <!-- Tool 3: Intersection Lab -->
+                     <div class="item-card">
+                        <div class="card-image"><i class="fas fa-shapes"></i></div>
+                        <div class="card-content">
+                            <h3 class="card-title">Intersection Lab</h3>
+                            <p class="card-desc">多面体同士の共通部分（交差）をシミュレーションし、結果を可視化する研究用ツール。</p>
+                            <!-- リンク先をintersection_lab.htmlに変更 -->
+                            <a href="./intersection_lab.html" class="card-link">LAUNCH TOOL</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ゲームセクション -->
+            <section id="games" class="section">
+                <h1 class="section-title">GAMES LIBRARY</h1>
+                <div class="card-grid">
+                    <!-- Game 1: 数速バトル -->
+                    <div class="item-card" style="border-color: var(--primary-color); box-shadow: 0 0 10px rgba(0,230,230,0.2);">
+                        <div class="card-image"><i class="fas fa-brain"></i></div>
+                        <div class="card-content">
+                            <h3 class="card-title">数速バトル <span class="new-badge">HOT</span></h3>
+                            <p class="card-desc">制限時間内に計算問題を解き続けるハイスピード脳トレゲーム。サイバーな演出と共に限界に挑め。</p>
+                            <a href="./math_battle.html" class="card-link">PLAY GAME</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Game 2: Rhythm Echo -->
+                    <div class="item-card">
+                        <div class="card-image"><i class="fas fa-music"></i></div>
+                        <div class="card-content">
+                            <h3 class="card-title">Rhythm Echo</h3>
+                            <p class="card-desc">音が反響する空間でリズムを刻む。視覚と聴覚で楽しむリズムアクション。</p>
+                            <a href="./rhythm_echo.html" class="card-link">PLAY GAME</a>
+                        </div>
+                    </div>
+
+                    <!-- Game 3: Missing Pieces -->
+                    <div class="item-card">
+                        <div class="card-image"><i class="fas fa-book-open"></i></div>
+                        <div class="card-content">
+                            <h3 class="card-title">Missing Pieces</h3>
+                            <p class="card-desc">「娘の手記」と「父の手記」。失われた記憶の断片を読み解くノベルアドベンチャー。</p>
+                            <a href="./missing_pieces.html" class="card-link">READ LOGS</a>
+                        </div>
+                    </div>
+
+                    <!-- Game 4: Last Diary -->
+                    <div class="item-card">
+                        <div class="card-image"><i class="fas fa-skull"></i></div>
+                        <div class="card-content">
+                            <h3 class="card-title">The Last Diary</h3>
+                            <p class="card-desc">終末世界に残された最後の日記。静寂とノイズの中で語られる物語。</p>
+                            <a href="./last_diary.html" class="card-link">READ LOGS</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- アプデ情報セクション -->
+            <section id="updates" class="section">
+                <h1 class="section-title">UPDATE LOGS</h1>
+                <div class="update-list">
+                    
+                    <!-- Update Item 1 -->
+                    <details class="update-item" open>
+                        <summary class="update-summary">
+                            <span class="update-date">2026.01.11</span>
+                            <span class="update-title"><span class="new-badge">NEW</span>ツール・ゲーム追加</span>
+                            <i class="fas fa-chevron-down update-icon"></i>
+                        </summary>
+                        <div class="update-details">
+                            <p>新たなコンテンツをライブラリに追加しました。</p>
+                            <ul>
+                                <li><strong>Cyber Calculator</strong>: 素因数分解・乗除機能の実装</li>
+                                <li><strong>Polyhedra Tools</strong>: 3D図形描画・交差シミュレーション</li>
+                                <li><strong>Game Library</strong>: Rhythm Echo, Missing Pieces, Last Diaryを追加</li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <!-- Update Item 2 -->
+                    <details class="update-item">
+                        <summary class="update-summary">
+                            <span class="update-date">2026.01.10</span>
+                            <span class="update-title">ポータルサイト公開</span>
+                            <i class="fas fa-chevron-down update-icon"></i>
+                        </summary>
+                        <div class="update-details">
+                            <p>GitHub Pagesにてポートフォリオサイトを正式オープンしました。</p>
+                            <ul>
+                                <li>UIデザインの全面刷新（サイバーテーマ適用）</li>
+                                <li>レスポンシブ対応（スマートフォン表示の最適化）</li>
+                            </ul>
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <footer class="cyber-footer">
+                &copy; 2026 CYBER PORTAL. All Systems Operational.
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // セクション切り替え機能
+        function showSection(sectionId) {
+            // 全セクションを非表示
+            document.querySelectorAll('.section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            // 選択されたセクションを表示
+            const target = document.getElementById(sectionId);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            // ナビゲーションボタンのアクティブ状態更新
+            document.querySelectorAll('.cyber-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // クリックされたボタンを特定してactiveクラスを付与
+            const buttons = document.querySelectorAll('.nav-menu .cyber-button');
+            const indexMap = { 'profile': 0, 'tools': 1, 'games': 2, 'updates': 3 };
+            if (buttons[indexMap[sectionId]]) {
+                buttons[indexMap[sectionId]].classList.add('active');
+            }
+
+            // 効果音再生
+            playSound('click-sound');
+        }
+
+        // 簡易的な効果音再生関数
+        function playSound(id) {
+            const audio = document.getElementById(id);
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log('Audio play failed (interaction required)'));
+            }
+        }
+
+        // デコレーション：ランダムな文字化け演出
+        const glitchTexts = document.querySelectorAll('.glitch-text');
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+
+        glitchTexts.forEach(text => {
+            text.addEventListener('mouseover', () => {
+                const original = text.innerText;
+                let iteration = 0;
+                const interval = setInterval(() => {
+                    text.innerText = text.innerText
+                        .split('')
+                        .map((char, index) => {
+                            if(index < iteration) return original[index];
+                            return chars[Math.floor(Math.random() * chars.length)];
+                        })
+                        .join('');
+                    
+                    if(iteration >= original.length) clearInterval(interval);
+                    iteration += 1 / 3;
+                }, 30);
+            });
+        });
+
+        window.addEventListener('load', () => {
+            console.log('SYSTEM INITIATED...');
+        });
+    </script>
+</body>
+</html>
