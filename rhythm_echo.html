@@ -3,183 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rhythm Echo - リズムの反響</title>
+    <title>Rhythm Echo - CYBER</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0055;
+            --neon-green: #0aff0a;
+            --bg-color: #050510;
+            --panel-bg: rgba(10, 15, 30, 0.9);
+        }
+
         body {
-            background-color: #1a1a2e;
-            color: #e94560;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--neon-cyan);
+            font-family: 'Share Tech Mono', monospace;
             overflow: hidden;
             touch-action: manipulation;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
+
+        /* Scanline Effect */
+        body:not(.light-mode)::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.6;
+        }
+
         canvas {
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
-            background: #fffff0; /* 楽譜らしいクリーム色 */
+            border: 1px solid var(--neon-cyan);
+            border-radius: 4px;
+            background: rgba(5, 5, 16, 0.8);
+            position: relative;
+            z-index: 1;
         }
+        body:not(.light-mode) canvas {
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3), 0 0 50px rgba(0, 243, 255, 0.1) inset;
+        }
+
         .overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(26, 26, 46, 0.98);
-            z-index: 10;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            background: rgba(5, 5, 10, 0.92);
+            z-index: 100;
             transition: opacity 0.3s;
+            backdrop-filter: blur(8px);
         }
-        .hidden {
-            opacity: 0;
-            pointer-events: none;
+        /* Using a specific class to avoid Tailwind conflict and ensure hiding */
+        .overlay-hidden { 
+            opacity: 0 !important; 
+            pointer-events: none !important; 
+            visibility: hidden !important;
         }
-        /* 汎用ボタンスタイル */
-        .btn {
-            background: #e94560;
-            color: white;
-            padding: 15px 40px;
-            font-size: 1.5rem;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s, box-shadow 0.2s;
+
+        .glitch-title {
+            font-size: 5rem;
             font-weight: bold;
-            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+            color: #fff;
+            text-shadow: 2px 2px var(--neon-pink), -2px -2px var(--neon-cyan);
+            animation: glitch-anim 2s infinite alternate-reverse;
+        }
+        @keyframes glitch-anim {
+            0% { transform: skew(0deg); }
+            20% { transform: skew(-2deg); }
+            40% { transform: skew(0deg); }
+            60% { transform: skew(2deg); }
+            80% { transform: skew(0deg); }
+            100% { transform: skew(0deg); }
+        }
+
+        .btn {
+            background: rgba(0, 243, 255, 0.1);
+            color: var(--neon-cyan);
+            padding: 12px 36px;
+            font-size: 1.5rem;
+            border: 1px solid var(--neon-cyan);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
             text-transform: uppercase;
+            font-family: 'Share Tech Mono', monospace;
         }
-        .btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 8px rgba(233, 69, 96, 0.4);
+        .btn:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-cyan);
         }
-        .btn-small {
-            padding: 10px 20px;
-            font-size: 1rem;
-        }
-        
-        /* Mode Select Buttons */
+        .btn:active { transform: scale(0.98); }
+
         .mode-container {
-            display: flex;
-            gap: 8px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
+            width: 100%;
+            max-width: 500px;
         }
         .mode-btn {
-            padding: 8px 16px;
-            border: 2px solid #555;
-            border-radius: 25px;
-            color: #aaa;
-            background: transparent;
+            padding: 12px 5px;
+            border: 1px solid #333;
+            color: #555;
+            background: rgba(0,0,0,0.6);
             cursor: pointer;
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 1rem;
             transition: all 0.2s;
+            text-align: center;
         }
+        .mode-btn:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
         .mode-btn.active {
-            border-color: #e94560;
-            color: #fff;
-            background: #e94560;
-            box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+            border-color: var(--neon-cyan);
+            color: #000;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 15px var(--neon-cyan);
         }
+        #modeCrazy:hover { border-color: var(--neon-pink); color: var(--neon-pink); }
+        #modeCrazy.active { background: var(--neon-pink); color: #fff; box-shadow: 0 0 20px var(--neon-pink); border-color: var(--neon-pink); }
 
-        /* Stage Select Buttons */
+        .stage-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            max-width: 450px;
+        }
         .stage-btn {
-            background: #16213e;
-            border: 2px solid #e94560;
-            color: #e94560;
-            width: 45px;
-            height: 45px;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            color: #555;
+            width: 100%;
+            aspect-ratio: 1;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s;
         }
         .stage-btn:hover {
-            background: #e94560;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
-        }
-        .stage-btn:active {
-            transform: scale(0.95);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            transform: scale(1.05);
         }
 
-        /* Key Config Slots */
-        .key-slot {
-            width: 60px;
-            height: 60px;
-            border: 2px solid #fff;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-            background: #333;
+        .setting-btn {
+            font-size: 0.9rem; font-weight: bold;
+            color: var(--neon-cyan);
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 110px;
+            text-align: center;
+            border-radius: 4px;
         }
-        .key-slot.active {
-            border-color: #e94560;
-            background: #e94560;
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+        .setting-btn:hover { background: rgba(0, 243, 255, 0.2); box-shadow: 0 0 10px var(--neon-cyan); }
+        .setting-btn.active { background: var(--neon-cyan); color: #000; }
 
-        /* Result Grid */
-        .result-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+        .key-config-grid {
+            display: grid; gap: 10px;
             margin-bottom: 2rem;
-            text-align: left;
-            width: 80%;
-            max-width: 400px;
+            max-width: 600px;
+        }
+        .key-slot {
+            width: 50px; height: 50px;
+            border: 1px solid var(--neon-cyan);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: bold;
+            color: var(--neon-cyan);
+            background: rgba(0,0,0,0.5);
+        }
+        .key-slot.active { background: var(--neon-cyan); color: #000; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        .result-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+            margin-bottom: 2rem; width: 90%; max-width: 450px;
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border: 1px solid #333;
         }
         .result-item {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid #444;
+            font-size: 1.5rem; color: #fff;
+            display: flex; justify-content: space-between;
+            border-bottom: 1px dashed #333;
             padding-bottom: 0.5rem;
         }
-        .result-label { color: #aaa; }
-        .perf { color: #fbbf24; }
-        .good { color: #4ade80; }
-        .ok { color: #60a5fa; }
-        .miss { color: #ef4444; }
-
-        #feedback {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3rem;
-            font-weight: bold;
-            pointer-events: none;
-            text-shadow: 0 0 10px rgba(0,0,0,0.2);
-            z-index: 5;
+        .result-label { color: #888; }
+        .perf { color: #fbbf24; text-shadow: 0 0 8px #fbbf24; } 
+        .good { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); } 
+        .miss { color: var(--neon-pink); text-shadow: 0 0 8px var(--neon-pink); }
+        
+        .rank-display {
+            font-size: 9rem; font-weight: 900; color: #fbbf24;
+            text-shadow: 0 0 40px #fbbf24;
+            position: absolute; top: 10%; right: 5%;
+            transform: rotate(10deg); opacity: 0.9;
+            font-family: 'Share Tech Mono', monospace;
+            z-index: 20;
         }
-        .anim-pop {
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        
+        #feedbackContainer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
         }
-        @keyframes pop {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        .feedback-item {
+            position: absolute; left: 50%; transform: translate(-50%, -50%);
+            font-size: 3.5rem; font-weight: 900; pointer-events: none;
+            z-index: 50; white-space: nowrap; font-family: 'Share Tech Mono', monospace;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.8);
+            animation: glitch-pop 0.3s forwards;
         }
+        @keyframes glitch-pop {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+        
+        #comboDisplay {
+            position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+            font-size: 6rem; font-weight: 900; 
+            color: rgba(0, 243, 255, 0.1);
+            pointer-events: none; transition: transform 0.1s;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+            z-index: 0;
+        }
+        body:not(.light-mode) .combo-active {
+            color: rgba(0, 243, 255, 0.6) !important;
+            text-shadow: 0 0 30px var(--neon-cyan);
+            animation: bounce 0.1s;
+        }
+        @keyframes bounce { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.15); } }
+        
+        .click-anywhere {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            color: var(--neon-cyan);
+            animation: blink 1s infinite;
+            border: 1px solid var(--neon-cyan);
+            padding: 10px 20px;
+            background: rgba(0, 243, 255, 0.1);
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-center">
@@ -187,55 +263,47 @@
     <!-- Game Canvas -->
     <div class="relative w-full max-w-4xl aspect-[16/9] px-4">
         <canvas id="gameCanvas" class="w-full h-full"></canvas>
-        <div id="feedback"></div>
+        <div id="feedbackContainer"></div>
+        <div id="comboDisplay"></div>
         
-        <!-- Start/Menu Overlay (Stage Select) -->
+        <!-- Start/Menu Overlay -->
         <div id="menuOverlay" class="overlay">
-            <h1 class="text-4xl md:text-5xl mb-2 text-white font-bold tracking-wider">RHYTHM ECHO</h1>
+            <h1 class="glitch-title mb-6">RHYTHM ECHO</h1>
             
-            <!-- Mode Selection -->
             <div class="mode-container">
                 <button class="mode-btn active" id="modeNormal" onclick="window.game.setMode('NORMAL')">NORMAL</button>
-                <button class="mode-btn" id="modeHard" onclick="window.game.setMode('HARD')">HARD</button>
-                <button class="mode-btn" id="modeSpeed" onclick="window.game.setMode('SPEED_UP')">SPEED UP</button>
-                <button class="mode-btn" id="modeNoRest" onclick="window.game.setMode('NO_REST')">NO REST</button>
+                <button class="mode-btn" id="modeTech" onclick="window.game.setMode('TECHNICAL')">TECHNICAL</button>
+                <button class="mode-btn" id="modeTwin" onclick="window.game.setMode('TWIN')">TWIN</button>
+                <button class="mode-btn" id="modeTrio" onclick="window.game.setMode('TRIO')">TRIO</button>
+                <button class="mode-btn" id="modeQuartet" onclick="window.game.setMode('QUARTET')">QUARTET</button>
+                <button class="mode-btn" id="modeCrazy" onclick="window.game.setMode('CRAZY')">CRAZY</button>
             </div>
 
-            <p class="text-gray-300 mb-4 text-lg">SELECT STAGE (MAX 25)</p>
-            
-            <!-- Stage Select Grid -->
-            <div id="stageGrid" class="grid grid-cols-5 gap-2 mb-6 max-w-lg">
-                <!-- JS will populate buttons 1-25 -->
-            </div>
+            <p class="text-cyan-400 mb-2 text-sm tracking-widest border-b border-cyan-800 pb-1">>> SELECT DATA NODE <<</p>
+            <div id="stageGrid" class="stage-grid"></div>
 
-            <div class="flex flex-col items-center gap-2">
-                <p id="currentKeysDisplay" class="text-gray-400 text-sm font-mono border border-gray-600 px-4 py-2 rounded-full">
-                    Keys: [D] [F] [J] [K] or Tap
-                </p>
-                <button id="configBtn" class="text-xs text-[#e94560] underline hover:text-white mt-1">
-                    CHANGE KEY BINDINGS
-                </button>
+            <div class="flex flex-wrap justify-center gap-3 w-full max-w-md mt-6">
+                <button id="soundBtn" class="setting-btn">SOUND: ECHO</button>
+                <button id="autoBtn" class="setting-btn">AUTO: OFF</button>
+                <button id="lightBtn" class="setting-btn" onclick="window.game.toggleLightMode()">LIGHT: OFF</button>
+                <button id="configBtn" class="setting-btn">KEY CONFIG</button>
             </div>
+            <p id="currentKeysDisplay" class="text-gray-500 text-xs mt-3 tracking-widest font-mono">SYSTEM: INITIALIZING...</p>
         </div>
 
         <!-- Key Config Overlay -->
-        <div id="configOverlay" class="overlay hidden">
-            <h2 class="text-3xl text-white mb-4 font-bold">KEY CONFIG</h2>
-            <p class="text-gray-300 mb-8">Press any 4 keys in order</p>
-            
-            <div class="flex gap-4 mb-8">
-                <div id="keySlot0" class="key-slot active">?</div>
-                <div id="keySlot1" class="key-slot">?</div>
-                <div id="keySlot2" class="key-slot">?</div>
-                <div id="keySlot3" class="key-slot">?</div>
-            </div>
-
-            <button id="cancelConfigBtn" class="btn btn-small bg-gray-600" style="background-color: #555;">CANCEL</button>
+        <div id="configOverlay" class="overlay overlay-hidden">
+            <h2 class="text-3xl text-cyan-400 mb-2 font-bold tracking-widest">>> INPUT CONFIG <<</h2>
+            <p id="configInstruction" class="text-gray-400 mb-8 text-sm">SET KEYS FOR CURRENT MODE</p>
+            <div id="keyConfigGrid" class="key-config-grid"></div>
+            <button id="cancelConfigBtn" class="btn">CONFIRM</button>
         </div>
 
-        <!-- Stage Clear Overlay (Result) -->
-        <div id="stageOverlay" class="overlay hidden">
-            <h2 id="stageTitle" class="text-4xl mb-6 text-white font-bold">STAGE CLEAR</h2>
+        <!-- Stage Clear Overlay -->
+        <div id="stageOverlay" class="overlay overlay-hidden">
+            <h2 id="stageTitle" class="text-5xl mb-8 text-white font-bold tracking-widest">CLEARED</h2>
+            <div id="rankDisplay" class="rank-display">S</div>
+            <div id="autoLabel" class="auto-label overlay-hidden" style="position:absolute; top:35%; right:10%; color:#ff0055; border:1px solid #ff0055; padding:2px 5px; transform:rotate(15deg); font-weight:bold; font-size:1.5rem;">AUTO</div>
             
             <div class="result-grid">
                 <div class="result-item"><span class="result-label perf">PERFECT</span> <span id="resPerf">0</span></div>
@@ -243,42 +311,37 @@
                 <div class="result-item"><span class="result-label ok">OK</span> <span id="resOk">0</span></div>
                 <div class="result-item"><span class="result-label miss">MISS</span> <span id="resMiss">0</span></div>
             </div>
-
-            <div class="flex gap-4">
-                <button id="titleBtn" class="btn" style="background: #333;">TITLE</button>
-                <button id="nextStageBtn" class="btn">NEXT</button>
+            
+            <div class="click-anywhere">>> TAP TO PROCEED <<</div>
+            
+            <div class="absolute bottom-10 left-10">
+                <button id="titleBtn" class="setting-btn" style="border-color:#444; color:#888;">RETURN TITLE</button>
             </div>
         </div>
 
         <!-- All Clear Overlay -->
-        <div id="resultOverlay" class="overlay hidden">
-            <h2 id="resultTitle" class="text-4xl mb-4 text-white font-bold">ALL STAGES CLEARED!</h2>
-            <p class="text-xl text-gray-300 mb-4">Total Results</p>
-            <div class="result-grid" id="finalResultGrid">
-                <!-- Populated by JS -->
-            </div>
-            <button id="retryBtn" class="btn">TITLE</button>
+        <div id="resultOverlay" class="overlay overlay-hidden">
+            <h2 id="resultTitle" class="text-6xl mb-8 text-white font-bold glitch-title">SYSTEM ALL GREEN</h2>
+            <div class="result-grid" id="finalResultGrid"></div>
+            <button id="retryBtn" class="btn mt-8">REBOOT SYSTEM</button>
         </div>
     </div>
 
     <!-- UI Info -->
-    <div class="mt-4 flex justify-between w-full max-w-4xl px-4 text-white font-mono text-xl">
-        <div id="levelDisplay">STAGE 1 - 1/5</div>
-        <div id="modeDisplay" class="text-gray-400">NORMAL</div>
+    <div id="gameUI" class="mt-2 flex justify-between w-full max-w-4xl px-4 text-cyan-400 font-mono text-lg tracking-widest overlay-hidden border-t border-cyan-900 pt-2">
+        <div id="levelDisplay">DATA: 01</div>
+        <div id="modeDisplay">MODE: NORMAL</div>
         <div id="bpmDisplay">BPM: 100</div>
     </div>
 
 <script>
-/**
- * AUDIO SYSTEM
- */
 class AudioController {
     constructor() {
         this.ctx = null;
         this.gainNode = null;
         this.noiseBuffer = null;
+        this.soundType = 'ECHO'; 
     }
-
     init() {
         if (!this.ctx) {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -291,408 +354,441 @@ class AudioController {
             this.ctx.resume();
         }
     }
-
+    setSoundType(type) { this.soundType = type; }
     createNoiseBuffer() {
         const bufferSize = this.ctx.sampleRate * 2.0; 
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
+        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
         this.noiseBuffer = buffer;
     }
-
-    playDrum(type, time) {
+    triggerDrum(type, time, pan = 0) {
         if (!this.ctx) return;
+        const panner = this.ctx.createStereoPanner();
+        panner.pan.value = pan;
+        panner.connect(this.gainNode);
         const gain = this.ctx.createGain();
-        gain.connect(this.gainNode);
-
+        gain.connect(panner);
         if (type === 'kick') {
             const osc = this.ctx.createOscillator();
             osc.frequency.setValueAtTime(150, time);
             osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
             gain.gain.setValueAtTime(0.8, time);
             gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
-            osc.connect(gain);
-            osc.start(time);
-            osc.stop(time + 0.5);
+            osc.connect(gain); osc.start(time); osc.stop(time + 0.5);
         } else if (type === 'snare') {
             const noise = this.ctx.createBufferSource();
             noise.buffer = this.noiseBuffer;
             const filter = this.ctx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.value = 1000;
-            noise.connect(filter);
-            filter.connect(gain);
+            filter.type = 'highpass'; filter.frequency.value = 1000;
+            noise.connect(filter); filter.connect(gain);
             gain.gain.setValueAtTime(0.6, time);
             gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
-            noise.start(time);
-            noise.stop(time + 0.2);
-            
+            noise.start(time); noise.stop(time + 0.2);
             const osc = this.ctx.createOscillator();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(100, time);
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(180, time);
             const snapGain = this.ctx.createGain();
             snapGain.gain.setValueAtTime(0.3, time);
             snapGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
-            osc.connect(snapGain);
-            snapGain.connect(this.gainNode);
-            osc.start(time);
-            osc.stop(time + 0.1);
-        } else if (type === 'hihat') {
+            osc.connect(snapGain); snapGain.connect(panner); 
+            osc.start(time); osc.stop(time + 0.1);
+        } else if (type === 'hihat' || type === 'closed_hihat') {
             const noise = this.ctx.createBufferSource();
             noise.buffer = this.noiseBuffer;
             const filter = this.ctx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.value = 5000;
-            noise.connect(filter);
-            filter.connect(gain);
+            filter.type = 'highpass'; filter.frequency.value = 5000;
+            noise.connect(filter); filter.connect(gain);
             gain.gain.setValueAtTime(0.2, time); 
             gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-            noise.start(time);
-            noise.stop(time + 0.05);
+            noise.start(time); noise.stop(time + 0.05);
+        } else if (type === 'open_hihat' || type === 'crash') {
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = this.noiseBuffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'highpass'; filter.frequency.value = 3000;
+            noise.connect(filter); filter.connect(gain);
+            gain.gain.setValueAtTime(0.3, time); 
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+            noise.start(time); noise.stop(time + 0.3);
+        } else if (type === 'tom') {
+            const osc = this.ctx.createOscillator();
+            osc.frequency.setValueAtTime(100, time);
+            osc.frequency.exponentialRampToValueAtTime(20, time + 0.3);
+            gain.gain.setValueAtTime(0.6, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+            osc.connect(gain); osc.start(time); osc.stop(time + 0.3);
         }
     }
-
-    playNote(time, type = 'high') {
+    playNote(time, type = 'high', pan = 0, laneIndex = 0, totalLanes = 1) {
         if (!this.ctx) return;
+        if (this.soundType === 'DRUM') {
+            let drum = 'snare';
+            const ratio = laneIndex / Math.max(totalLanes - 1, 1);
+            if (totalLanes === 1) { drum = type === 'hit' ? 'snare' : 'closed_hihat'; } 
+            else {
+                if (ratio <= 0.1) drum = 'crash'; 
+                else if (ratio <= 0.4) drum = 'closed_hihat';
+                else if (ratio <= 0.6) drum = 'snare';
+                else if (ratio <= 0.8) drum = 'tom';
+                else drum = 'kick';
+            }
+            this.triggerDrum(drum, time, pan);
+            return;
+        }
+        const panner = this.ctx.createStereoPanner();
+        panner.pan.value = pan;
+        panner.connect(this.gainNode);
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain);
-        gain.connect(this.gainNode);
-
-        if (type === 'high') { 
-            osc.frequency.value = 880; 
-            osc.type = 'sine';
-        } else if (type === 'hit') { 
-            osc.frequency.value = 1174.66; 
-            osc.type = 'triangle';
+        gain.connect(panner);
+        let baseFreq = 880;
+        if (this.soundType === 'WOOD') baseFreq = 1200; 
+        if (totalLanes > 1) {
+            const step = (baseFreq * 0.5) / (Math.max(totalLanes - 1, 1));
+            baseFreq = baseFreq - (laneIndex * step);
         }
-
-        const duration = 0.05;
+        if (this.soundType === '8BIT') {
+            osc.type = 'square';
+            if (type === 'hit') {
+                osc.frequency.setValueAtTime(baseFreq, time);
+                osc.frequency.setValueAtTime(baseFreq * 1.5, time + 0.03);
+            } else { osc.frequency.value = baseFreq; }
+        } else if (this.soundType === 'WOOD') {
+            osc.type = 'sine';
+            osc.frequency.value = type === 'hit' ? baseFreq * 1.2 : baseFreq;
+        } else {
+            if (type === 'high') { osc.type = 'sine'; osc.frequency.value = baseFreq; } 
+            else if (type === 'hit') { osc.type = 'triangle'; osc.frequency.value = baseFreq * 1.5; }
+        }
+        let decay = 0.05;
+        if (this.soundType === '8BIT') decay = 0.08;
+        if (this.soundType === 'WOOD') decay = 0.03; 
         osc.start(time);
         gain.gain.setValueAtTime(0, time);
         gain.gain.linearRampToValueAtTime(0.8, time + 0.005);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-        osc.stop(time + duration + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + decay);
+        osc.stop(time + decay + 0.05);
     }
-
-    getCurrentTime() {
-        return this.ctx ? this.ctx.currentTime : 0;
-    }
+    getCurrentTime() { return this.ctx ? this.ctx.currentTime : 0; }
 }
 
-/**
- * RHYTHM GENERATOR
- */
 class RhythmGenerator {
     constructor() {
         this.cells = {
-            // Basic
-            quarter:      { id: 'q',    offsets: [0], draw: 'quarter' },
-            rest:         { id: 'r',    offsets: [], draw: 'rest_q' },
-            eighths:      { id: '88',   offsets: [0, 0.5], draw: 'eighths' },
-            triplets:     { id: '333',  offsets: [0, 1/3, 2/3], draw: 'triplets' }, 
-            sixteenths:   { id: '16',   offsets: [0, 0.25, 0.5, 0.75], draw: 'sixteenths' },
-            
-            // 6-tuplets
-            sextuplets:   { id: '666666', offsets: [0, 1/6, 2/6, 3/6, 4/6, 5/6], draw: 'sextuplets' },
+            quarter: { id: 'q', offsets: [0], draw: 'quarter' },
+            rest: { id: 'r', offsets: [], draw: 'rest_q' },
+            eighths: { id: '88', offsets: [0, 0.5], draw: 'eighths' },
+            triplets: { id: '333', offsets: [0, 1/3, 2/3], draw: 'triplets' }, 
+            sixteenths: { id: '16', offsets: [0, 0.25, 0.5, 0.75], draw: 'sixteenths' },
+            quintuplets: { id: '55555', offsets: [0, 0.2, 0.4, 0.6, 0.8], draw: 'quintuplets' },
+            septuplets: { id: '7777777', offsets: [0, 1/7, 2/7, 3/7, 4/7, 5/7, 6/7], draw: 'septuplets' },
+            nonuplets: { id: '999999999', offsets: [0, 1/9, 2/9, 3/9, 4/9, 5/9, 6/9, 7/9, 8/9], draw: 'nonuplets' },
+            sextuplets: { id: '666666', offsets: [0, 1/6, 2/6, 3/6, 4/6, 5/6], draw: 'sextuplets' },
             sextuplets_4: { id: '6_4', offsets: [0, 1/6, 2/6, 3/6], draw: 'sextuplets_4' }, 
-            
-            // 32nd notes
-            thirtyseconds:{ id: '32',   offsets: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875], draw: 'thirtyseconds' },
+            thirtyseconds: { id: '32', offsets: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875], draw: 'thirtyseconds' },
             thirtyseconds_5: { id: '32_5', offsets: [0, 0.125, 0.25, 0.375, 0.5], draw: 'thirtyseconds_5' }, 
-            
-            // 48th notes (12-tuplets)
             fortyeighths_7: { id: '48_7', offsets: [0, 1/12, 2/12, 3/12, 4/12, 5/12, 6/12], draw: 'fortyeighths_7' },
-
-            // 64th notes (16-tuplets)
-            // 1拍に16個 = 0.0625間隔
-            // 前半9個 (0~0.5) で裏拍頭に着地
-            sixtyfourths_9: { 
-                id: '64_9', 
-                offsets: [0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5], 
-                draw: 'sixtyfourths_9' 
-            },
-
-            // Syncopated
-            e_ss:         { id: '8ss',offsets: [0, 0.5, 0.75], draw: 'eighth_two16' }, 
-            ss_e:         { id: 'ss8',offsets: [0, 0.25, 0.5], draw: 'two16_eighth' }, 
+            sixtyfourths_9: { id: '64_9', offsets: [0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5], draw: 'sixtyfourths_9' },
+            e_ss: { id: '8ss', offsets: [0, 0.5, 0.75], draw: 'eighth_two16' }, 
+            ss_e: { id: 'ss8', offsets: [0, 0.25, 0.5], draw: 'two16_eighth' }, 
         };
     }
-
-    // Determine Pattern Pool based on Stage & Mode
     getPool(stage, mode) {
         let pool = [];
+        let easy = ['quarter', 'eighths', 'rest'];
+        let medium = ['eighths', 'sixteenths', 'e_ss', 'ss_e', 'rest'];
+        let hard = ['sixteenths', 'triplets', 'sextuplets', 'sextuplets_4', 'rest', 'quarter'];
         
-        // --- BASE POOLS (Difficulty based) ---
-        let easy = ['quarter', 'eighths'];
-        if (mode !== 'NO_REST') easy.push('rest');
-
-        let medium = ['eighths', 'sixteenths', 'e_ss', 'ss_e'];
-        let hard = ['sixteenths', 'triplets', 'sextuplets', 'sextuplets_4'];
-        let expert = ['sixteenths', 'sextuplets', 'thirtyseconds', 'thirtyseconds_5'];
-        let master = ['thirtyseconds', 'fortyeighths_7', 'sextuplets', 'sextuplets_4'];
-        
-        // SPECIAL POOL FOR SPEED UP (Limits density to allow high BPM)
-        if (mode === 'SPEED_UP') {
-            if (stage <= 5) pool = easy;
-            else if (stage <= 10) pool = [...easy, ...medium];
-            else pool = ['eighths', 'sixteenths', 'triplets', 'e_ss', 'ss_e'];
-            
-            // Add rest spacing occasionally
-            if (mode !== 'NO_REST') pool.push('rest', 'quarter');
+        if (mode === 'CRAZY') return ['fortyeighths_7', 'sixtyfourths_9', 'septuplets', 'nonuplets'];
+        if (mode === 'TECHNICAL') {
+            if (stage <= 3) pool = ['quarter', 'eighths', 'triplets'];
+            else if (stage <= 8) pool = ['eighths', 'triplets', 'quintuplets'];
+            else if (stage <= 15) pool = ['triplets', 'quintuplets', 'septuplets', 'sixteenths'];
+            else pool = ['quintuplets', 'septuplets', 'nonuplets', 'sixteenths', 'rest'];
             return pool;
         }
-
-        // NORMAL / HARD Logic
-        let effectiveStage = stage;
-        if (mode === 'HARD') effectiveStage = stage + 5; 
-
-        if (effectiveStage <= 3) {
-            pool = easy;
-        } else if (effectiveStage <= 7) {
-            pool = [...easy, ...medium];
-        } else if (effectiveStage <= 12) {
-            pool = [...easy, ...medium, 'triplets'];
-        } else if (effectiveStage <= 17) {
-            pool = [...medium, ...hard];
-            if (mode !== 'NO_REST') pool.push('rest', 'quarter'); 
-        } else if (effectiveStage <= 21) {
-            pool = [...hard, ...expert];
-            if (mode !== 'NO_REST') pool.push('rest', 'quarter');
-        } else {
-            pool = [...expert, ...master];
-            if (mode !== 'NO_REST') pool.push('rest', 'quarter');
+        if (mode === 'SPEED_UP') {
+            if (stage <= 5) pool = easy;
+            else if (stage <= 10) pool = medium;
+            else pool = ['eighths', 'sixteenths', 'triplets', 'e_ss', 'ss_e', 'rest'];
+            return pool;
         }
-
-        // HARD MODE: 64th notes unlock at high stages
-        if (mode === 'HARD' && effectiveStage >= 28) { 
-             pool.push('sixtyfourths_9');
-        }
-        // Very high stage in Normal
-        if (stage >= 24) {
-             pool.push('sixtyfourths_9');
-        }
-
-        // NO REST MODE: Remove any accidental rests
-        if (mode === 'NO_REST') {
-            pool = pool.filter(p => p !== 'rest');
-        }
-
+        let expert = ['sixteenths', 'sextuplets', 'thirtyseconds', 'thirtyseconds_5', 'rest'];
+        let master = ['thirtyseconds', 'fortyeighths_7', 'sextuplets', 'sextuplets_4', 'rest'];
+        if (stage <= 3) pool = easy;
+        else if (stage <= 7) pool = medium;
+        else if (stage <= 12) pool = [...easy, ...medium, 'triplets']; 
+        else if (stage <= 17) pool = [...medium, ...hard];
+        else if (stage <= 21) pool = [...hard, ...expert];
+        else pool = [...expert, ...master];
+        if (stage >= 24) pool.push('sixtyfourths_9');
+        if (mode === 'NO_REST') pool = pool.filter(p => p !== 'rest');
         return pool;
     }
-
-    // Ensure at least one difficult pattern exists in high stages
     ensureDifficulty(beatPatterns, stage, mode) {
-        if (mode === 'SPEED_UP') return beatPatterns; // SPEED UP relies on BPM, not pattern complexity
-
+        if (mode === 'SPEED_UP') return beatPatterns;
         let difficultSet = [];
-        let effectiveStage = (mode === 'HARD') ? stage + 5 : stage;
-
-        if (effectiveStage >= 24) difficultSet = ['sixtyfourths_9', 'fortyeighths_7'];
-        else if (effectiveStage >= 22) difficultSet = ['fortyeighths_7', 'thirtyseconds', 'thirtyseconds_5'];
-        else if (effectiveStage >= 18) difficultSet = ['thirtyseconds', 'thirtyseconds_5', 'sextuplets', 'sextuplets_4'];
-        else if (effectiveStage >= 13) difficultSet = ['sextuplets', 'sextuplets_4', 'triplets'];
-        else if (effectiveStage >= 8) difficultSet = ['triplets', 'sixteenths'];
-        
+        if (mode === 'CRAZY') difficultSet = ['sixtyfourths_9', 'fortyeighths_7', 'nonuplets'];
+        else if (mode === 'TECHNICAL') {
+            if (stage >= 16) difficultSet = ['nonuplets', 'septuplets'];
+            else if (stage >= 9) difficultSet = ['septuplets', 'quintuplets'];
+            else if (stage >= 4) difficultSet = ['quintuplets'];
+        } else {
+            if (stage >= 24) difficultSet = ['sixtyfourths_9', 'fortyeighths_7'];
+            else if (stage >= 22) difficultSet = ['fortyeighths_7', 'thirtyseconds', 'thirtyseconds_5'];
+            else if (stage >= 18) difficultSet = ['thirtyseconds', 'thirtyseconds_5', 'sextuplets'];
+            else if (stage >= 13) difficultSet = ['sextuplets', 'sextuplets_4', 'triplets'];
+            else if (stage >= 8) difficultSet = ['triplets', 'sixteenths'];
+        }
         if (difficultSet.length === 0) return beatPatterns; 
-
         const hasDifficulty = beatPatterns.some(cell => difficultSet.includes(cell.id) || difficultSet.some(ds => cell.draw.includes(ds.split('_')[0])));
-
         if (!hasDifficulty) {
             const replaceIndex = Math.floor(Math.random() * 3) + 1; 
-            if (difficultSet.length > 0) {
-                const targetKey = difficultSet[Math.floor(Math.random() * difficultSet.length)];
-                if (this.cells[targetKey]) {
-                    beatPatterns[replaceIndex] = this.cells[targetKey];
-                }
-            }
+            const targetKey = difficultSet[Math.floor(Math.random() * difficultSet.length)];
+            let foundKey = Object.keys(this.cells).find(k => this.cells[k].id === targetKey);
+            if (!foundKey) foundKey = targetKey;
+            if (this.cells[foundKey]) beatPatterns[replaceIndex] = this.cells[foundKey];
         }
         return beatPatterns;
     }
-
     generate(stage, mode) {
         const beatPatterns = [];
         const pool = this.getPool(stage, mode);
-
         for(let i=0; i<4; i++) {
             let choice;
             let stabilizationLimit = 20;
-            if (mode === 'HARD') stabilizationLimit = 15;
-            
-            // SPEED_UP: 1st beat stabilization is less strict
+            if (mode === 'CRAZY') stabilizationLimit = 0; 
             if (mode === 'SPEED_UP') stabilizationLimit = 5;
-
+            if (mode === 'TWIN' || mode === 'TRIO' || mode === 'QUARTET') stabilizationLimit = 10;
             if (i === 0 && stage < stabilizationLimit) {
                 const safePool = ['quarter', 'eighths', 'sixteenths'].filter(k => pool.includes(k) || k==='quarter');
-                choice = safePool[Math.floor(Math.random() * safePool.length)];
-                if(!choice) choice = 'quarter';
+                choice = safePool[Math.floor(Math.random() * safePool.length)] || 'quarter';
             } else {
                 choice = pool[Math.floor(Math.random() * pool.length)];
             }
             beatPatterns.push(this.cells[choice]);
         }
-
         const finalPatterns = this.ensureDifficulty(beatPatterns, stage, mode);
-
         const notes = [];
         finalPatterns.forEach((cell, beatIndex) => {
             cell.offsets.forEach((offset) => {
-                notes.push({
-                    beat: beatIndex + offset,
-                    hit: false,
-                    type: 'note'
-                });
+                notes.push({ beat: beatIndex + offset, hit: false });
             });
         });
-
         return { notes, structure: finalPatterns };
     }
 }
 
-/**
- * GAME ENGINE
- */
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.audio = new AudioController();
         this.generator = new RhythmGenerator();
-        
-        // Settings
-        this.keyConfig = ['KeyD', 'KeyF', 'KeyJ', 'KeyK']; 
-        this.keyLabels = ['D', 'F', 'J', 'K'];
+        this.keyConfigs = {
+            'SINGLE': ['KeyD', 'KeyF', 'KeyJ', 'KeyK'], 
+            'TWIN':   ['KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL'], 
+            'TRIO':   ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Backslash'],
+            'QUARTET':['Key1', 'Key2', 'Key3', 'Key4', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyZ', 'KeyX', 'KeyC', 'KeyV']
+        };
+        this.keyLabels = {
+            'SINGLE': ['D', 'F', 'J', 'K'],
+            'TWIN':   ['S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+            'TRIO':   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", '\\'],
+            'QUARTET':['1', '2', '3', '4', 'Q', 'W', 'E', 'R', 'A', 'S', 'D', 'F', 'Z', 'X', 'C', 'V']
+        };
         this.mode = 'NORMAL'; 
-
-        // State
+        this.isAuto = false;
+        this.lightMode = false;
         this.state = 'MENU';
         this.stage = 1;
         this.round = 1;
         this.maxRounds = 5;
         this.maxStages = 25; 
-        
         this.bpm = 100;
         this.startTime = 0;
-        this.patternData = null; 
-        this.userInputs = [];
+        this.lanes = []; 
+        this.combo = 0;
         this.judgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
         this.totalJudgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
-
+        this.effects = [];
         this.handleInput = this.handleInput.bind(this);
         this.setupInputs();
         this.setupUI();
         this.resize();
         window.addEventListener('resize', () => this.resize());
-
         this.loop = this.loop.bind(this);
         requestAnimationFrame(this.loop);
     }
-
+    getModeKeyType() {
+        if (this.mode === 'TWIN') return 'TWIN';
+        if (this.mode === 'TRIO') return 'TRIO';
+        if (this.mode === 'QUARTET') return 'QUARTET';
+        return 'SINGLE';
+    }
+    getCurrentKeys() { return this.keyConfigs[this.getModeKeyType()]; }
+    getCurrentKeyLabels() { return this.keyLabels[this.getModeKeyType()]; }
     setupInputs() {
         document.addEventListener('keydown', (e) => {
-            if (this.isConfiguring) {
-                e.preventDefault();
-                this.handleConfigInput(e);
-            } else if (this.state === 'PLAY' || this.state === 'LISTEN') { 
-                if (this.keyConfig.includes(e.code)) {
+            if (this.isConfiguring) { e.preventDefault(); this.handleConfigInput(e); } 
+            else if (this.state === 'PLAY' || this.state === 'LISTEN') { 
+                const currentKeys = this.getCurrentKeys();
+                if (currentKeys.includes(e.code) && !this.isAuto) { 
                     if(e.code === 'Space') e.preventDefault();
-                    this.handleInput();
+                    this.triggerInput(e.code);
                 }
             }
         });
         document.addEventListener('touchstart', (e) => {
-             if (this.state === 'PLAY' || this.state === 'LISTEN' || e.target === this.canvas) {
-                 e.preventDefault();
-                 this.handleInput();
-             }
+            if (this.state === 'CLEAR_WAIT') { this.nextStage(); return; }
+            if ((this.state === 'PLAY' || this.state === 'LISTEN') && e.target === this.canvas && !this.isAuto) {
+                e.preventDefault();
+                this.triggerInput(this.getCurrentKeys()[0]);
+            }
         }, { passive: false });
         document.addEventListener('mousedown', (e) => {
-            if (e.target === this.canvas && (this.state === 'PLAY' || this.state === 'LISTEN')) {
-                this.handleInput();
+            if (this.state === 'CLEAR_WAIT') { this.nextStage(); return; }
+            if (e.target === this.canvas && (this.state === 'PLAY' || this.state === 'LISTEN') && !this.isAuto) {
+                this.triggerInput(this.getCurrentKeys()[0]);
             }
         });
     }
-
+    triggerInput(code) {
+        let laneIndex = 0;
+        const currentKeys = this.getCurrentKeys();
+        const kIndex = currentKeys.indexOf(code);
+        if (kIndex === -1) return;
+        laneIndex = Math.floor(kIndex / 4);
+        if (this.lanes.length === 1) laneIndex = 0;
+        this.handleInput(laneIndex);
+    }
     setupUI() {
         this.initStageButtons();
-        document.getElementById('nextStageBtn').onclick = () => this.nextStage();
         document.getElementById('titleBtn').onclick = () => this.resetToTitle();
         document.getElementById('retryBtn').onclick = () => this.resetToTitle();
         document.getElementById('configBtn').onclick = () => this.startKeyConfig();
         document.getElementById('cancelConfigBtn').onclick = () => this.cancelKeyConfig();
+        document.getElementById('soundBtn').onclick = () => this.toggleSound();
+        document.getElementById('autoBtn').onclick = () => this.toggleAuto();
+        document.getElementById('lightBtn').onclick = () => this.toggleLightMode();
         this.updateKeyDisplay();
     }
-
+    toggleLightMode() {
+        this.lightMode = !this.lightMode;
+        document.body.classList.toggle('light-mode', this.lightMode);
+        document.getElementById('lightBtn').innerText = `LIGHT: ${this.lightMode ? 'ON' : 'OFF'}`;
+        document.getElementById('lightBtn').classList.toggle('active', this.lightMode);
+    }
+    toggleSound() {
+        const types = ['ECHO', '8BIT', 'WOOD', 'DRUM'];
+        let current = this.audio.soundType;
+        let idx = types.indexOf(current);
+        let next = types[(idx + 1) % types.length];
+        this.audio.setSoundType(next);
+        document.getElementById('soundBtn').innerText = `SOUND: ${next}`;
+    }
+    toggleAuto() {
+        this.isAuto = !this.isAuto;
+        document.getElementById('autoBtn').innerText = `AUTO: ${this.isAuto ? 'ON' : 'OFF'}`;
+        document.getElementById('autoBtn').classList.toggle('active', this.isAuto);
+    }
     setMode(mode) {
         this.mode = mode;
         document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
         if(mode === 'NORMAL') document.getElementById('modeNormal').classList.add('active');
-        if(mode === 'HARD') document.getElementById('modeHard').classList.add('active');
-        if(mode === 'NO_REST') document.getElementById('modeNoRest').classList.add('active');
         if(mode === 'SPEED_UP') document.getElementById('modeSpeed').classList.add('active');
+        if(mode === 'TECHNICAL') document.getElementById('modeTech').classList.add('active');
+        if(mode === 'TWIN') document.getElementById('modeTwin').classList.add('active');
+        if(mode === 'TRIO') document.getElementById('modeTrio').classList.add('active');
+        if(mode === 'QUARTET') document.getElementById('modeQuartet').classList.add('active');
+        if(mode === 'CRAZY') document.getElementById('modeCrazy').classList.add('active');
+        if(mode === 'NO_REST') document.getElementById('modeNoRest').classList.add('active');
+        this.updateKeyDisplay();
     }
-
     initStageButtons() {
         const grid = document.getElementById('stageGrid');
         grid.innerHTML = '';
         for (let i = 1; i <= this.maxStages; i++) {
-            const btn = document.createElement('button');
+            const btn = document.createElement('div');
             btn.className = 'stage-btn';
             btn.innerText = i;
             btn.onclick = () => this.startGame(i);
             grid.appendChild(btn);
         }
     }
-
-    // --- KEY CONFIG ---
     startKeyConfig() {
         this.isConfiguring = true;
         this.tempKeys = [];
         this.tempLabels = [];
-        document.getElementById('menuOverlay').classList.add('hidden');
+        const type = this.getModeKeyType();
+        const keyCount = this.keyConfigs[type].length;
+        document.getElementById('menuOverlay').classList.add('hidden'); // overlay-hidden not used here, using generic hidden
+        document.getElementById('menuOverlay').classList.remove('flex'); // Ensuring display toggle works with custom class logic if needed
+        document.getElementById('menuOverlay').style.display = 'none'; // Force hide
+        
         document.getElementById('configOverlay').classList.remove('hidden');
-        for(let i=0; i<4; i++) {
-            const slot = document.getElementById(`keySlot${i}`);
+        document.getElementById('configOverlay').classList.remove('overlay-hidden');
+        document.getElementById('configOverlay').style.display = 'flex';
+
+        const grid = document.getElementById('keyConfigGrid');
+        grid.innerHTML = '';
+        if (keyCount > 8) grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+        else if (keyCount > 4) grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+        else grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+
+        for(let i=0; i<keyCount; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'key-slot';
+            slot.id = `keySlot${i}`;
             slot.innerText = '?';
-            slot.classList.remove('active');
             if(i===0) slot.classList.add('active');
+            grid.appendChild(slot);
         }
+        document.getElementById('configInstruction').innerText = `PRESS ${keyCount} KEYS`;
     }
     cancelKeyConfig() {
         this.isConfiguring = false;
         document.getElementById('configOverlay').classList.add('hidden');
+        document.getElementById('configOverlay').style.display = 'none';
         document.getElementById('menuOverlay').classList.remove('hidden');
+        document.getElementById('menuOverlay').style.display = 'flex';
     }
     handleConfigInput(e) {
         if (!this.isConfiguring) return;
+        const type = this.getModeKeyType();
+        const keyCount = this.keyConfigs[type].length;
         const index = this.tempKeys.length;
-        if (index < 4) {
+        if (index < keyCount) {
             this.tempKeys.push(e.code);
-            let label = e.key.toUpperCase();
+            let label = e.key.toUpperCase().replace('KEY', '');
             if (e.code === 'Space') label = 'SPC';
-            if (label.length > 3) label = label.substring(0, 3);
+            if (label.length > 2) label = label.substring(0,2);
             this.tempLabels.push(label);
             document.getElementById(`keySlot${index}`).innerText = label;
             document.getElementById(`keySlot${index}`).classList.remove('active');
-            if (index + 1 < 4) document.getElementById(`keySlot${index+1}`).classList.add('active');
+            if (index + 1 < keyCount) document.getElementById(`keySlot${index+1}`).classList.add('active');
             else setTimeout(() => { this.finishKeyConfig(); }, 300);
         }
     }
     finishKeyConfig() {
-        this.keyConfig = [...this.tempKeys];
-        this.keyLabels = [...this.tempLabels];
+        const type = this.getModeKeyType();
+        this.keyConfigs[type] = [...this.tempKeys];
+        this.keyLabels[type] = [...this.tempLabels];
         this.isConfiguring = false;
         this.updateKeyDisplay();
         document.getElementById('configOverlay').classList.add('hidden');
+        document.getElementById('configOverlay').style.display = 'none';
         document.getElementById('menuOverlay').classList.remove('hidden');
+        document.getElementById('menuOverlay').style.display = 'flex';
     }
     updateKeyDisplay() {
-        document.getElementById('currentKeysDisplay').innerText = `Keys: [${this.keyLabels.join('] [')}] or Tap`;
+        const labels = this.getCurrentKeyLabels();
+        let text = "";
+        if (labels.length <= 4) text = `[${labels.join('][')}]`;
+        else text = `${labels.length} KEYS Configured`;
+        document.getElementById('currentKeysDisplay').innerText = `Keys (${this.getModeKeyType()}): ${text}`;
     }
-
-    // --- GAME LOGIC ---
     resize() {
         this.canvas.width = this.canvas.clientWidth * window.devicePixelRatio;
         this.canvas.height = this.canvas.clientHeight * window.devicePixelRatio;
@@ -702,64 +798,60 @@ class Game {
         this.virtualWidth = this.canvas.clientWidth;
         this.virtualHeight = this.canvas.clientHeight;
     }
-
     resetToTitle() {
         this.state = 'MENU';
         document.getElementById('menuOverlay').classList.remove('hidden');
-        document.getElementById('resultOverlay').classList.add('hidden');
         document.getElementById('stageOverlay').classList.add('hidden');
+        document.getElementById('resultOverlay').classList.add('hidden');
+        document.getElementById('gameUI').classList.add('hidden');
+        document.getElementById('resultOverlay').classList.add('overlay-hidden'); // Force hide
+        document.getElementById('stageOverlay').classList.add('overlay-hidden');
+        document.getElementById('comboDisplay').innerText = "";
         this.totalJudgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
     }
-
     startGame(selectedStage) {
         this.audio.init();
         this.stage = selectedStage;
         this.judgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+        this.combo = 0;
+        this.updateCombo();
         this.round = 1;
         this.updateUI();
         document.getElementById('menuOverlay').classList.add('hidden');
-        document.getElementById('resultOverlay').classList.add('hidden');
         document.getElementById('stageOverlay').classList.add('hidden');
+        document.getElementById('stageOverlay').classList.add('overlay-hidden');
+        document.getElementById('resultOverlay').classList.add('hidden');
+        document.getElementById('resultOverlay').classList.add('overlay-hidden');
+        document.getElementById('gameUI').classList.remove('hidden');
+        document.getElementById('gameUI').classList.remove('overlay-hidden'); // remove any stray classes
         this.startRound();
     }
-
     calculateBPM(stage) {
-        // SPECIAL LOGIC FOR SPEED UP MODE
-        if (this.mode === 'SPEED_UP') {
-            // Start at 120, increase by 5 per stage. Max 240.
-            // Pattern density is limited in getPool so this is safe.
-            return Math.min(120 + ((stage - 1) * 5), 240);
-        }
-
-        // NORMAL / HARD Logic
+        if (this.mode === 'TWIN' || this.mode === 'TRIO' || this.mode === 'QUARTET') return 100;
+        if (this.mode === 'SPEED_UP') return Math.min(120 + ((stage - 1) * 5), 240);
         let base = 90 + ((stage - 1) * 2); 
-        if (this.mode === 'HARD') base += 10; 
-
-        // Cap BPM for high density notes (Safety mechanism for Non-Speed Up modes)
-        let hasUltraFast = false;
-        if ((this.mode === 'HARD' && stage >= 23) || stage >= 24) hasUltraFast = true;
-        
-        if (hasUltraFast) {
-            base = Math.min(base, 90); 
-        } else if (stage >= 22) { // 48th notes
-            base = Math.min(base, 100);
-        } else if (stage >= 18) { // 32nd notes
-            base = Math.min(base, 110);
-        }
-
+        if (this.mode === 'TECHNICAL') base -= 10; 
+        if (this.mode === 'CRAZY') return Math.min(120 + (stage * 3), 180);
+        let hasUltraFast = (stage >= 24); 
+        if (hasUltraFast) base = Math.min(base, 90); 
+        else if (stage >= 22) base = Math.min(base, 100); 
+        else if (stage >= 18) base = Math.min(base, 110); 
         return base;
     }
-
     startRound() {
         this.state = 'IDLE';
-        this.userInputs = [];
         this.bpm = this.calculateBPM(this.stage);
         this.measureDuration = (60 / this.bpm) * 4;
-        
-        // Generate with Mode
-        this.patternData = this.generator.generate(this.stage, this.mode);
+        this.lanes = [];
+        let laneCount = 1;
+        if (this.mode === 'TWIN') laneCount = 2;
+        if (this.mode === 'TRIO') laneCount = 3;
+        if (this.mode === 'QUARTET') laneCount = 4;
+        for(let i=0; i<laneCount; i++) {
+            const data = this.generator.generate(this.stage, this.mode);
+            this.lanes.push({ ...data, userInputs: [] });
+        }
         this.updateUI();
-        
         setTimeout(() => {
             this.startTime = this.audio.getCurrentTime() + 0.5;
             this.state = 'LISTEN';
@@ -767,105 +859,148 @@ class Game {
             this.scheduleBackingTrack();
         }, 500);
     }
-
     scheduleDemonstration() {
-        this.patternData.notes.forEach(note => {
-            const time = this.startTime + (note.beat * (60 / this.bpm));
-            this.audio.playNote(time, 'high');
+        const totalLanes = this.lanes.length;
+        this.lanes.forEach((lane, index) => {
+            let pan = 0;
+            if (totalLanes > 1) pan = -0.8 + (1.6 * (index / (totalLanes - 1)));
+            lane.notes.forEach(note => {
+                const time = this.startTime + (note.beat * (60 / this.bpm));
+                this.audio.playNote(time, 'high', totalLanes > 1 ? pan : 0, index, totalLanes);
+            });
         });
     }
-
     scheduleBackingTrack() {
         const beatTime = 60 / this.bpm;
         for(let i = 0; i < 8; i++) {
             const t = this.startTime + (i * beatTime);
-            this.audio.playDrum('kick', t);
-            if (i % 4 === 1 || i % 4 === 3) this.audio.playDrum('snare', t);
-            this.audio.playDrum('hihat', t); 
-            this.audio.playDrum('hihat', t + (beatTime / 2)); 
+            this.audio.triggerDrum('kick', t);
+            if (i % 4 === 1 || i % 4 === 3) this.audio.triggerDrum('snare', t);
+            this.audio.triggerDrum('hihat', t); 
+            this.audio.triggerDrum('hihat', t + (beatTime / 2)); 
         }
     }
-
-    handleInput() {
+    handleInput(laneIndex) {
         if (this.state !== 'PLAY' && this.state !== 'LISTEN') return;
+        if (this.lanes.length === 1) laneIndex = 0;
         const now = this.audio.getCurrentTime();
         const playPhaseStart = this.startTime + this.measureDuration;
-        const relativeTime = now - playPhaseStart;
-        const beatPos = relativeTime / (60 / this.bpm);
-
-        if (this.state === 'LISTEN') {
-            if (beatPos < -0.25) return; 
+        const beatPos = (now - playPhaseStart) / (60 / this.bpm); 
+        if (this.state === 'LISTEN') { if (beatPos < -0.25) return; }
+        if (this.lanes[laneIndex]) {
+            this.lanes[laneIndex].userInputs.push({ beat: beatPos, time: now });
+            this.judgeInput(laneIndex, beatPos);
         }
-        
-        this.userInputs.push({ beat: beatPos, time: now });
-        this.judgeInput(beatPos);
     }
-
-    judgeInput(beatPos) {
+    judgeInput(laneIndex, beatPos) {
         const tolerance = 0.16; 
-        let hit = false;
-        let diff = 0;
-
-        for (let note of this.patternData.notes) {
+        const lane = this.lanes[laneIndex];
+        const totalLanes = this.lanes.length;
+        for (let note of lane.notes) {
             if (note.hit) continue;
-            diff = Math.abs(note.beat - beatPos);
+            let diff = Math.abs(note.beat - beatPos);
             if (diff < tolerance) {
                 note.hit = true;
-                hit = true;
-                this.audio.playNote(this.audio.getCurrentTime(), 'hit');
-                
-                let text = "";
-                let color = "";
-                
-                if (diff < 0.05) {
-                    this.judgeCounts.perfect++;
-                    text = "PERFECT"; color = "#fbbf24";
-                } else if (diff < 0.10) {
-                    this.judgeCounts.good++;
-                    text = "GOOD"; color = "#4ade80";
-                } else {
-                    this.judgeCounts.ok++;
-                    text = "OK"; color = "#60a5fa";
-                }
-                
-                this.showFeedback(text, color);
+                let pan = 0;
+                if (totalLanes > 1) pan = -0.8 + (1.6 * (laneIndex / (totalLanes - 1)));
+                this.audio.playNote(this.audio.getCurrentTime(), 'hit', pan, laneIndex, totalLanes);
+                if (!this.lightMode) { this.spawnEffect(laneIndex, note.beat); }
+                let text = ""; let color = "";
+                if (diff < 0.05) { this.judgeCounts.perfect++; this.combo++; text = "PERFECT"; color = "#fbbf24"; } 
+                else if (diff < 0.10) { this.judgeCounts.good++; this.combo++; text = "GOOD"; color = "#4ade80"; } 
+                else { this.judgeCounts.ok++; this.combo++; text = "OK"; color = "#60a5fa"; }
+                this.updateCombo();
+                this.showFeedback(text, color, laneIndex);
                 break;
             }
         }
     }
-
-    showFeedback(text, color) {
-        const el = document.getElementById('feedback');
-        el.innerText = text;
-        el.style.color = color;
-        el.classList.remove('anim-pop');
-        void el.offsetWidth;
-        el.classList.add('anim-pop');
+    processAutoPlay() {
+        const now = this.audio.getCurrentTime();
+        const playPhaseStart = this.startTime + this.measureDuration;
+        const currentBeat = (now - playPhaseStart) / (60 / this.bpm);
+        const totalLanes = this.lanes.length;
+        this.lanes.forEach((lane, lIdx) => {
+            lane.notes.forEach(note => {
+                if (!note.hit && note.beat <= currentBeat + 0.02) {
+                    note.hit = true;
+                    let pan = 0;
+                    if (totalLanes > 1) pan = -0.8 + (1.6 * (lIdx / (totalLanes - 1)));
+                    this.audio.playNote(now, 'hit', pan, lIdx, totalLanes);
+                    if (!this.lightMode) { this.spawnEffect(lIdx, note.beat); }
+                    this.judgeCounts.perfect++;
+                    this.combo++;
+                    this.updateCombo();
+                    this.showFeedback("PERFECT", "#fbbf24", lIdx);
+                }
+            });
+        });
     }
-
+    spawnEffect(laneIndex, beat) {
+        if(this.lightMode) return;
+        this.effects.push({ laneIndex: laneIndex, beat: beat, startTime: Date.now(), life: 1.0 });
+    }
+    updateCombo() {
+        const el = document.getElementById('comboDisplay');
+        if (this.combo > 1) {
+            el.innerText = this.combo + " COMBO";
+            el.classList.remove('combo-active');
+            void el.offsetWidth;
+            el.classList.add('combo-active');
+        } else {
+            el.innerText = "";
+        }
+    }
+    showFeedback(text, color, laneIndex = 0) {
+        const container = document.getElementById('feedbackContainer');
+        const el = document.createElement('div');
+        el.className = 'feedback-item';
+        el.innerText = text; el.style.color = color;
+        const totalLanes = this.lanes.length;
+        if (totalLanes > 1) {
+            const laneHeightPerc = 100 / totalLanes;
+            const topPos = (laneIndex * laneHeightPerc) + (laneHeightPerc / 2);
+            el.style.top = topPos + '%';
+        } else {
+            el.style.top = '40%';
+        }
+        container.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+    clearFeedbacks() { document.getElementById('feedbackContainer').innerHTML = ''; }
     nextStage() {
         this.totalJudgeCounts.perfect += this.judgeCounts.perfect;
         this.totalJudgeCounts.good += this.judgeCounts.good;
         this.totalJudgeCounts.ok += this.judgeCounts.ok;
         this.totalJudgeCounts.miss += this.judgeCounts.miss;
-
-        if (this.stage >= this.maxStages) {
-            this.showAllClear();
-            return;
-        }
-        
+        if (this.stage >= this.maxStages) { this.showAllClear(); return; }
         this.stage++;
         this.round = 1;
         this.judgeCounts = { perfect: 0, good: 0, ok: 0, miss: 0 };
         document.getElementById('stageOverlay').classList.add('hidden');
+        document.getElementById('stageOverlay').classList.add('overlay-hidden');
+        this.state = 'IDLE'; 
         this.updateUI();
         this.startRound();
     }
-
+    calculateRank() {
+        const total = this.judgeCounts.perfect + this.judgeCounts.good + this.judgeCounts.ok + this.judgeCounts.miss;
+        if (total === 0) return "-";
+        const score = (this.judgeCounts.perfect * 3) + (this.judgeCounts.good * 2) + (this.judgeCounts.ok * 1);
+        const maxScore = total * 3;
+        const percentage = score / maxScore;
+        if (percentage === 1.0) return "SS";
+        if (percentage >= 0.95) return "S";
+        if (percentage >= 0.8) return "A";
+        if (percentage >= 0.7) return "B";
+        return "C";
+    }
     showAllClear() {
+        this.state = 'RESULT'; // FIX: Ensure state is updated so click doesn't trigger nextStage
         document.getElementById('stageOverlay').classList.add('hidden');
+        document.getElementById('stageOverlay').classList.add('overlay-hidden');
         document.getElementById('resultOverlay').classList.remove('hidden');
-        
+        document.getElementById('resultOverlay').classList.remove('overlay-hidden');
         const grid = document.getElementById('finalResultGrid');
         grid.innerHTML = `
             <div class="result-item"><span class="result-label perf">PERFECT</span> <span>${this.totalJudgeCounts.perfect}</span></div>
@@ -874,46 +1009,43 @@ class Game {
             <div class="result-item"><span class="result-label miss">MISS</span> <span>${this.totalJudgeCounts.miss}</span></div>
         `;
     }
-
     updateUI() {
         document.getElementById('levelDisplay').innerText = `STAGE ${this.stage} - LOOP ${this.round}/${this.maxRounds}`;
         document.getElementById('bpmDisplay').innerText = `BPM: ${this.bpm}`;
         document.getElementById('modeDisplay').innerText = this.mode.replace('_', ' ');
     }
-
     loop() {
         this.updateLogic();
         this.draw();
         requestAnimationFrame(this.loop);
     }
-
     updateLogic() {
-        if (this.state === 'MENU' || this.state === 'RESULT') return;
+        if (this.state === 'MENU' || this.state === 'RESULT' || this.state === 'CLEAR_WAIT') return;
         if (this.state === 'IDLE') return;
-
         const now = this.audio.getCurrentTime();
         const cycleDuration = this.measureDuration * 2;
         const timeInCycle = now - this.startTime;
-
         if (this.state === 'LISTEN') {
-            if (timeInCycle >= this.measureDuration) {
-                this.state = 'PLAY';
-            }
+            if (timeInCycle >= this.measureDuration) this.state = 'PLAY';
         } else if (this.state === 'PLAY') {
-            if (timeInCycle >= cycleDuration) {
-                this.endRound();
-            }
+            if (this.isAuto) this.processAutoPlay();
+            if (timeInCycle >= cycleDuration) this.endRound();
         }
     }
-
     endRound() {
         this.state = 'IDLE';
-        const missedNotes = this.patternData.notes.filter(n => !n.hit).length;
-        if (missedNotes > 0) {
-            this.judgeCounts.miss += missedNotes;
-            this.showFeedback("MISS", "#ef4444");
+        this.clearFeedbacks(); 
+        let totalMiss = 0;
+        this.lanes.forEach(lane => {
+            const missed = lane.notes.filter(n => !n.hit).length;
+            totalMiss += missed;
+        });
+        if (totalMiss > 0) {
+            this.judgeCounts.miss += totalMiss;
+            this.combo = 0;
+            this.updateCombo();
+            this.showFeedback("MISS", "#ef4444"); 
         }
-
         setTimeout(() => {
             this.round++;
             if (this.round > this.maxRounds) {
@@ -922,99 +1054,142 @@ class Game {
                 document.getElementById('resGood').innerText = this.judgeCounts.good;
                 document.getElementById('resOk').innerText = this.judgeCounts.ok;
                 document.getElementById('resMiss').innerText = this.judgeCounts.miss;
+                document.getElementById('rankDisplay').innerText = this.calculateRank();
+                if (this.isAuto) document.getElementById('autoLabel').classList.remove('hidden', 'overlay-hidden');
+                else document.getElementById('autoLabel').classList.add('hidden', 'overlay-hidden');
+                
+                document.getElementById('gameUI').classList.add('hidden'); 
                 document.getElementById('stageOverlay').classList.remove('hidden');
+                document.getElementById('stageOverlay').classList.remove('overlay-hidden');
+                this.state = 'CLEAR_WAIT'; 
             } else {
                 this.startRound();
             }
         }, 1000);
     }
-
     draw() {
         const ctx = this.ctx;
         const w = this.virtualWidth;
         const h = this.virtualHeight;
-
-        ctx.fillStyle = '#fffff0';
+        ctx.fillStyle = '#050510'; 
         ctx.fillRect(0, 0, w, h);
-
         if (this.state === 'MENU') return;
-
-        const centerY = h / 2;
-        const staffWidth = w * 0.9; 
-        const startX = (w - staffWidth) / 2;
-        const endX = startX + staffWidth;
-
-        // Staff
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
-        for (let i = -2; i <= 2; i++) {
-            const y = centerY + (i * 12); ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(endX, y); ctx.stroke();
+        const laneCount = this.lanes.length;
+        this.lanes.forEach((lane, index) => {
+            let centerY;
+            if (laneCount === 1) { centerY = h / 2; } 
+            else { const laneH = h / laneCount; centerY = (laneH * index) + (laneH / 2); }
+            this.drawStaff(ctx, centerY, w, lane, index, laneCount);
+        });
+        if (!this.lightMode) { this.drawEffects(ctx, w, h, laneCount); }
+        ctx.font = 'bold 24px "Share Tech Mono"'; ctx.textAlign = 'center';
+        const uiY = laneCount === 1 ? h/2 - 100 : h/2; 
+        if (this.state === 'LISTEN') { ctx.fillStyle = 'rgba(0, 230, 230, 0.8)'; ctx.fillText('LISTEN', w / 2, uiY); }
+        else if (this.state === 'PLAY') { 
+            ctx.fillStyle = 'rgba(255, 0, 85, 0.8)'; ctx.fillText(this.isAuto ? 'AUTO PLAY' : 'PLAY', w / 2, uiY); 
         }
-        ctx.fillStyle = '#000'; ctx.font = '70px serif'; ctx.fillText('𝄞', startX - 45, centerY + 25);
-        ctx.font = 'bold 30px serif'; ctx.fillText('4', startX + 10, centerY - 5); ctx.fillText('4', startX + 10, centerY + 25);
-        ctx.beginPath(); ctx.moveTo(startX, centerY - 24); ctx.lineTo(startX, centerY + 24); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(endX, centerY - 24); ctx.lineTo(endX, centerY + 24); ctx.lineWidth = 4; ctx.stroke(); ctx.lineWidth = 1.5;
-
-        if (this.patternData && this.patternData.structure) {
-            ctx.save(); ctx.translate(0, centerY + 6);
-            this.patternData.structure.forEach((cell, i) => {
-                const drawX = startX + 60 + (i * ((staffWidth - 60)/4)); 
-                const drawW = (staffWidth - 60)/4;
-                if (cell.draw === 'rest_q') this.drawQuarterRest(ctx, drawX + drawW/2 - 10, 0);
-                else this.drawBeamGroup(ctx, drawX, drawW, cell.draw, '#000');
+        else if (this.state === 'IDLE' && this.round <= this.maxRounds) { ctx.fillStyle = '#888'; ctx.fillText('READY...', w / 2, uiY); }
+    }
+    drawEffects(ctx, w, h, laneCount) {
+        const staffWidth = w * 0.9; const startX = (w - staffWidth) / 2;
+        const now = Date.now();
+        this.effects = this.effects.filter(e => now - e.startTime < 300);
+        this.effects.forEach(e => {
+            const age = (now - e.startTime) / 300; 
+            const alpha = 1 - age;
+            let centerY;
+            if (laneCount === 1) centerY = h / 2;
+            else { const laneH = h / laneCount; centerY = (laneH * e.laneIndex) + (laneH / 2); }
+            const drawW = (staffWidth - 60)/4;
+            const x = startX + 60 + (e.beat * drawW);
+            const y = centerY + 6;
+            ctx.beginPath(); ctx.arc(x, y, 20 + (age * 30), 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(0, 230, 230, ${alpha})`; ctx.lineWidth = 3; ctx.stroke();
+        });
+    }
+    drawStaff(ctx, centerY, w, lane, laneIndex, laneCount) {
+        const staffWidth = w * 0.9; const startX = (w - staffWidth) / 2; const endX = startX + staffWidth;
+        let scale = 1.0;
+        if (laneCount >= 3) scale = 0.8;
+        if (laneCount >= 5) scale = 0.6;
+        ctx.save();
+        ctx.strokeStyle = '#00e6e6'; ctx.lineWidth = 1.5 * scale; 
+        if(!this.lightMode) { ctx.shadowBlur = 5; ctx.shadowColor = "#00e6e6"; }
+        const lineSpacing = 12 * scale;
+        for (let i = -2; i <= 2; i++) { const y = centerY + (i * lineSpacing); ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(endX, y); ctx.stroke(); }
+        ctx.fillStyle = '#00e6e6'; ctx.font = `${70 * scale}px serif`; ctx.fillText('𝄞', startX - (45*scale), centerY + (25*scale));
+        ctx.font = `bold ${30 * scale}px "Share Tech Mono"`; ctx.fillText('4', startX + (10*scale), centerY - (5*scale)); ctx.fillText('4', startX + (10*scale), centerY + (25*scale));
+        ctx.beginPath(); ctx.moveTo(startX, centerY - (24*scale)); ctx.lineTo(startX, centerY + (24*scale)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(endX, centerY - (24*scale)); ctx.lineTo(endX, centerY + (24*scale)); ctx.lineWidth = 4*scale; ctx.stroke(); ctx.lineWidth = 1.5*scale;
+        if (laneCount > 1) {
+            ctx.font = `bold ${20 * scale}px "Share Tech Mono"`; ctx.fillStyle = '#ff0055'; 
+            if(!this.lightMode) ctx.shadowColor = "#ff0055";
+            let hint = "";
+            const keys = this.keyLabels[this.getModeKeyType()];
+            if (this.mode === 'TWIN') hint = laneIndex===0 ? `[${keys[0]}${keys[1]}${keys[2]}${keys[3]}]` : `[${keys[4]}${keys[5]}${keys[6]}${keys[7]}]`;
+            if (this.mode === 'TRIO') hint = laneIndex===0 ? `[${keys[0]}-${keys[3]}]` : (laneIndex===1 ? `[${keys[4]}-${keys[7]}]` : `[${keys[8]}-${keys[11]}]`);
+            if (this.mode === 'QUARTET') {
+                 const start = laneIndex * 4;
+                 hint = `[${keys[start]}-${keys[start+3]}]`;
+            }
+            ctx.fillText(hint, startX - (90*scale), centerY + (10*scale));
+        }
+        ctx.shadowBlur = 0; 
+        if (lane.structure) {
+            ctx.translate(0, centerY + (6*scale));
+            lane.structure.forEach((cell, i) => {
+                const drawX = startX + 60 + (i * ((staffWidth - 60)/4)); const drawW = (staffWidth - 60)/4;
+                if (cell.draw === 'rest_q') this.drawQuarterRest(ctx, drawX + drawW/2 - (10*scale), 0, scale);
+                else this.drawBeamGroup(ctx, drawX, drawW, cell.draw, '#00e6e6', scale);
             });
-            ctx.restore();
-            this.patternData.notes.forEach(note => {
+            lane.notes.forEach(note => {
                 if (note.hit) {
                     const drawW = (staffWidth - 60)/4;
                     const noteX = startX + 60 + (note.beat * drawW); 
-                    this.drawNoteHead(ctx, noteX, centerY + 6, '#4ade80');
+                    this.drawNoteHead(ctx, noteX, 0, '#fbbf24', scale); 
                 }
             });
+            ctx.translate(0, -(centerY + (6*scale))); 
         }
-
         const now = this.audio.getCurrentTime();
         let timeInCycle = now - this.startTime;
         let cursorProgress = 0;
         if (this.state === 'LISTEN') cursorProgress = timeInCycle / this.measureDuration;
         else if (this.state === 'PLAY') cursorProgress = (timeInCycle - this.measureDuration) / this.measureDuration;
-        
         if (cursorProgress < 0) cursorProgress = 0;
         if (cursorProgress > 1) cursorProgress = 1;
-
-        const drawStart = startX + 60;
-        const drawEnd = endX;
+        const drawStart = startX + 60; const drawEnd = endX;
         const cursorX = drawStart + (cursorProgress * (drawEnd - drawStart));
-
-        ctx.strokeStyle = this.state === 'LISTEN' ? '#4ade80' : '#e94560';
-        ctx.lineWidth = 3; ctx.globalAlpha = 0.7;
-        ctx.beginPath(); ctx.moveTo(cursorX, centerY - 60); ctx.lineTo(cursorX, centerY + 60); ctx.stroke();
-        ctx.globalAlpha = 1.0;
-
-        ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
-        if (this.state === 'LISTEN') { ctx.fillStyle = '#4ade80'; ctx.fillText('LISTEN', w / 2, centerY - 100); }
-        else if (this.state === 'PLAY') { ctx.fillStyle = '#e94560'; ctx.fillText('PLAY', w / 2, centerY - 100); }
-        else { ctx.fillStyle = '#888'; ctx.fillText('READY...', w / 2, centerY - 100); }
+        ctx.strokeStyle = this.state === 'LISTEN' ? '#00e6e6' : '#ff0055';
+        if(!this.lightMode) { ctx.shadowBlur = 10; ctx.shadowColor = ctx.strokeStyle; }
+        ctx.lineWidth = 3 * scale; ctx.globalAlpha = 0.8;
+        ctx.beginPath(); ctx.moveTo(cursorX, centerY - (60*scale)); ctx.lineTo(cursorX, centerY + (60*scale)); ctx.stroke();
+        ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+        ctx.restore();
     }
-
-    drawNoteHead(ctx, x, y, color) { ctx.save(); ctx.translate(x, y); ctx.rotate(-0.2); ctx.scale(1.2, 1); ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.restore(); }
-    drawQuarterRest(ctx, x, y) { ctx.save(); ctx.translate(x, y); ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-6, -10); ctx.lineTo(6, -2); ctx.lineTo(-6, 6); ctx.quadraticCurveTo(0, 15, -4, 20); ctx.stroke(); ctx.restore(); }
-    drawEighthRest(ctx, x, y) { ctx.save(); ctx.translate(x, y); ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(-2, -5, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2.5; ctx.moveTo(-2, -5); ctx.bezierCurveTo(2, -2, 5, 5, -4, 12); ctx.stroke(); ctx.restore(); }
-    drawBeamGroup(ctx, startX, width, type, color) {
-        const stemHeight = 45; const noteY = 0; ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2;
-        const drawStem = (bx) => { this.drawNoteHead(ctx, bx, noteY, color); ctx.beginPath(); ctx.moveTo(bx + 9, noteY); ctx.lineTo(bx + 9, noteY - stemHeight); ctx.stroke(); };
-        const drawBeam = (xStart, xEnd, yOffset) => { ctx.beginPath(); ctx.moveTo(xStart + 9, noteY - stemHeight + yOffset); ctx.lineTo(xEnd + 9, noteY - stemHeight + yOffset); ctx.stroke(); };
+    drawNoteHead(ctx, x, y, color, scale) { ctx.save(); ctx.translate(x, y); ctx.rotate(-0.2); ctx.scale(1.2 * scale, 1 * scale); ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fillStyle = color; if(!this.lightMode){ctx.shadowBlur = 10; ctx.shadowColor = color;} ctx.fill(); ctx.restore(); }
+    drawQuarterRest(ctx, x, y, scale) { ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); ctx.strokeStyle = '#00e6e6'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-6, -10); ctx.lineTo(6, -2); ctx.lineTo(-6, 6); ctx.quadraticCurveTo(0, 15, -4, 20); ctx.stroke(); ctx.restore(); }
+    drawEighthRest(ctx, x, y, scale) { ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); ctx.fillStyle = '#00e6e6'; ctx.beginPath(); ctx.arc(-2, -5, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.strokeStyle = '#00e6e6'; ctx.lineWidth = 2.5; ctx.moveTo(-2, -5); ctx.bezierCurveTo(2, -2, 5, 5, -4, 12); ctx.stroke(); ctx.restore(); }
+    drawBeamGroup(ctx, startX, width, type, color, scale) {
+        const stemHeight = 45 * scale; const noteY = 0; ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2 * scale;
+        const drawStem = (bx) => { this.drawNoteHead(ctx, bx, noteY, color, scale); ctx.beginPath(); ctx.moveTo(bx + (9*scale), noteY); ctx.lineTo(bx + (9*scale), noteY - stemHeight); ctx.stroke(); };
+        const drawBeam = (xStart, xEnd, yOffset) => { ctx.beginPath(); ctx.moveTo(xStart + (9*scale), noteY - stemHeight + (yOffset*scale)); ctx.lineTo(xEnd + (9*scale), noteY - stemHeight + (yOffset*scale)); ctx.stroke(); };
+        ctx.font = `bold ${20 * scale}px "Share Tech Mono"`;
         if (type === 'quarter') drawStem(startX);
-        else if (type === 'eighths') { const x2 = startX + width/2; drawStem(startX); drawStem(x2); ctx.lineWidth = 6; drawBeam(startX, x2, 0); }
-        else if (type === 'triplets') { const s = width/3; drawStem(startX); drawStem(startX+s); drawStem(startX+2*s); ctx.lineWidth = 6; drawBeam(startX, startX+2*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('3', startX+s+9, noteY-stemHeight-10); }
-        else if (type === 'sixteenths') { const s = width/4; for(let i=0;i<4;i++) drawStem(startX+i*s); ctx.lineWidth = 5; drawBeam(startX, startX+3*s, 0); drawBeam(startX, startX+3*s, 8); }
-        else if (type === 'sextuplets') { const s = width/6; for(let i=0;i<6;i++) drawStem(startX+i*s); ctx.lineWidth = 5; drawBeam(startX, startX+5*s, 0); drawBeam(startX, startX+5*s, 8); ctx.font = 'bold 20px serif'; ctx.fillText('6', startX+2.5*s+5, noteY-stemHeight-10); }
-        else if (type === 'sextuplets_4') { const s = width/6; for(let i=0;i<4;i++) drawStem(startX+i*s); ctx.lineWidth = 5; drawBeam(startX, startX+3*s, 0); drawBeam(startX, startX+3*s, 8); this.drawEighthRest(ctx, startX+5*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('6', startX+1.5*s+5, noteY-stemHeight-10); }
-        else if (type === 'thirtyseconds') { const s = width/8; for(let i=0;i<8;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+7*s, 0); drawBeam(startX, startX+7*s, 7); drawBeam(startX, startX+7*s, 14); }
-        else if (type === 'thirtyseconds_5') { const s = width/8; for(let i=0;i<5;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+4*s, 0); drawBeam(startX, startX+4*s, 7); drawBeam(startX, startX+4*s, 14); this.drawEighthRest(ctx, startX+6.5*s, 0); }
-        else if (type === 'fortyeighths_7') { const s = width/12; for(let i=0;i<7;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+6*s, 0); drawBeam(startX, startX+6*s, 6); drawBeam(startX, startX+6*s, 12); drawBeam(startX, startX+6*s, 18); this.drawEighthRest(ctx, startX+9*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('12', startX+3*s+5, noteY-stemHeight-10); }
-        else if (type === 'sixtyfourths_9') { const s = width/16; for(let i=0;i<9;i++) drawStem(startX+i*s); ctx.lineWidth = 4; drawBeam(startX, startX+8*s, 0); drawBeam(startX, startX+8*s, 6); drawBeam(startX, startX+8*s, 12); drawBeam(startX, startX+8*s, 18); this.drawEighthRest(ctx, startX+11*s, 0); ctx.font = 'bold 20px serif'; ctx.fillText('16', startX+4*s+5, noteY-stemHeight-10); }
-        else if (type === 'eighth_two16') { const s = width/4; drawStem(startX); drawStem(startX+2*s); drawStem(startX+3*s); ctx.lineWidth = 5; drawBeam(startX, startX+3*s, 0); drawBeam(startX+2*s, startX+3*s, 8); }
-        else if (type === 'two16_eighth') { const s = width/4; drawStem(startX); drawStem(startX+s); drawStem(startX+2*s); ctx.lineWidth = 5; drawBeam(startX, startX+2*s, 0); drawBeam(startX, startX+s, 8); }
+        else if (type === 'eighths') { const x2 = startX + width/2; drawStem(startX); drawStem(x2); ctx.lineWidth = 6*scale; drawBeam(startX, x2, 0); }
+        else if (type === 'triplets') { const s = width/3; drawStem(startX); drawStem(startX+s); drawStem(startX+2*s); ctx.lineWidth = 6*scale; drawBeam(startX, startX+2*s, 0); ctx.fillText('3', startX+s+(9*scale), noteY-stemHeight-(10*scale)); }
+        else if (type === 'sixteenths') { const s = width/4; for(let i=0;i<4;i++) drawStem(startX+i*s); ctx.lineWidth = 5*scale; drawBeam(startX, startX+3*s, 0); drawBeam(startX, startX+3*s, 8); }
+        else if (type === 'sextuplets') { const s = width/6; for(let i=0;i<6;i++) drawStem(startX+i*s); ctx.lineWidth = 5*scale; drawBeam(startX, startX+5*s, 0); drawBeam(startX, startX+5*s, 8); ctx.fillText('6', startX+2.5*s+(5*scale), noteY-stemHeight-(10*scale)); }
+        else if (type === 'sextuplets_4') { const s = width/6; for(let i=0;i<4;i++) drawStem(startX+i*s); ctx.lineWidth = 5*scale; drawBeam(startX, startX+3*s, 0); drawBeam(startX, startX+3*s, 8); this.drawEighthRest(ctx, startX+5*s, 0, scale); ctx.fillText('6', startX+1.5*s+(5*scale), noteY-stemHeight-(10*scale)); }
+        else if (type === 'thirtyseconds') { const s = width/8; for(let i=0;i<8;i++) drawStem(startX+i*s); ctx.lineWidth = 4*scale; drawBeam(startX, startX+7*s, 0); drawBeam(startX, startX+7*s, 7); drawBeam(startX, startX+7*s, 14); }
+        else if (type === 'thirtyseconds_5') { const s = width/8; for(let i=0;i<5;i++) drawStem(startX+i*s); ctx.lineWidth = 4*scale; drawBeam(startX, startX+4*s, 0); drawBeam(startX, startX+4*s, 7); drawBeam(startX, startX+4*s, 14); this.drawEighthRest(ctx, startX+6.5*s, 0, scale); }
+        else if (type === 'fortyeighths_7') { const s = width/12; for(let i=0;i<7;i++) drawStem(startX+i*s); ctx.lineWidth = 4*scale; drawBeam(startX, startX+6*s, 0); drawBeam(startX, startX+6*s, 6); drawBeam(startX, startX+6*s, 12); drawBeam(startX, startX+6*s, 18); this.drawEighthRest(ctx, startX+9*s, 0, scale); ctx.fillText('12', startX+3*s+(5*scale), noteY-stemHeight-(10*scale)); }
+        else if (type === 'sixtyfourths_9') { const s = width/16; for(let i=0;i<9;i++) drawStem(startX+i*s); ctx.lineWidth = 4*scale; drawBeam(startX, startX+8*s, 0); drawBeam(startX, startX+8*s, 6); drawBeam(startX, startX+8*s, 12); drawBeam(startX, startX+8*s, 18); this.drawEighthRest(ctx, startX+11*s, 0, scale); ctx.fillText('16', startX+4*s+(5*scale), noteY-stemHeight-(10*scale)); }
+        else if (type === 'eighth_two16') { const s = width/4; drawStem(startX); drawStem(startX+2*s); drawStem(startX+3*s); ctx.lineWidth = 5*scale; drawBeam(startX, startX+3*s, 0); drawBeam(startX+2*s, startX+3*s, 8); }
+        else if (type === 'two16_eighth') { const s = width/4; drawStem(startX); drawStem(startX+s); drawStem(startX+2*s); ctx.lineWidth = 5*scale; drawBeam(startX, startX+2*s, 0); drawBeam(startX, startX+s, 8); }
+        else if (type === 'quintuplets') { const s = width/5; for(let i=0;i<5;i++) drawStem(startX+i*s); ctx.lineWidth = 5*scale; drawBeam(startX, startX+4*s, 0); drawBeam(startX, startX+4*s, 8); ctx.fillText('5', startX+2*s+(9*scale), noteY-stemHeight-(10*scale)); }
+        else if (type === 'septuplets') { const s = width/7; for(let i=0;i<7;i++) drawStem(startX+i*s); ctx.lineWidth = 5*scale; drawBeam(startX, startX+6*s, 0); drawBeam(startX, startX+6*s, 8); ctx.fillText('7', startX+3*s+(9*scale), noteY-stemHeight-(10*scale)); }
+        else if (type === 'nonuplets') { const s = width/9; for(let i=0;i<9;i++) drawStem(startX+i*s); ctx.lineWidth = 4*scale; drawBeam(startX, startX+8*s, 0); drawBeam(startX, startX+8*s, 7); drawBeam(startX, startX+8*s, 14); ctx.fillText('9', startX+4*s+(9*scale), noteY-stemHeight-(10*scale)); }
     }
 }
 
