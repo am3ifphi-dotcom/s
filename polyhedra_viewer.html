@@ -3,19 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>切頂正多面体 (Polyhedra Morph & Truncate)</title>
+    <title>Polyhedra Morph & Truncate</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
+        :root {
+            --primary-color: #00e6e6;
+            --secondary-color: #003333;
+            --accent-color: #ff0055;
+            --bg-color: #050505;
+            --text-color: #ffffff;
+            --glass-bg: rgba(0, 30, 30, 0.85);
+            --glow-strong: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
+            --glow-soft: 0 0 5px var(--primary-color);
+        }
+
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #050510;
-            color: #ffffff;
-            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+            background-image: 
+                linear-gradient(rgba(0, 230, 230, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 230, 230, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
         }
 
+        /* Scanline Effect */
+        .scanline {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 230, 230, 0.02) 51%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* --- Header --- */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            background: rgba(0, 10, 10, 0.9);
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px rgba(0, 230, 230, 0.2);
+        }
+
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-shadow: var(--glow-soft);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.8rem;
+            border: 1px solid var(--primary-color);
+            padding: 0.5rem 1rem;
+            transition: 0.3s;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .back-link:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: var(--glow-soft);
+        }
+
+        /* --- UI Container (Top Buttons) --- */
         #ui-container {
             position: absolute;
-            top: 20px;
+            top: 80px; /* Below header */
             left: 0;
             width: 100%;
             display: flex;
@@ -31,49 +107,66 @@
             justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
+            padding: 0 20px;
         }
 
         .btn {
             pointer-events: auto;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 30px;
+            background: rgba(0, 20, 20, 0.8);
+            border: 1px solid var(--secondary-color);
+            color: var(--primary-color);
+            padding: 10px 20px;
             cursor: pointer;
             backdrop-filter: blur(5px);
             transition: all 0.3s ease;
-            font-size: 13px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             user-select: none;
+            position: relative;
+            overflow: hidden;
+            min-width: 100px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 8px; height: 8px;
+            background: linear-gradient(45deg, transparent 50%, var(--primary-color) 50%);
         }
 
         .btn:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(0, 230, 230, 0.2);
+            border-color: var(--primary-color);
+            box-shadow: var(--glow-strong);
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
-        }
-
-        .btn:active:not(:disabled) {
-            transform: translateY(0);
+            color: #fff;
         }
 
         .btn.active {
-            background: #00e5ff;
+            background: var(--primary-color);
             color: #000;
-            border-color: #00e5ff;
+            border-color: var(--primary-color);
             font-weight: bold;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+            box-shadow: var(--glow-strong);
         }
 
         .btn-action {
-            background: rgba(255, 100, 100, 0.2);
-            border-color: rgba(255, 100, 100, 0.4);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
         }
+        
+        .btn-action::before {
+            background: linear-gradient(45deg, transparent 50%, var(--accent-color) 50%);
+        }
+
         .btn-action:hover:not(:disabled) {
-            background: rgba(255, 100, 100, 0.4);
-            box-shadow: 0 4px 15px rgba(255, 50, 50, 0.3);
+            background: rgba(255, 0, 85, 0.2);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-color);
+            color: #fff;
         }
 
         .btn:disabled {
@@ -81,31 +174,55 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+            border-color: #555;
+            color: #888;
         }
 
-        /* Controls Panel */
+        /* --- Controls Panel (Right Side) --- */
         #controls-panel {
             position: absolute;
-            top: 20px;
+            top: 80px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.6);
+            background: var(--glass-bg);
             padding: 20px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--primary-color);
+            box-shadow: var(--glow-soft);
             backdrop-filter: blur(10px);
             pointer-events: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            min-width: 240px;
-            max-height: 90vh;
+            gap: 15px;
+            width: 280px;
+            max-height: calc(100vh - 100px);
             overflow-y: auto;
+            border-radius: 4px;
+            z-index: 15;
+        }
+        
+        /* Custom Scrollbar */
+        #controls-panel::-webkit-scrollbar { width: 5px; }
+        #controls-panel::-webkit-scrollbar-track { background: #000; }
+        #controls-panel::-webkit-scrollbar-thumb { background: var(--primary-color); }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--secondary-color);
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border: 1px solid #333;
         }
 
         .control-header {
@@ -115,25 +232,25 @@
         }
 
         .control-label {
-            font-size: 12px;
-            color: #ccc;
+            font-size: 0.8rem;
+            color: #aaa;
             flex-grow: 1;
         }
 
         .val-display {
-            font-family: monospace;
-            color: #fff;
+            font-family: 'Orbitron', monospace;
+            color: var(--primary-color);
             margin-right: 8px;
-            font-size: 11px;
+            font-size: 0.8rem;
         }
 
         .reset-btn {
             background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #aaa;
+            border: 1px solid #555;
+            color: #555;
             border-radius: 50%;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             font-size: 10px;
             cursor: pointer;
             display: flex;
@@ -143,40 +260,64 @@
             transition: all 0.2s;
         }
         .reset-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            border-color: #fff;
-        }
-        
-        .panel-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #00e5ff;
-            margin-bottom: 5px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            padding-bottom: 5px;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            box-shadow: 0 0 5px var(--primary-color);
         }
 
+        /* Cyberpunk Slider */
         input[type="range"] {
+            -webkit-appearance: none;
             width: 100%;
+            background: transparent;
+            margin: 5px 0;
+        }
+
+        input[type="range"]:focus { outline: none; }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
             cursor: pointer;
+            background: #111;
+            border: 1px solid #333;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            border: 1px solid var(--primary-color);
+            height: 16px;
+            width: 10px;
+            background: #000;
+            cursor: pointer;
+            margin-top: -7px; /* center */
+            box-shadow: 0 0 5px var(--primary-color);
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* --- Footer Info --- */
+        #info {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 10;
         }
 
         #canvas-container {
             width: 100vw;
             height: 100vh;
-        }
-
-        #info {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
-            pointer-events: none;
+            position: fixed;
+            top: 0; left: 0;
         }
     </style>
-    <!-- Import Maps for Three.js modules -->
+    
+    <!-- Three.js Import Map -->
     <script type="importmap">
         {
             "imports": {
@@ -188,80 +329,87 @@
 </head>
 <body>
 
+    <div class="scanline"></div>
+
+    <header class="header">
+        <div class="app-title">
+            <i class="fas fa-cube"></i> POLYHEDRA LAB
+        </div>
+        <a href="./index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> RETURN
+        </a>
+    </header>
+
     <div id="ui-container">
         <!-- Shape Selection -->
         <div class="row">
-            <button class="btn" onclick="morphTo('tetrahedron', this)">正四面体</button>
-            <button class="btn" onclick="morphTo('cube', this)">正六面体</button>
-            <button class="btn" onclick="morphTo('octahedron', this)">正八面体</button>
-            <button class="btn active" onclick="morphTo('dodecahedron', this)">正十二面体</button>
-            <button class="btn" onclick="morphTo('icosahedron', this)">正二十面体</button>
+            <button class="btn" onclick="morphTo('tetrahedron', this)">TETRA</button>
+            <button class="btn" onclick="morphTo('cube', this)">CUBE</button>
+            <button class="btn" onclick="morphTo('octahedron', this)">OCTA</button>
+            <button class="btn active" onclick="morphTo('dodecahedron', this)">DODECA</button>
+            <button class="btn" onclick="morphTo('icosahedron', this)">ICOSA</button>
         </div>
         <!-- Truncation Actions -->
         <div class="row">
-            <button class="btn btn-action" onclick="truncateShape('midpoint')">辺の中点で切頂</button>
-            <button class="btn btn-action" onclick="truncateShape('trisection')">3等分点で切頂</button>
-            <button class="btn" id="undo-btn" onclick="undo()" disabled>⟲ 戻す (Undo)</button>
+            <button class="btn btn-action" onclick="truncateShape('midpoint')">MIDPOINT CUT</button>
+            <button class="btn btn-action" onclick="truncateShape('trisection')">TRI-SECTION CUT</button>
+            <button class="btn" id="undo-btn" onclick="undo()" disabled><i class="fas fa-undo"></i> UNDO</button>
         </div>
     </div>
 
-    <!-- Enhanced Settings Panel -->
+    <!-- Settings Panel -->
     <div id="controls-panel">
-        <div class="panel-title">View & Appearance</div>
+        <div class="panel-title"><i class="fas fa-eye"></i> VIEW SETTINGS</div>
         
         <!-- Perspective (FOV) -->
         <div class="control-group">
             <div class="control-header">
-                <span class="control-label">遠近感 (Perspective)</span>
+                <span class="control-label">FOV (Perspective)</span>
                 <span id="fov-val" class="val-display">45°</span>
-                <button class="reset-btn" onclick="resetParam('fov')" title="デフォルトに戻す">↺</button>
+                <button class="reset-btn" onclick="resetParam('fov')" title="Reset"><i class="fas fa-sync-alt"></i></button>
             </div>
-            <!-- 1度(望遠) 〜 120度(超広角) -->
             <input type="range" id="fov-slider" min="1" max="120" step="1" value="45">
-            <div style="font-size: 9px; color: #888;">
-                ← 望遠 (等角風) | 広角 (パース強) →
-            </div>
         </div>
 
-        <!-- Zoom (Camera Distance) - Value hidden as requested -->
+        <!-- Zoom -->
         <div class="control-group">
             <div class="control-header">
-                <span class="control-label">ズーム (Zoom)</span>
-                <!-- 数値表示を削除 -->
-                <button class="reset-btn" onclick="resetParam('zoom')" title="デフォルトに戻す">↺</button>
+                <span class="control-label">ZOOM LEVEL</span>
+                <button class="reset-btn" onclick="resetParam('zoom')" title="Reset"><i class="fas fa-sync-alt"></i></button>
             </div>
-            <!-- 対数スケール用に 0.0 ~ 1.0 に正規化。初期値0.236は距離6.0に相当 -->
             <input type="range" id="zoom-slider" min="0" max="1" step="0.001" value="0.236">
         </div>
+
+        <div class="panel-title" style="margin-top: 10px;"><i class="fas fa-sliders-h"></i> MATERIAL</div>
 
         <!-- Opacity -->
         <div class="control-group">
             <div class="control-header">
-                <span class="control-label">透明度 (Opacity)</span>
+                <span class="control-label">OPACITY</span>
                 <span id="opacity-val" class="val-display">0.6</span>
-                <button class="reset-btn" onclick="resetParam('opacity')" title="デフォルトに戻す">↺</button>
+                <button class="reset-btn" onclick="resetParam('opacity')" title="Reset"><i class="fas fa-sync-alt"></i></button>
             </div>
             <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.6">
         </div>
 
-        <!-- Roughness (Reflection) -->
+        <!-- Roughness -->
         <div class="control-group">
             <div class="control-header">
-                <span class="control-label">表面の粗さ</span>
+                <span class="control-label">ROUGHNESS</span>
                 <span id="roughness-val" class="val-display">0.2</span>
-                <button class="reset-btn" onclick="resetParam('roughness')" title="デフォルトに戻す">↺</button>
+                <button class="reset-btn" onclick="resetParam('roughness')" title="Reset"><i class="fas fa-sync-alt"></i></button>
             </div>
             <input type="range" id="roughness-slider" min="0" max="1" step="0.05" value="0.2">
         </div>
 
-        <div class="panel-title" style="margin-top: 10px;">Details</div>
+        <div class="panel-title" style="margin-top: 10px;"><i class="fas fa-microchip"></i> DETAILS</div>
 
         <!-- Point Size -->
         <div class="control-group">
             <div class="control-header">
-                <span class="control-label">点の大きさ</span>
+                <span class="control-label">PARTICLE SIZE</span>
                 <span id="size-val" class="val-display">0.04</span>
-                <button class="reset-btn" onclick="resetParam('pointSize')" title="デフォルトに戻す">↺</button>
+                <button class="reset-btn" onclick="resetParam('pointSize')" title="Reset"><i class="fas fa-sync-alt"></i></button>
             </div>
             <input type="range" id="size-slider" min="0" max="0.15" step="0.005" value="0.04">
         </div>
@@ -269,17 +417,18 @@
         <!-- Edge Angle -->
         <div class="control-group">
             <div class="control-header">
-                <span class="control-label">エッジ検出角</span>
+                <span class="control-label">EDGE THRESHOLD</span>
                 <span id="edge-angle-val" class="val-display">10°</span>
-                <button class="reset-btn" onclick="resetParam('edgeAngle')" title="デフォルトに戻す">↺</button>
+                <button class="reset-btn" onclick="resetParam('edgeAngle')" title="Reset"><i class="fas fa-sync-alt"></i></button>
             </div>
             <input type="range" id="edge-angle-slider" min="0.1" max="60" step="0.1" value="10">
-            <div style="font-size: 9px; color: #888;">※値を小さくすると細かい線が出ます</div>
         </div>
     </div>
 
     <div id="canvas-container"></div>
-    <div id="info">Drag to rotate • Scroll to zoom</div>
+    <div id="info">
+        STATUS: ONLINE &nbsp;//&nbsp; DRAG TO ROTATE &nbsp;//&nbsp; SCROLL TO ZOOM
+    </div>
 
     <script type="module">
         import * as THREE from 'three';
@@ -287,10 +436,12 @@
         import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
         import { ConvexHull } from 'three/addons/math/ConvexHull.js';
 
-        // --- 設定 ---
+        // --- Settings ---
         const scene = new THREE.Scene();
+        // Background controlled by CSS, scene background transparent
+        // Fog adjusted to match dark theme
         const initialFogDensity = 0.002; 
-        scene.fog = new THREE.FogExp2(0x050510, initialFogDensity);
+        scene.fog = new THREE.FogExp2(0x050505, initialFogDensity);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
         camera.position.set(0, 0, 6);
@@ -301,19 +452,20 @@
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- ライト ---
+        // --- Lights ---
         const ambientLight = new THREE.AmbientLight(0x404040, 2);
         scene.add(ambientLight);
 
-        const pointLight1 = new THREE.PointLight(0x00e5ff, 50, 0); // distance 0 = infinite
+        // Cyberpunk colors for lights
+        const pointLight1 = new THREE.PointLight(0x00e6e6, 40, 0); // Cyan
         pointLight1.position.set(5, 5, 5);
         scene.add(pointLight1);
 
-        const pointLight2 = new THREE.PointLight(0xff00ff, 50, 0); // distance 0 = infinite
+        const pointLight2 = new THREE.PointLight(0xff0055, 40, 0); // Pink
         pointLight2.position.set(-5, -5, 5);
         scene.add(pointLight2);
 
-        // --- コントロール ---
+        // --- Controls ---
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
@@ -321,26 +473,24 @@
         controls.minDistance = 1.0;
         controls.maxDistance = 2000.0;
 
-        // --- ズーム制御用定数 (対数スケール) ---
+        // --- Zoom Logic ---
         const MIN_ZOOM_DIST = 1.0;
-        const MAX_ZOOM_DIST = 2000.0; // controls.maxDistance と同じにする
+        const MAX_ZOOM_DIST = 2000.0;
         const ZOOM_LOG_FACTOR = Math.log(MAX_ZOOM_DIST / MIN_ZOOM_DIST);
 
-        // スライダー値(0-1)から距離へ変換
         function getZoomDistance(sliderValue) {
             return MIN_ZOOM_DIST * Math.exp(sliderValue * ZOOM_LOG_FACTOR);
         }
 
-        // 距離からスライダー値(0-1)へ変換
         function getZoomSliderValue(distance) {
             const d = Math.max(MIN_ZOOM_DIST, Math.min(MAX_ZOOM_DIST, distance));
             return Math.log(d / MIN_ZOOM_DIST) / ZOOM_LOG_FACTOR;
         }
 
-        // --- 数学定数 ---
+        // --- Constants ---
         const PHI = (1 + Math.sqrt(5)) / 2;
 
-        // --- ジオメトリ定義 ---
+        // --- Geometry Definitions ---
         function normalizePoints(points) {
             return points.map(p => p.normalize());
         }
@@ -382,20 +532,21 @@
             }
         };
 
-        // --- システムの状態 ---
-        let particles = [];     // 現在の表示位置
-        let targets = [];       // 目標位置
-        let pointMeshes = [];   // 表示用Sphere Mesh
-        let history = [];       // 履歴
+        // --- System State ---
+        let particles = [];
+        let targets = [];
+        let pointMeshes = [];
+        let history = [];
 
-        // グループ
+        // Groups
         const shapeGroup = new THREE.Group();
         scene.add(shapeGroup);
 
-        // マテリアル
+        // Materials (Cyberpunk Style)
         const material = new THREE.MeshPhysicalMaterial({
-            color: 0x22aaff,
-            metalness: 0.1, 
+            color: 0x00e6e6, // Cyan base
+            emissive: 0x002222,
+            metalness: 0.2, 
             roughness: 0.2, 
             transmission: 0.6,
             thickness: 1.0,
@@ -407,17 +558,17 @@
         const mainMesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
         shapeGroup.add(mainMesh);
 
-        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2, transparent: true, opacity: 0.4 });
         const wireframeMesh = new THREE.LineSegments(new THREE.BufferGeometry(), lineMaterial);
         shapeGroup.add(wireframeMesh);
 
-        const sphereGeo = new THREE.SphereGeometry(1, 16, 16); // スケールでサイズ調整するため半径1
-        const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        const sphereGeo = new THREE.SphereGeometry(1, 16, 16);
+        const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff0055 }); // Pink dots
 
-        // --- デフォルト値と現在の状態 ---
+        // --- Defaults ---
         const defaults = {
             fov: 45,
-            zoom: 0.236, // 距離6.0に相当する対数スライダー値
+            zoom: 0.236,
             opacity: 0.6,
             roughness: 0.2,
             pointSize: 0.04,
@@ -427,57 +578,29 @@
         let currentPointSize = defaults.pointSize;
         let currentEdgeThreshold = defaults.edgeAngle;
 
-        // --- リセット機能 ---
+        // --- Reset Function ---
         window.resetParam = (param) => {
             const val = defaults[param];
             let sliderId = '';
             
             switch(param) {
-                case 'fov': 
-                    sliderId = 'fov-slider';
-                    updateFov(val); 
-                    break;
-                case 'zoom':
-                    sliderId = 'zoom-slider';
-                    updateZoom(val);
-                    break;
-                case 'opacity':
-                    sliderId = 'opacity-slider';
-                    material.opacity = val;
-                    break;
-                case 'roughness':
-                    sliderId = 'roughness-slider';
-                    material.roughness = val;
-                    break;
-                case 'pointSize':
-                    sliderId = 'size-slider';
-                    currentPointSize = val;
-                    updatePointAppearance();
-                    break;
-                case 'edgeAngle':
-                    sliderId = 'edge-angle-slider';
-                    currentEdgeThreshold = val;
-                    updateGeometry();
-                    break;
+                case 'fov': sliderId = 'fov-slider'; updateFov(val); break;
+                case 'zoom': sliderId = 'zoom-slider'; updateZoom(val); break;
+                case 'opacity': sliderId = 'opacity-slider'; material.opacity = val; break;
+                case 'roughness': sliderId = 'roughness-slider'; material.roughness = val; break;
+                case 'pointSize': sliderId = 'size-slider'; currentPointSize = val; updatePointAppearance(); break;
+                case 'edgeAngle': sliderId = 'edge-angle-slider'; currentEdgeThreshold = val; updateGeometry(); break;
             }
 
-            // UI更新
             if(sliderId) {
                 const slider = document.getElementById(sliderId);
-                const display = document.getElementById(sliderId.replace('slider', 'val') || sliderId.replace('slider', 'value'));
-                
-                if (slider) {
-                    slider.value = val;
-                    slider.dispatchEvent(new Event('input'));
-                }
-                if (display) {
-                    display.textContent = val + (sliderId.includes('angle') || sliderId.includes('fov') ? '°' : '');
-                }
+                const display = document.getElementById(sliderId.replace('slider', 'val'));
+                if (slider) { slider.value = val; slider.dispatchEvent(new Event('input')); }
+                if (display) { display.textContent = val + (sliderId.includes('angle') || sliderId.includes('fov') ? '°' : ''); }
             }
         };
 
-
-        // --- UI イベントリスナーヘルパー ---
+        // --- UI Helpers ---
         const bindSlider = (id, valId, callback) => {
             const slider = document.getElementById(id);
             const valDisplay = document.getElementById(valId);
@@ -488,25 +611,17 @@
             });
         };
 
-        // --- フォグ調整ロジック ---
-        // カメラ距離に基づいてFogの濃さを調整する (遠くに行っても暗くなりすぎないように)
+        // --- Logic Functions ---
         function updateFogDensity(distance) {
             const baseDist = 6.0;
-            // 距離が遠くなるほどdensityを下げる
-            // 対数的に減少させるとより自然
             const newDensity = Math.max(0.00001, initialFogDensity * (baseDist / distance));
             scene.fog.density = newDensity;
         }
 
-        // --- FOV (遠近感) ロジック - Dolly Zoom ---
         function updateFov(val) {
             const oldFov = camera.fov;
             const newFov = val;
-
-            // 現在のカメラ距離
             const dist = camera.position.distanceTo(controls.target);
-            
-            // ドリーズーム計算
             const oldRad = (oldFov * Math.PI) / 360; 
             const newRad = (newFov * Math.PI) / 360;
             const newDist = dist * Math.tan(oldRad) / Math.tan(newRad);
@@ -514,76 +629,41 @@
             camera.fov = newFov;
             camera.updateProjectionMatrix();
 
-            // カメラ位置更新
             const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
             camera.position.copy(controls.target).add(dir.multiplyScalar(newDist));
             
-            // Fog調整
             updateFogDensity(newDist);
 
-            // ズームスライダーの位置も同期 (対数スケールに変換してセット)
             const zoomSlider = document.getElementById('zoom-slider');
-            if(zoomSlider) {
-                zoomSlider.value = getZoomSliderValue(newDist);
-            }
+            if(zoomSlider) zoomSlider.value = getZoomSliderValue(newDist);
+            
             controls.update();
         }
 
         bindSlider('fov-slider', 'fov-val', updateFov);
+        bindSlider('opacity-slider', 'opacity-val', (val) => material.opacity = val);
+        bindSlider('roughness-slider', 'roughness-val', (val) => material.roughness = val);
+        bindSlider('size-slider', 'size-val', (val) => { currentPointSize = val; updatePointAppearance(); });
+        bindSlider('edge-angle-slider', 'edge-angle-val', (val) => { currentEdgeThreshold = val; updateGeometry(); });
 
-        // --- Opacity ---
-        bindSlider('opacity-slider', 'opacity-val', (val) => {
-            material.opacity = val;
-        });
-
-        // --- Zoom (Distance) ロジック (対数スケール対応) ---
         function updateZoom(sliderVal) {
-            // スライダー値(0-1)を対数スケールの距離に変換
             const distance = getZoomDistance(sliderVal);
-
             const direction = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
             camera.position.copy(controls.target).add(direction.multiplyScalar(distance));
             controls.update();
-            // Fog調整
             updateFogDensity(distance);
         }
 
-        // Zoomスライダー (対数スケール)
-        const zoomSlider = document.getElementById('zoom-slider');
-        zoomSlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            updateZoom(val);
-        });
+        document.getElementById('zoom-slider').addEventListener('input', (e) => updateZoom(parseFloat(e.target.value)));
         
-        // マウス操作でズームした際もスライダーとFogを更新
         controls.addEventListener('change', () => {
             const dist = camera.position.distanceTo(controls.target);
             const slider = document.getElementById('zoom-slider');
             if (document.activeElement !== slider) {
-                // 実際の距離からスライダー位置(0-1)へ逆変換
                 slider.value = getZoomSliderValue(dist);
                 updateFogDensity(dist);
             }
         });
-
-        // --- Roughness ---
-        bindSlider('roughness-slider', 'roughness-val', (val) => {
-            material.roughness = val;
-        });
-
-        // --- Point Size ---
-        bindSlider('size-slider', 'size-val', (val) => {
-            currentPointSize = val;
-            updatePointAppearance();
-        });
-
-        // --- Edge Angle ---
-        bindSlider('edge-angle-slider', 'edge-angle-val', (val) => {
-            currentEdgeThreshold = val;
-            updateGeometry();
-        });
-
-        // --- 関数群 ---
 
         function updatePointAppearance() {
              pointMeshes.forEach(mesh => {
@@ -602,9 +682,7 @@
             const currentCount = particles.length;
 
             targets = [];
-            for(let i=0; i<newCount; i++) {
-                targets.push(newTargetPoints[i].clone());
-            }
+            for(let i=0; i<newCount; i++) targets.push(newTargetPoints[i].clone());
 
             if (newCount > currentCount) {
                 for (let i = currentCount; i < newCount; i++) {
@@ -643,22 +721,17 @@
 
         function updateGeometry() {
             if (particles.length < 4) return;
-
-            // 凸包計算
             const hull = new ConvexHull();
             hull.setFromPoints(particles);
 
-            // メインメッシュの更新
             const geometry = new ConvexGeometry(particles);
             if(mainMesh.geometry) mainMesh.geometry.dispose();
             mainMesh.geometry = geometry;
 
-            // ワイヤーフレーム更新
             if(wireframeMesh.geometry) wireframeMesh.geometry.dispose();
             const edges = new THREE.EdgesGeometry(geometry, currentEdgeThreshold);
             wireframeMesh.geometry = edges;
 
-            // 頂点の可視性制御
             const activeVertices = new Set();
             hull.faces.forEach(face => {
                 let edge = face.edge;
@@ -671,7 +744,6 @@
             particles.forEach((p, i) => {
                 pointMeshes[i].position.copy(p);
                 pointMeshes[i].scale.set(currentPointSize, currentPointSize, currentPointSize);
-                
                 if (currentPointSize > 0.001) {
                     pointMeshes[i].visible = activeVertices.has(p);
                 } else {
@@ -680,12 +752,9 @@
             });
         }
 
-        // --- 切頂ロジック ---
-
         function getUniqueEdges(points) {
             const hull = new ConvexHull();
             hull.setFromPoints(points);
-            
             const edgeSet = new Set();
             const uniqueEdges = [];
             const PRECISION = 4;
@@ -695,23 +764,20 @@
                 do {
                     const v1 = edge.head().point;
                     const v2 = edge.tail().point;
-                    
                     const id1 = `${v1.x.toFixed(PRECISION)},${v1.y.toFixed(PRECISION)},${v1.z.toFixed(PRECISION)}`;
                     const id2 = `${v2.x.toFixed(PRECISION)},${v2.y.toFixed(PRECISION)},${v2.z.toFixed(PRECISION)}`;
-                    
                     const key = id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
-                    
                     if (!edgeSet.has(key)) {
                         edgeSet.add(key);
                         uniqueEdges.push({ start: v1, end: v2 });
                     }
-                    
                     edge = edge.next;
                 } while (edge !== face.edge);
             });
             return uniqueEdges;
         }
 
+        // --- Global Functions for HTML ---
         window.truncateShape = (type) => {
             const currentPoints = targets.map(p => p.clone());
             history.push(currentPoints);
@@ -719,7 +785,6 @@
 
             const edges = getUniqueEdges(currentPoints);
             const newPoints = [];
-
             const exists = (pt) => {
                 for (let existing of newPoints) {
                     if (existing.distanceToSquared(pt) < 0.0001) return true;
@@ -731,7 +796,6 @@
                 const vStart = edge.start;
                 const vEnd = edge.end;
                 const vec = new THREE.Vector3().subVectors(vEnd, vStart);
-                
                 if (type === 'midpoint') {
                     const mid = new THREE.Vector3().copy(vStart).addScaledVector(vec, 0.5);
                     if (!exists(mid)) newPoints.push(mid);
@@ -742,7 +806,6 @@
                     if (!exists(t2)) newPoints.push(t2);
                 }
             });
-
             reconcileParticles(newPoints);
         };
 
@@ -762,16 +825,13 @@
         window.morphTo = (shape, btnElement) => {
             history = [];
             updateUndoBtn();
-
             if(btnElement) {
                 document.querySelectorAll('.row .btn').forEach(b => {
-                    if(b.onclick && b.onclick.toString().includes('morphTo')) {
-                        b.classList.remove('active');
-                    }
+                    // check if it's a shape button (simple heuristic)
+                    if(b.textContent.match(/TETRA|CUBE|OCTA|DODECA|ICOSA/)) b.classList.remove('active');
                 });
                 btnElement.classList.add('active');
             }
-
             const newPoints = Geometries[shape]();
             reconcileParticles(newPoints);
         };
@@ -780,12 +840,9 @@
 
         function animate() {
             requestAnimationFrame(animate);
-
             let needsUpdate = false;
-
             for (let i = 0; i < particles.length; i++) {
                 if (!targets[i]) continue;
-                
                 const dist = particles[i].distanceTo(targets[i]);
                 if (dist > 0.001) {
                     particles[i].lerp(targets[i], LERP_SPEED);
@@ -794,18 +851,14 @@
                     particles[i].copy(targets[i]);
                 }
             }
+            if (needsUpdate || particles.length > 0) updateGeometry();
 
-            if (needsUpdate || particles.length > 0) {
-                updateGeometry();
-            }
-
-            shapeGroup.rotation.y += 0.005;
-            shapeGroup.rotation.x += 0.002;
-
+            shapeGroup.rotation.y += 0.003;
             controls.update();
             renderer.render(scene, camera);
         }
 
+        // --- Init ---
         init('dodecahedron');
 
         window.addEventListener('resize', () => {
