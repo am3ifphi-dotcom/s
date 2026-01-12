@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNAL_BIOLOGY // SYSTEM_FAILURE</title>
+    <!-- Three.js (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;900&family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0a0000; /* Deep Red/Black for Internal */
+            overflow: hidden;
+            font-family: 'Share Tech Mono', monospace;
+            user-select: none;
+            transition: background-color 2s ease;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            transition: filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        body.modal-open #canvas-container {
+            filter: brightness(0.4) blur(4px); 
+        }
+
+        /* --- Main UI --- */
+        #main-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 1;
+            display: block;
+        }
+
+        .header-info {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: rgba(255, 100, 100, 0.8);
+            transition: color 0.5s;
+        }
+        .header-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 15px #ff0055;
+            letter-spacing: 4px;
+            transition: text-shadow 0.5s, color 0.5s;
+        }
+        .alert-sub {
+            color: #ff0055;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 15px;
+            border-left: 2px solid #ff0055;
+            transition: border-color 0.5s;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .controls-hint strong {
+            color: #ff0055;
+            text-decoration: underline;
+        }
+
+        /* --- Archive Modal --- */
+        #archive-modal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 500px;
+            max-width: 90%;
+            height: 100%;
+            background: rgba(10, 0, 5, 0.95);
+            border-left: 1px solid rgba(255, 0, 85, 0.3);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 200;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+            box-shadow: -20px 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        #archive-modal.active {
+            transform: translateX(0);
+        }
+
+        .modal-bg-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 0, 85, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 85, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .modal-header {
+            padding: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 0, 85, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .modal-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .modal-label {
+            font-size: 0.7rem;
+            color: rgba(255, 0, 85, 0.6);
+            letter-spacing: 2px;
+        }
+        .modal-title {
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.8rem;
+            line-height: 1.1;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(255, 0, 85, 0.3);
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 50%;
+        }
+        .modal-close:hover { 
+            background: #ff0055; 
+            color: #fff;
+            box-shadow: 0 0 15px #ff0055;
+            transform: rotate(90deg);
+        }
+        
+        .modal-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            padding-top: 20px;
+        }
+        
+        .modal-content {
+            color: #ccc;
+            line-height: 1.8;
+            font-size: 1rem;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .modal-content h3 { 
+            color: #ff0055; 
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(255, 0, 85, 0.3);
+            display: flex;
+            align-items: center;
+        }
+        .modal-content code {
+            background: rgba(255,0,85,0.1);
+            border: 1px solid rgba(255,0,85,0.3);
+            color: #ff99aa;
+            padding: 2px 6px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9em;
+        }
+        .modal-content p {
+            margin-bottom: 1.5em;
+        }
+
+        .modal-footer {
+            padding: 20px 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- RESTORED STATE --- */
+        body.restored {
+            background-color: #000a14; /* Deep Blue/Green */
+        }
+        body.restored .header-title { text-shadow: 0 0 20px #00aaff; color: #fff; }
+        body.restored .header-info { color: #00aaff; }
+        body.restored .alert-sub { color: #00aaff; animation: none; content: "SYSTEM STABLE"; }
+        body.restored #archive-modal { border-left-color: rgba(0, 170, 255, 0.5); background: rgba(0, 5, 10, 0.95); }
+        body.restored .modal-title { text-shadow: 0 0 20px #00aaff; color: #00aaff; }
+        body.restored .modal-bg-grid {
+             background-image: 
+                linear-gradient(rgba(0, 170, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 170, 255, 0.05) 1px, transparent 1px);
+        }
+        body.restored .modal-content h3 { color: #00aaff; border-bottom-color: rgba(0, 170, 255, 0.4); }
+        body.restored .modal-content code { background: rgba(0,170,255,0.1); border-color: rgba(0,170,255,0.3); color: #99eeff; }
+        body.restored .controls-hint { border-left-color: #00aaff; }
+        body.restored .controls-hint strong { color: #00aaff; }
+
+        .scanline {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent 95%, rgba(0, 255, 0, 0.1) 100%);
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+            z-index: 5;
+        }
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="scanline"></div>
+
+    <!-- Main UI -->
+    <div id="main-ui">
+        <div class="header-info">
+            <div class="header-title" id="main-title">FATAL_ERROR</div>
+            <div id="sub-title" class="alert-sub">MULTIPLE ORGAN FAILURES DETECTED</div>
+        </div>
+        <div class="controls-hint">
+            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] DEBUG_CONSOLE</strong>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <!-- Archive Modal -->
+    <div id="archive-modal">
+        <div class="modal-bg-grid"></div>
+        
+        <div class="modal-header">
+            <div class="modal-title-group">
+                <span class="modal-label">ORGAN //</span>
+                <span class="modal-title" id="modal-title-text">TARGET</span>
+            </div>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-scroll-area">
+            <div class="modal-content" id="modal-body-text"></div>
+        </div>
+
+        <div class="modal-footer">
+            <span id="connection-status">DIAGNOSTIC MODE</span>
+            <span id="protocol-ver">BIO-OS v4.04</span>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        const state = {
+            phase: 'main', 
+            organsSolved: 0,
+            isRestored: false
+        };
+
+        // --- ORGAN DATA ---
+        const organs = [
+            { 
+                id: 'heart', 
+                title: "CORE: HEART", 
+                color: 0xff0055, 
+                pos: {x: 0, y: 50, z: 0}, 
+                geometry: "icosahedron", 
+                solved: false,
+                content: `
+                    <h3>DIAGNOSIS: <span style="color:#ff3333">VENTRICULAR_RECURSION</span></h3>
+                    <p>心拍リズムを制御するループ処理が「終了条件のない再帰」に陥っています。現在、BPM（Beats Per Minute）は計測不能領域（Over 9000）に達しており、CPUが過熱状態です。</p>
+                    
+                    <div style="background:rgba(50,0,0,0.6); padding:15px; border-left:3px solid #ff0055; color:#ffaaaa; font-family:'Share Tech Mono'; margin-bottom: 20px;">
+                        <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
+                        [CRITICAL] Uncaught RangeError: Maximum call stack size exceeded.<br>
+                        [WARNING] Myocardium.js is unresponsive.<br>
+                        [STATUS] Pulse: <span style="animation:blink 0.1s infinite">ERROR</span>
+                    </div>
+
+                    <h3>DEBUG_PROTOCOL</h3>
+                    <p>開発者ツール（Console）を使用して、心拍リズムを強制的に正常値へ書き換えてください。正常な人間の安静時心拍数は <code>60</code> です。</p>
+                    <p>
+                        <strong>Input Command:</strong><br>
+                        <code>sys.heart.setBPM(value)</code>
+                    </p>
+                `,
+                solvedContent: `
+                    <h3>STATUS: <span style="color:#00aaff">NORMALIZED</span></h3>
+                    <p>再帰ループの修正を確認。心拍リズムは安定した正弦波を描いています。コア温度低下中。</p>
+                    
+                    <div style="background:rgba(0,50,80,0.4); padding:15px; border-left:3px solid #00aaff; color:#aee; font-family:'Share Tech Mono';">
+                        <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
+                        [SUCCESS] Rhythm stabilizer active.<br>
+                        [INFO] Pulse: 60 BPM (Stable).
+                    </div>
+                `
+            },
+            { 
+                id: 'brain', 
+                title: "LOGIC: BRAIN", 
+                color: 0x5500ff, 
+                pos: {x: 250, y: 150, z: -100}, 
+                geometry: "box_cluster", 
+                solved: false,
+                content: `
+                    <h3>DIAGNOSIS: <span style="color:#aa00ff">403_FORBIDDEN_GATEWAY</span></h3>
+                    <p>思考回路へのアクセスがファイアウォールにより拒否されました。前任の開発者が残した「スパゲッティコード」により、ニューロン接続が迷路化しています。</p>
+                    
+                    <div style="background:rgba(20,0,50,0.6); padding:15px; border-left:3px solid #5500ff; color:#ccaaff; font-family:'Share Tech Mono'; margin-bottom: 20px;">
+                        <span style="opacity:0.7">>> SECURITY_ALERT</span><br>
+                        [ERROR] AuthToken missing in header.<br>
+                        [HINT] "パスワードはメモリのゴミ捨て場（Dump）に隠した"
+                    </div>
+
+                    <h3>DEBUG_PROTOCOL</h3>
+                    <p>メモリダンプを実行して隠された認証トークンを探し出し、セキュリティロックを解除してください。</p>
+                    <p>
+                        <strong>Step 1:</strong> <code>sys.brain.dump()</code><br>
+                        <strong>Step 2:</strong> <code>sys.brain.unlock('TOKEN')</code>
+                    </p>
+                `,
+                solvedContent: `
+                    <h3>STATUS: <span style="color:#00aaff">ACCESS_GRANTED</span></h3>
+                    <p>認証成功。ニューラルネットワークの再構築が完了しました。思考プロセスはクリアです。</p>
+                    
+                    <div style="background:rgba(0,50,80,0.4); padding:15px; border-left:3px solid #00aaff; color:#aee; font-family:'Share Tech Mono';">
+                        <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
+                        [SUCCESS] Firewall rules updated.<br>
+                        [INFO] Cognitive functions: ONLINE.
+                    </div>
+                `
+            },
+            { 
+                id: 'stomach', 
+                title: "MEM: STOMACH", 
+                color: 0x00ff55, 
+                pos: {x: -250, y: -100, z: 100}, 
+                geometry: "sphere_distorted", 
+                solved: false,
+                content: `
+                    <h3>DIAGNOSIS: <span style="color:#00ff55">MEMORY_LEAK_OVERFLOW</span></h3>
+                    <p>消化管（メモリ領域）がパンク寸前です。解決されなかった <code>Promise</code> や、参照が残ったままのDOM要素がヘドロのように堆積しています。</p>
+                    
+                    <div style="background:rgba(0,40,0,0.6); padding:15px; border-left:3px solid #00ff55; color:#aaffaa; font-family:'Share Tech Mono'; margin-bottom: 20px;">
+                        <span style="opacity:0.7">>> HEAP_SNAPSHOT</span><br>
+                        [FATAL] Allocation failed - JavaScript heap out of memory.<br>
+                        [DATA] Garbage Objects: <span style="color:#fff">99,999+</span> (Undigested)
+                    </div>
+
+                    <h3>DEBUG_PROTOCOL</h3>
+                    <p>緊急ガベージコレクション（胃洗浄）を実行し、不要なメモリ領域を強制解放してください。</p>
+                    <p>
+                        <strong>Input Command:</strong><br>
+                        <code>sys.stomach.flush()</code>
+                    </p>
+                `,
+                solvedContent: `
+                    <h3>STATUS: <span style="color:#00aaff">BUFFER_CLEAN</span></h3>
+                    <p>メモリリークの解消を確認。ヒープ領域は正常化され、消化効率は100%に回復しました。</p>
+                    
+                    <div style="background:rgba(0,50,80,0.4); padding:15px; border-left:3px solid #00aaff; color:#aee; font-family:'Share Tech Mono';">
+                        <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
+                        [SUCCESS] Garbage Collection finished.<br>
+                        [INFO] Free Memory: 80% available.
+                    </div>
+                `
+            }
+        ];
+
+        // --- HACKING INTERFACE (Console) ---
+        window.sys = {
+            help: function() {
+                console.group("=== BIO-OS DIAGNOSTICS ===");
+                console.log("%c Available Modules:", "color: #00ffaa");
+                console.log("1. sys.heart - Core Processor");
+                console.log("2. sys.brain - Logic Gate");
+                console.log("3. sys.stomach - Garbage Collector");
+                console.groupEnd();
+                return "Waiting for input...";
+            },
+            
+            heart: {
+                get status() {
+                    if (organs[0].solved) return "STATUS: STABLE.";
+                    return "WARNING: BPM UNSTABLE (Over 9000). Use setBPM(60) to fix.";
+                },
+                setBPM: function(val) {
+                    if (organs[0].solved) return "Heart is already stable.";
+                    if (val === 60) {
+                        solveOrgan('heart');
+                        return "SUCCESS: Heart rhythm stabilized.";
+                    }
+                    console.warn("BPM rejected. Target is 60.");
+                    return "FAILED: Invalid Value.";
+                }
+            },
+
+            brain: {
+                get status() {
+                    if (organs[1].solved) return "STATUS: ONLINE.";
+                    return "ERROR: LOCKED. Check dump() for token.";
+                },
+                dump: function() {
+                    console.log("%c[MEMORY DUMP] 00 00 00 CA FE BA BE ...", "color: #aaa");
+                    console.log("%c... TOKEN_FOUND: 'NEURAL_LINK_777' ...", "color: #5500ff; font-weight:bold;");
+                    return "End of dump.";
+                },
+                unlock: function(token) {
+                    if (organs[1].solved) return "Brain is already unlocked.";
+                    if (token === 'NEURAL_LINK_777') {
+                        solveOrgan('brain');
+                        return "SUCCESS: Access Granted.";
+                    }
+                    console.error("Access Denied. Invalid Token.");
+                    return "FAILED: Incorrect Token.";
+                }
+            },
+
+            stomach: {
+                get status() {
+                    if (organs[2].solved) return "STATUS: CLEAN.";
+                    return "CRITICAL: OVERFLOW. Use flush() to clear.";
+                },
+                flush: function() {
+                    if (organs[2].solved) return "Stomach is empty.";
+                    console.log("Initiating flush sequence...");
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 20;
+                        console.log(`Clearing... ${progress}%`);
+                        if(progress >= 100) {
+                            clearInterval(interval);
+                            solveOrgan('stomach');
+                            console.log("%cSUCCESS: Buffer cleared.", "color: #00ff55");
+                        }
+                    }, 200);
+                    return "Processing...";
+                }
+            }
+        };
+
+        function solveOrgan(id) {
+            const organ = organs.find(o => o.id === id);
+            if(organ && !organ.solved) {
+                organ.solved = true;
+                state.organsSolved++;
+                
+                // Update 3D Object
+                updateOrganVisuals(id);
+                
+                // Update Modal if open
+                const modal = document.getElementById('archive-modal');
+                if(modal.classList.contains('active')) {
+                    const title = document.getElementById('modal-title-text');
+                    // Check if the open modal corresponds to the solved organ
+                    // Use includes or ID check
+                    if(title.textContent.includes(organ.title.split(':')[1].trim())) {
+                         document.getElementById('modal-body-text').innerHTML = organ.solvedContent;
+                         // Update header style to blue
+                         const colorHex = '#00aaff';
+                         title.style.color = colorHex;
+                         title.style.textShadow = `0 0 20px ${colorHex}`;
+                    }
+                }
+
+                // Check Win Condition
+                if(state.organsSolved === organs.length) {
+                    restoreSystem();
+                }
+            }
+        }
+
+        function restoreSystem() {
+            state.isRestored = true;
+            document.body.classList.add('restored');
+            document.getElementById('main-title').innerText = "SYSTEM_RESTORED";
+            document.getElementById('sub-title').innerText = "VITAL SIGNS STABLE";
+            
+            // White Flash
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = 0; flash.style.left = 0;
+            flash.style.width = '100%'; flash.style.height = '100%';
+            flash.style.background = '#fff';
+            flash.style.zIndex = 999;
+            flash.style.transition = 'opacity 1s';
+            document.body.appendChild(flash);
+            
+            setTimeout(() => {
+                flash.style.opacity = 0;
+                setTimeout(() => flash.remove(), 1000);
+            }, 100);
+        }
+
+        // --- Three.js Setup ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0000, 0.002); 
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.z = 800; // Start at zoomed-in position
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // --- OrbitControls ---
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.minDistance = 200;
+        controls.maxDistance = 1500;
+
+        // --- Particles (Blood/Data Stream) ---
+        const pCount = 5000;
+        const pGeo = new THREE.BufferGeometry();
+        const pPos = new Float32Array(pCount * 3);
+        const pCol = new Float32Array(pCount * 3);
+        
+        const c1 = new THREE.Color(0xff0055); // Red
+        const c2 = new THREE.Color(0x550022); // Dark Red
+        const c3 = new THREE.Color(0x00ffaa); // Green (Healthy)
+
+        for(let i=0; i<pCount; i++) {
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = (Math.random() - 0.5) * 2000;
+            pPos[i*3] = x; pPos[i*3+1] = y; pPos[i*3+2] = z;
+
+            pCol[i*3] = c1.r; pCol[i*3+1] = c1.g; pCol[i*3+2] = c1.b;
+        }
+
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+
+        const pMat = new THREE.PointsMaterial({
+            size: 3, vertexColors: true, transparent: true, opacity: 0.6,
+            blending: THREE.AdditiveBlending, sizeAttenuation: true
+        });
+        const particleSystem = new THREE.Points(pGeo, pMat);
+        scene.add(particleSystem);
+
+        // --- Organ Objects ---
+        const organMeshes = [];
+        
+        organs.forEach(data => {
+            const group = new THREE.Group();
+            group.position.set(data.pos.x, data.pos.y, data.pos.z);
+            
+            let core;
+            if (data.geometry === "icosahedron") {
+                const geo = new THREE.IcosahedronGeometry(60, 1);
+                const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
+                core = new THREE.Mesh(geo, mat);
+                // Inner Glow
+                const innerGeo = new THREE.IcosahedronGeometry(40, 0);
+                const innerMat = new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+                core.add(new THREE.Mesh(innerGeo, innerMat));
+
+            } else if (data.geometry === "box_cluster") {
+                core = new THREE.Group();
+                const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
+                for(let i=0; i<5; i++) {
+                    const box = new THREE.Mesh(new THREE.BoxGeometry(40,40,40), mat);
+                    box.position.set((Math.random()-0.5)*50, (Math.random()-0.5)*50, (Math.random()-0.5)*50);
+                    box.rotation.set(Math.random(), Math.random(), Math.random());
+                    core.add(box);
+                }
+            } else {
+                // Sphere Distorted
+                const geo = new THREE.SphereGeometry(50, 16, 16);
+                const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
+                core = new THREE.Mesh(geo, mat);
+            }
+
+            group.add(core);
+            group.userData = { id: data.id, originalColor: data.color, mesh: core };
+            
+            // Add particles around organ
+            const subPGeo = new THREE.BufferGeometry();
+            const subPPos = [];
+            for(let i=0; i<100; i++) subPPos.push((Math.random()-0.5)*150, (Math.random()-0.5)*150, (Math.random()-0.5)*150);
+            subPGeo.setAttribute('position', new THREE.Float32BufferAttribute(subPPos, 3));
+            const subPMat = new THREE.PointsMaterial({color: data.color, size: 2, transparent: true, opacity: 0.5});
+            group.add(new THREE.Points(subPGeo, subPMat));
+
+            scene.add(group);
+            organMeshes.push(group);
+        });
+
+        function updateOrganVisuals(id) {
+            const group = organMeshes.find(m => m.userData.id === id);
+            if (!group) return;
+
+            // Change Color to Blue/Cyan
+            const newColor = 0x00aaff;
+            group.traverse((child) => {
+                if (child.material) {
+                    child.material.color.setHex(newColor);
+                    if(child.material.emissive) child.material.emissive.setHex(0x0055ff);
+                }
+            });
+        }
+
+        // --- Interaction Logic ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        let mouseDownPos = { x: 0, y: 0 };
+        window.addEventListener('mousedown', (e) => {
+            mouseDownPos.x = e.clientX;
+            mouseDownPos.y = e.clientY;
+        });
+        
+        window.addEventListener('mouseup', (event) => {
+            const dx = event.clientX - mouseDownPos.x;
+            const dy = event.clientY - mouseDownPos.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            // If moved more than 5px, it's a drag, ignore click
+            if (distance > 5) return;
+
+            // Proceed with Raycast
+            if (event.target.closest('#archive-modal')) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(organMeshes, true);
+
+            if (intersects.length > 0) {
+                // Find parent group
+                let target = intersects[0].object;
+                while(target.parent && !target.userData.id) target = target.parent;
+                if(target.userData.id) openModal(target.userData.id);
+            }
+        });
+
+
+        // --- Modal Logic ---
+        const modal = document.getElementById('archive-modal');
+        const modalTitle = document.getElementById('modal-title-text');
+        const modalBody = document.getElementById('modal-body-text');
+
+        function openModal(id) {
+            const data = organs.find(o => o.id === id);
+            if (!data) return;
+
+            modalTitle.innerText = data.title;
+            
+            if (data.solved) {
+                modalBody.innerHTML = data.solvedContent;
+                modalTitle.style.color = '#00aaff';
+                modalTitle.style.textShadow = '0 0 20px #00aaff';
+            } else {
+                modalBody.innerHTML = data.content;
+                const c = '#' + data.color.toString(16).padStart(6, '0');
+                modalTitle.style.color = c;
+                modalTitle.style.textShadow = `0 0 20px ${c}`;
+            }
+            
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+
+        window.closeModal = function() {
+            modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+        };
+
+        // --- Animation Loop ---
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+            
+            controls.update(); // Required for damping
+
+            // Organ Animation
+            organMeshes.forEach(group => {
+                const data = organs.find(o => o.id === group.userData.id);
+                
+                if (data.solved) {
+                    // Stable rotation
+                    group.rotation.x += 0.005;
+                    group.rotation.y += 0.005;
+                    group.scale.set(1, 1, 1);
+                } else {
+                    // Glitchy movement
+                    group.rotation.x += 0.01;
+                    group.rotation.y += 0.02;
+                    
+                    // Heartbeat / Twitch
+                    if (data.id === 'heart') {
+                        const s = 1 + Math.sin(time * 15) * 0.1; // Fast pulse
+                        group.scale.set(s, s, s);
+                    } else if (data.id === 'stomach') {
+                         group.scale.x = 1 + Math.sin(time*5)*0.1;
+                         group.scale.y = 1 + Math.cos(time*4)*0.1;
+                    } else {
+                         if(Math.random() < 0.05) group.scale.setScalar(1 + Math.random()*0.3);
+                         else group.scale.setScalar(1);
+                    }
+                }
+            });
+
+            // Background Color Shift if restored
+            if (state.isRestored) {
+                 const c = particleSystem.geometry.attributes.color;
+                 for(let i=0; i<pCount; i++) {
+                     // Slowly turn particles green/blue
+                     c.setXYZ(i, 0, 0.6, 1);
+                 }
+                 c.needsUpdate = true;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Initial Message
+        console.clear();
+        console.log("%c SYSTEM FAILURE // MULTIPLE ORGAN ERRORS DETECTED ", "background: red; color: white; font-size: 16px; padding: 5px;");
+        console.log("Type 'sys.help()' to start diagnostics.");
+
+        animate();
+
+    </script>
+</body>
+</html>
