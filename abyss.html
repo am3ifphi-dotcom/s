@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE ABYSS</title>
+    <title>ARCHIVE_CORE // AM3I</title>
     <!-- Three.js (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Noto+Sans+JP:wght@100&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;900&family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         body {
@@ -15,7 +17,8 @@
             padding: 0;
             background-color: #000;
             overflow: hidden;
-            font-family: 'Orbitron', sans-serif;
+            font-family: 'Share Tech Mono', monospace;
+            user-select: none;
         }
 
         #canvas-container {
@@ -25,66 +28,152 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+            transition: filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        body.modal-open #canvas-container {
+            filter: brightness(0.8) grayscale(0.3); 
         }
 
-        #overlay {
+        /* --- Intro UI --- */
+        #intro-ui {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 10;
             text-align: center;
             color: #fff;
-            pointer-events: none; /* クリックを通過させる */
-            mix-blend-mode: exclusion;
+            z-index: 20;
+            transition: opacity 0.5s;
         }
 
-        h1 {
-            font-size: 4rem;
-            letter-spacing: 1rem;
-            margin-bottom: 1rem;
-            opacity: 0;
-            animation: fadeIn 3s 1s forwards;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-
-        p {
-            font-family: 'Noto Sans JP', sans-serif;
-            font-weight: 100;
-            letter-spacing: 0.2rem;
-            opacity: 0;
-            animation: fadeIn 3s 3s forwards;
-            font-size: 0.9rem;
-        }
-
-        .home-btn {
-            margin-top: 50px;
-            padding: 15px 40px;
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.3);
-            color: rgba(255,255,255,0.7);
+        .hold-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 230, 230, 0.3);
+            background: rgba(0, 0, 0, 0.6);
+            color: #00e6e6;
             font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             cursor: pointer;
-            pointer-events: auto; /* ここだけクリック可能に */
-            transition: all 0.5s;
-            opacity: 0;
-            animation: fadeIn 2s 5s forwards;
+            pointer-events: auto;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 230, 230, 0.1);
+            transition: transform 0.1s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
+            margin: 0 auto;
+            backdrop-filter: blur(5px);
+        }
+        
+        .hold-btn:active {
+            transform: scale(0.95);
         }
 
-        .home-btn:hover {
-            background: #fff;
+        .hold-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(0, 230, 230, 0.8);
+            animation: pulseText 2s infinite;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 150px;
+            height: 150px;
+            transform: rotate(-90deg);
+            pointer-events: none;
+        }
+        .progress-ring__circle {
+            stroke: #00e6e6;
+            stroke-width: 6;
+            fill: transparent;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 0.05s linear;
+            filter: drop-shadow(0 0 5px #00e6e6);
+        }
+
+        @keyframes pulseText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* --- Main UI --- */
+        #main-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.5s ease-in;
+            display: none;
+        }
+
+        .header-info {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: rgba(0, 230, 230, 0.8);
+            transition: color 0.5s;
+        }
+        .header-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 15px #00e6e6;
+            letter-spacing: 4px;
+            transition: text-shadow 0.5s;
+        }
+        .controls-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-left: 2px solid #00e6e6;
+            transition: border-color 0.5s;
+        }
+
+        #return-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 20, 20, 0.6);
+            border: 1px solid #00e6e6;
+            color: #00e6e6;
+            padding: 10px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        #return-btn:hover {
+            background: #00e6e6;
             color: #000;
-            box-shadow: 0 0 30px rgba(255,255,255,0.8);
+            box-shadow: 0 0 20px #00e6e6;
         }
 
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
-        /* 導入時のホワイトアウトからの復帰 */
-        #intro-flash {
+        /* --- Flash Overlay --- */
+        #flash-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -92,161 +181,981 @@
             height: 100%;
             background: #fff;
             z-index: 100;
-            animation: flashOut 3s forwards ease-in-out;
+            opacity: 0;
             pointer-events: none;
+            transition: opacity 0.5s ease-out;
         }
 
-        @keyframes flashOut {
-            0% { opacity: 1; background: #fff; }
-            50% { opacity: 1; background: #000; } /* 一瞬黒に */
-            100% { opacity: 0; visibility: hidden; }
+        /* --- Archive Modal (Refined Side Panel) --- */
+        #archive-modal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 500px;
+            max-width: 90%;
+            height: 100%;
+            background: rgba(5, 10, 15, 0.9);
+            border-left: 1px solid rgba(0, 230, 230, 0.3);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 200;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+            box-shadow: -20px 0 50px rgba(0, 0, 0, 0.8);
         }
+
+        /* Decoration Lines */
+        #archive-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #00e6e6, transparent);
+            opacity: 0.5;
+            transition: background 0.5s;
+        }
+
+        #archive-modal.active {
+            transform: translateX(0);
+        }
+
+        .modal-bg-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 230, 230, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 230, 230, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .modal-header {
+            padding: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 230, 230, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: border-color 0.5s;
+        }
+
+        .modal-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .modal-label {
+            font-size: 0.7rem;
+            color: rgba(0, 230, 230, 0.6);
+            letter-spacing: 2px;
+            transition: color 0.5s;
+        }
+        .modal-title {
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.8rem;
+            line-height: 1.1;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 230, 230, 0.3);
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 50%;
+        }
+        .modal-close:hover { 
+            background: #00e6e6; 
+            color: #000;
+            box-shadow: 0 0 15px #00e6e6;
+            transform: rotate(90deg);
+        }
+        
+        .modal-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            padding-top: 20px;
+        }
+        
+        .modal-scroll-area::-webkit-scrollbar { width: 6px; }
+        .modal-scroll-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        .modal-scroll-area::-webkit-scrollbar-thumb { background: rgba(0,230,230,0.3); border-radius: 3px; }
+
+        .modal-content {
+            color: #ccc;
+            line-height: 1.8;
+            font-size: 1rem;
+            font-family: 'Noto Sans JP', sans-serif;
+            position: relative;
+        }
+        
+        .modal-content h3 { 
+            color: #00e6e6; 
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(0, 230, 230, 0.3);
+            display: flex;
+            align-items: center;
+            transition: color 0.5s, border-color 0.5s;
+        }
+        .modal-content h3::before {
+            content: '>>';
+            margin-right: 10px;
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        .modal-content h3:first-child { margin-top: 0; }
+        
+        .modal-content p {
+            margin-bottom: 20px;
+        }
+
+        .modal-content code {
+            display: block;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #00ffaa;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(to bottom, transparent, rgba(0, 230, 230, 0.1), transparent);
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(500%); }
+        }
+
+        .modal-footer {
+            padding: 20px 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        body.dragging { cursor: grabbing; }
+        body.pointer { cursor: pointer; }
+
+        /* Awakened State Styles */
+        body.awakened .header-title { text-shadow: 0 0 20px #ffd700; color: #fff; }
+        body.awakened .header-info { color: #ffd700; }
+        body.awakened #return-btn { border-color: #ffd700; color: #ffd700; }
+        body.awakened #return-btn:hover { background: #ffd700; color: #000; box-shadow: 0 0 20px #ffd700; }
+        body.awakened #archive-modal { border-left-color: rgba(255, 215, 0, 0.5); }
+        body.awakened #archive-modal::before { background: linear-gradient(to bottom, transparent, #ffd700, transparent); }
+        body.awakened .modal-label, body.awakened .modal-content h3 { color: #ffd700; }
+        body.awakened .modal-content h3 { border-bottom-color: rgba(255, 215, 0, 0.4); }
+        body.awakened .modal-close:hover { background: #ffd700; box-shadow: 0 0 15px #ffd700; }
+        body.awakened .modal-bg-grid {
+             background-image: 
+                linear-gradient(rgba(255, 215, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 215, 0, 0.05) 1px, transparent 1px);
+        }
+
     </style>
 </head>
 <body>
-    <div id="intro-flash"></div>
+
+    <div id="flash-overlay"></div>
+
+    <!-- Intro UI -->
+    <div id="intro-ui">
+        <div class="hold-btn" id="warp-btn">
+            <svg class="progress-ring">
+                <circle class="progress-ring__circle" r="70" cx="75" cy="75"/>
+            </svg>
+            <span class="hold-text">HOLD<br>TO DIVE</span>
+        </div>
+        <div style="margin-top: 25px; opacity: 0.6; font-size: 0.8rem; letter-spacing: 2px;">
+            INITIATE NEURAL LINK
+        </div>
+    </div>
+
+    <!-- Main UI -->
+    <div id="main-ui">
+        <div class="header-info">
+            <div class="header-title">ARCHIVE_CORE</div>
+            <div>DEEP STORAGE // FRAGMENT_VIEWER</div>
+        </div>
+        <button id="return-btn" onclick="location.href='index.html'">DISCONNECT</button>
+        <div class="controls-hint">
+            [DRAG] ROTATE &nbsp;//&nbsp; [CLICK] DECRYPT
+        </div>
+    </div>
 
     <div id="canvas-container"></div>
 
-    <div id="overlay">
-        <h1>ABYSS</h1>
-        <p>深淵を覗くとき、深淵もまたこちらを覗いている</p>
-        <button class="home-btn" onclick="location.href='index.html'">Resurface (Return)</button>
+    <!-- New Archive Modal (Side Panel) -->
+    <div id="archive-modal">
+        <div class="modal-bg-grid"></div>
+        <div class="scanline"></div>
+        
+        <div class="modal-header">
+            <div class="modal-title-group">
+                <span class="modal-label">DECRYPTED_DATA //</span>
+                <span class="modal-title" id="modal-title-text">FILE_NAME</span>
+            </div>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-scroll-area">
+            <div class="modal-content" id="modal-body-text">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <span>SECURE CONNECTION ESTABLISHED</span>
+            <span id="protocol-ver">AM3I PROTOCOL v2.0</span>
+        </div>
     </div>
 
     <script>
+        // --- State ---
+        const state = {
+            phase: 'intro', 
+            speed: 5,       
+            targetSpeed: 5,
+            maxWarpSpeed: 300, 
+            cameraShake: 0,
+            fov: 75,
+            rotationZ: 0, 
+            groupRotation: { x: 0, y: 0 }, 
+            holdProgress: 0,
+            autoRotateSpeed: { x: 0.0003, y: 0.0008 },
+            isAwakened: false // 謎解きクリアフラグ
+        };
+
+        // --- Sequence Puzzle Logic ---
+        const puzzle = {
+            targetSequence: [1, 2, 3, 4], // ID Order
+            currentSequence: [],
+            reset() { this.currentSequence = []; },
+            check(id) {
+                // STATUS(6)とCORE(5)はシーケンス対象外
+                if (id === 5 || id === 6) return;
+
+                // 順番通りかチェック
+                const expected = this.targetSequence[this.currentSequence.length];
+                if (id === expected) {
+                    this.currentSequence.push(id);
+                    console.log(`%c[SYSTEM] Sequence match: ${this.currentSequence.length}/4`, "color: #00ff00;");
+                    
+                    if (this.currentSequence.length === this.targetSequence.length) {
+                        triggerAwakening();
+                    }
+                } else {
+                    if (this.currentSequence.length > 0) {
+                        console.log("%c[SYSTEM] Sequence mismatch. Resetting...", "color: #ff0000;");
+                    }
+                    this.reset();
+                    // 最初からやり直しで、もし1番目を押したなら登録
+                    if (id === this.targetSequence[0]) {
+                        this.currentSequence.push(id);
+                    }
+                }
+            }
+        };
+
+        // --- Archive Data ---
+        const archives = [
+            { 
+                id: 5, 
+                title: "00: SYSTEM CORE", 
+                color: 0xffffff, 
+                pos: {x: 0, y: 0, z: 0}, // 中央
+                geometry: "icosahedron", 
+                content: `
+                    <h3>深淵の核（Core）</h3>
+                    <p>システムの中枢ユニット。<br>
+                    アーカイブデータの整合性チェックおよび暗号化を常時実行しています。</p>
+                    <p>アクセスログを確認中...<br>
+                    <span style="color:#00ff00">>> 認証成功。ゲストユーザーを認識しました。</span></p>
+                    <p>現在、全システムは安定稼働しています。</p>`,
+                // 覚醒後のコンテンツ
+                awakenedContent: `
+                    <h3 style="color:#ffd700; border-color:#ffd700;">CORE: UNLOCKED</h3>
+                    <p>セキュリティプロトコルの解除を確認。<br>
+                    ようこそ、深淵のさらに奥底へ。</p>
+                    <p>ここは本来アクセスできない開発者の本音領域です。<br>
+                    「完璧なコード」なんて存在しない。でも、その不完全さの中にこそ、人間味と愛おしさがあると思いませんか？</p>
+                    <p>これからもバグと戦い、カエルを崇めながら、楽しいモノを作り続けます。</p>
+                    <p style="text-align:right; margin-top:30px;">- AM3I Dev Team</p>
+                `
+            },
+            { 
+                id: 1, 
+                title: "01: ORIGIN STORY", 
+                color: 0x00ffff, 
+                pos: {x: 400, y: 150, z: -100}, 
+                geometry: "box",
+                content: `
+                    <h3>名前の由来</h3>
+                    <p>「Am3i」ってどう読むの？とよく聞かれます。<br>
+                    実はこれ、キーボードの上で寝返りを打ったら偶然入力された文字列なんです。</p>
+                    <p>...というのは嘘で、<strong>Am</strong>phibia(両生類) + <strong>3</strong>(安定構造) + <strong>i</strong>(虚数)です。<br>
+                    「存在しないが確かにそこにあるカエル」という意味です。深いでしょ？（後付け）</p>` 
+            },
+            { 
+                id: 2, 
+                title: "02: FROG OBSESSION", 
+                color: 0x00ffaa, 
+                pos: {x: -400, y: 50, z: 200}, 
+                geometry: "icosahedron",
+                content: `
+                    <h3>なぜカエルなのか？</h3>
+                    <p>虫（バグ）を食べてくれるからです。<br>
+                    私の書くコードは放っておくとすぐバグだらけになるので、守り神としてカエルを崇拝しています。</p>
+                    <p>あと、「井の中の蛙大海を知らず」には続きがあります。<br>
+                    <strong>「されど空の青さを知る」</strong>。<br>
+                    外の世界（最新技術）を知らなくても、自分の沼（ローカル環境）を極めれば最強になれると信じています。</p>` 
+            },
+            { 
+                id: 3, 
+                title: "03: REJECTED DESIGN", 
+                color: 0xff0055, 
+                pos: {x: 150, y: -350, z: 300}, 
+                geometry: "box",
+                content: `
+                    <h3>ボツ案：深紅の世界</h3>
+                    <p>初期のサイトデザインは、すべてが<strong>真っ赤（Crimson Red）</strong>でした。</p>
+                    <p>カッコいいと思って実装したのですが、開発開始30分で目が充血し、生命の危機を感じたため却下されました。<br>
+                    シアン（青緑）は目に優しいですね。Secret Modeが赤いのは、その時の名残（供養）です。</p>` 
+            },
+            { 
+                id: 4, 
+                title: "04: THE SERPENT", 
+                color: 0xaa00ff, 
+                pos: {x: -300, y: 350, z: -200}, 
+                geometry: "icosahedron",
+                content: `
+                    <h3>蛇（スパゲッティコード）</h3>
+                    <p>この世界に潜む「蛇」は、取り除こうとすればするほど絡まるスパゲッティコードの具現化です。</p>
+                    <p>カエル（開発者）にとって天敵ですが、無理に消そうとするとシステム全体が崩壊する呪いがかかっています。<br>
+                    なので、見なかったことにしてABYSS（深淵）の奥底に隔離しています。触らないでください。</p>` 
+            },
+            { 
+                id: 6, 
+                title: "LOG: STATUS", 
+                color: 0xffff00, 
+                pos: {x: 350, y: -250, z: -400}, 
+                geometry: "box",
+                content: `
+                    <h3>現在のステータス</h3>
+                    <p>
+                    - 精神状態： 正常（カフェイン駆動）<br>
+                    - 今日の晩御飯： 未定<br>
+                    - お風呂： まだ<br>
+                    - 進捗： ダメです<br>
+                    - カエルの鳴き声合成： 諦めました
+                    </p>` 
+            }
+        ];
+
         // --- Three.js Setup ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        // 霧を追加して奥行き感を出す (黒)
-        scene.fog = new THREE.FogExp2(0x000000, 0.001);
+        scene.fog = new THREE.FogExp2(0x000000, 0.0008);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.z = 1000;
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
+        camera.position.z = 0; 
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ReinhardToneMapping;
         container.appendChild(renderer.domElement);
 
-        // --- Tunnel / Wormhole Particles ---
-        const geometry = new THREE.BufferGeometry();
-        const count = 5000; // パーティクル数
-        const positions = [];
-        const colors = [];
+        // --- Particles (Infinite Tunnel) ---
+        const pCount = 15000;
+        const pGeo = new THREE.BufferGeometry();
+        const pPos = new Float32Array(pCount * 3);
+        const pCol = new Float32Array(pCount * 3);
+        
+        const c1 = new THREE.Color(0xaa00ff);
+        const c2 = new THREE.Color(0x00e6e6);
+        const c3 = new THREE.Color(0xffffff);
+        const tunnelRadius = 2500;
+        const tunnelLength = 12000;
 
-        // 紫と青緑のカラーパレット
-        const color1 = new THREE.Color(0xaa00ff); // 紫
-        const color2 = new THREE.Color(0x00e6e6); // 青緑
-        const color3 = new THREE.Color(0xffffff); // 白
+        for(let i=0; i<pCount; i++) {
+            const r = 500 + Math.pow(Math.random(), 2) * tunnelRadius; 
+            const theta = Math.random() * Math.PI * 2;
+            const z = (Math.random() * tunnelLength) - (tunnelLength / 2);
 
-        for (let i = 0; i < count; i++) {
-            // トンネル状に配置 (円筒座標系のようなイメージ)
-            const angle = Math.random() * Math.PI * 2;
-            const radius = 200 + Math.random() * 800; // 半径のばらつき
-            const z = Math.random() * 4000 - 2000; // 奥行き
+            pPos[i*3] = r * Math.cos(theta);
+            pPos[i*3+1] = r * Math.sin(theta);
+            pPos[i*3+2] = z;
 
-            // スパイラル構造
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-
-            positions.push(x, y, z);
-
-            // 色をランダムに割り当て
-            const mixedColor = Math.random();
-            let finalColor;
-            if (mixedColor < 0.4) finalColor = color1;
-            else if (mixedColor < 0.8) finalColor = color2;
-            else finalColor = color3;
-
-            colors.push(finalColor.r, finalColor.g, finalColor.b);
+            const mix = Math.random();
+            let c = mix < 0.4 ? c1 : (mix < 0.8 ? c2 : c3);
+            pCol[i*3] = c.r;
+            pCol[i*3+1] = c.g;
+            pCol[i*3+2] = c.b;
         }
 
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
 
-        const material = new THREE.PointsMaterial({
-            size: 3,
+        const pMat = new THREE.PointsMaterial({
+            size: 4,
             vertexColors: true,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.9,
             blending: THREE.AdditiveBlending,
+            sizeAttenuation: true,
             depthWrite: false
         });
 
-        const particles = new THREE.Points(geometry, material);
-        scene.add(particles);
+        const starSystem = new THREE.Points(pGeo, pMat);
+        scene.add(starSystem);
 
-        // --- Starfield (背景の星) ---
-        const starsGeo = new THREE.BufferGeometry();
-        const starsCount = 2000;
-        const starsPos = [];
-        for(let i=0; i<starsCount; i++) {
-            const x = (Math.random() - 0.5) * 4000;
-            const y = (Math.random() - 0.5) * 4000;
-            const z = (Math.random() - 0.5) * 4000;
-            starsPos.push(x,y,z);
-        }
-        starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos, 3));
-        const starsMat = new THREE.PointsMaterial({color: 0x888888, size: 1});
-        const starField = new THREE.Points(starsGeo, starsMat);
-        scene.add(starField);
+        // --- Archive Objects & Neural Links ---
+        const archiveGroup = new THREE.Group();
+        archiveGroup.visible = false; 
+        archiveGroup.position.z = -5000; 
+        scene.add(archiveGroup);
 
+        const clickableObjects = [];
+        const linksGroup = new THREE.Group(); // Coreと他をつなぐ線
+        archiveGroup.add(linksGroup);
 
-        // --- Mouse Interaction ---
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetX = 0;
-        let targetY = 0;
+        archives.forEach(data => {
+            const isCore = (data.id === 5);
+            let geometry;
+            
+            if (isCore) {
+                // Coreは少し大きく、細分化して丸くする
+                geometry = new THREE.IcosahedronGeometry(75, 1); 
+            } else if (data.geometry === "icosahedron") {
+                geometry = new THREE.IcosahedronGeometry(60, 0); 
+            } else {
+                geometry = new THREE.BoxGeometry(60, 60, 60); 
+            }
+            
+            const edges = new THREE.EdgesGeometry(geometry);
+            const lineMat = new THREE.LineBasicMaterial({ 
+                color: data.color, 
+                transparent: true, 
+                opacity: isCore ? 0.9 : 0.8 
+            });
+            const wire = new THREE.LineSegments(edges, lineMat);
+            
+            // コア（半透明）
+            const coreMat = new THREE.MeshBasicMaterial({ 
+                color: data.color, 
+                transparent: true, 
+                opacity: isCore ? 0.4 : 0.2, // Coreは濃く
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending
+            });
+            const core = new THREE.Mesh(geometry, coreMat);
+            
+            core.add(wire);
+            core.position.set(data.pos.x, data.pos.y, data.pos.z);
+            
+            core.userData = { 
+                id: data.id, 
+                title: data.title, 
+                content: data.content,
+                awakenedContent: data.awakenedContent, // Core only
+                originalColor: data.color,
+                originalPos: new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z),
+                isCore: isCore // Coreフラグ
+            };
+            
+            // パーティクル装飾
+            const subPGeo = new THREE.BufferGeometry();
+            const subPCount = isCore ? 80 : 40; // Coreは多め
+            const subPPos = [];
+            for(let i=0; i<subPCount*3; i++) subPPos.push((Math.random()-0.5)*(isCore?180:120), (Math.random()-0.5)*(isCore?180:120), (Math.random()-0.5)*(isCore?180:120));
+            subPGeo.setAttribute('position', new THREE.Float32BufferAttribute(subPPos, 3));
+            const subPMat = new THREE.PointsMaterial({color: data.color, size: 2, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
+            const particles = new THREE.Points(subPGeo, subPMat);
+            core.add(particles);
 
-        const windowHalfX = window.innerWidth / 2;
-        const windowHalfY = window.innerHeight / 2;
+            archiveGroup.add(core);
+            clickableObjects.push(core);
 
-        document.addEventListener('mousemove', (event) => {
-            mouseX = (event.clientX - windowHalfX) * 0.1;
-            mouseY = (event.clientY - windowHalfY) * 0.1;
+            // Neural Links: Core以外のオブジェクトに対して、Core(0,0,0)からの線を引く
+            if (!isCore) {
+                const points = [];
+                points.push(new THREE.Vector3(0, 0, 0)); // Core
+                points.push(new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z)); // Target
+                
+                const linkGeo = new THREE.BufferGeometry().setFromPoints(points);
+                const linkMat = new THREE.LineBasicMaterial({ 
+                    color: 0x00e6e6, 
+                    transparent: true, 
+                    opacity: 0.15,
+                    blending: THREE.AdditiveBlending 
+                });
+                const link = new THREE.Line(linkGeo, linkMat);
+                linksGroup.add(link);
+            }
         });
 
-        // --- Animation Loop ---
-        function animate() {
-            requestAnimationFrame(animate);
 
-            targetX = mouseX * 0.5;
-            targetY = mouseY * 0.5;
+        // --- Interaction Logic (Hold to Warp) ---
+        const warpBtn = document.getElementById('warp-btn');
+        const circle = document.querySelector('.progress-ring__circle');
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+        
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
 
-            // カメラの回転（マウス追従）
-            camera.rotation.x += 0.05 * ( - mouseY * 0.002 - camera.rotation.x );
-            camera.rotation.y += 0.05 * ( - mouseX * 0.002 - camera.rotation.y );
+        let isHolding = false;
+        
+        const startHold = (e) => {
+            if(state.phase !== 'intro') return;
+            e.preventDefault();
+            isHolding = true;
+            document.querySelector('.hold-text').innerHTML = "CHARGING...";
+            warpBtn.style.transform = "scale(0.9)";
+            warpBtn.style.borderColor = "#fff";
+        };
+        
+        const endHold = () => {
+            if(state.phase !== 'intro') return;
+            isHolding = false;
+            document.querySelector('.hold-text').innerHTML = "HOLD<br>TO DIVE";
+            warpBtn.style.transform = "scale(1)";
+            warpBtn.style.borderColor = "rgba(0, 230, 230, 0.3)";
+        };
 
-            // 前進アニメーション
-            camera.position.z -= 5; // スピード
+        warpBtn.addEventListener('mousedown', startHold);
+        warpBtn.addEventListener('touchstart', startHold);
+        window.addEventListener('mouseup', endHold);
+        window.addEventListener('touchend', endHold);
+
+
+        // --- Interaction Logic (Archives) ---
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let prevMouse = {x: 0, y: 0};
+        const raycaster = new THREE.Raycaster();
+        const mouseRay = new THREE.Vector2();
+        let hoveredObj = null;
+        let focusedObj = null;
+
+        container.addEventListener('mousedown', e => {
+            if(state.phase !== 'arrived') return;
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            prevMouse = {x: e.clientX, y: e.clientY};
+            document.body.classList.add('dragging');
+        });
+
+        window.addEventListener('mouseup', e => {
+            if(state.phase !== 'arrived') return;
             
-            // ループ処理（カメラがある程度進んだら位置を戻すのではなく、パーティクルを移動させる）
-            // ここでは簡易的に、カメラ位置に合わせてパーティクルを無限生成しているように見せる
-            // -> カメラ位置が -1000 を超えたら +1000 に戻す（無限ループ）
-            if (camera.position.z < -1000) {
-                camera.position.z = 1000;
+            const dist = Math.sqrt(Math.pow(e.clientX - dragStartX, 2) + Math.pow(e.clientY - dragStartY, 2));
+            
+            if (isDragging && dist < 5 && hoveredObj) {
+                focusOnObject(hoveredObj);
             }
 
-            // パーティクル自体の回転
-            particles.rotation.z += 0.002;
-            starField.rotation.z += 0.0005;
+            isDragging = false;
+            document.body.classList.remove('dragging');
+        });
 
-            // マウス操作によるシーン全体の傾き
-            particles.rotation.x = mouseY * 0.0005;
-            particles.rotation.y = mouseX * 0.0005;
+        container.addEventListener('mousemove', e => {
+            // フォーカス中もドラッグ回転を許可するために条件を緩和
+            if(state.phase === 'arrived') {
+                if(isDragging) {
+                    const dx = e.clientX - prevMouse.x;
+                    const dy = e.clientY - prevMouse.y;
+                    
+                    if (focusedObj) {
+                        // 選択中のオブジェクトを個別に回転（自転に加算する形）
+                        // 自転はanimate内で常に行われている
+                        focusedObj.rotation.y += dx * 0.01;
+                        focusedObj.rotation.x += dy * 0.01;
+                    } else {
+                        // 全体を回転
+                        state.groupRotation.y += dx * 0.005;
+                        state.groupRotation.x += dy * 0.005;
+                    }
+                    prevMouse = {x: e.clientX, y: e.clientY};
+                    
+                    if(hoveredObj) {
+                        hoveredObj = null;
+                        document.body.classList.remove('pointer');
+                    }
+                    return; 
+                }
+
+                // ホバー判定
+                if (!focusedObj) {
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    mouseRay.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouseRay.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                    raycaster.setFromCamera(mouseRay, camera);
+                    const intersects = raycaster.intersectObjects(clickableObjects);
+                    
+                    if(intersects.length > 0) {
+                        const target = intersects[0].object;
+                        if(hoveredObj !== target) {
+                            hoveredObj = target;
+                            document.body.classList.add('pointer');
+                        }
+                    } else {
+                        if(hoveredObj) {
+                            hoveredObj = null;
+                            document.body.classList.remove('pointer');
+                        }
+                    }
+                }
+            }
+        });
+
+
+        // --- Main Animation Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // 1. ワープ進行処理
+            if(state.phase === 'intro') {
+                if(isHolding) {
+                    state.holdProgress = Math.min(state.holdProgress + 0.015, 1); 
+                } else {
+                    state.holdProgress = Math.max(state.holdProgress - 0.03, 0); 
+                }
+
+                const offset = circumference - (state.holdProgress * circumference);
+                circle.style.strokeDashoffset = offset;
+
+                if(isHolding) {
+                    document.querySelector('.hold-text').innerHTML = "SYNC " + Math.floor(state.holdProgress*100) + "%";
+                }
+
+                const p = state.holdProgress;
+                state.targetSpeed = THREE.MathUtils.lerp(5, state.maxWarpSpeed, p * p * p);
+                state.cameraShake = p * 15;
+                state.fov = THREE.MathUtils.lerp(75, 160, p);
+                state.rotationZ = p * 0.8;
+
+                if(state.holdProgress >= 1) {
+                    initiateWarp();
+                }
+
+            } else if (state.phase === 'arrived') {
+                state.targetSpeed = THREE.MathUtils.lerp(state.targetSpeed, 5, 0.05); 
+                state.fov = THREE.MathUtils.lerp(state.fov, 75, 0.05);
+                state.cameraShake = 0;
+                state.rotationZ = THREE.MathUtils.lerp(state.rotationZ, 0, 0.05);
+
+                // --- 回転と位置の制御 ---
+                if (focusedObj) {
+                    // フォーカス時: グループ全体の回転を正面に戻す
+                    archiveGroup.rotation.y += (0 - archiveGroup.rotation.y) * 0.05;
+                    archiveGroup.rotation.x += (0 - archiveGroup.rotation.x) * 0.05;
+                    state.groupRotation.x = archiveGroup.rotation.x;
+                    state.groupRotation.y = archiveGroup.rotation.y;
+                } else {
+                    // 通常時：ドラッグ慣性 + 常時微回転
+                    if (!isDragging) {
+                        state.groupRotation.x += state.autoRotateSpeed.x;
+                        state.groupRotation.y += state.autoRotateSpeed.y;
+                    }
+                    archiveGroup.rotation.y += (state.groupRotation.y - archiveGroup.rotation.y) * 0.1;
+                    archiveGroup.rotation.x += (state.groupRotation.x - archiveGroup.rotation.x) * 0.1;
+                }
+            }
+
+            state.speed += (state.targetSpeed - state.speed) * 0.1;
+            camera.fov = state.fov;
+            camera.updateProjectionMatrix();
+            camera.rotation.z = state.rotationZ;
+
+            // Camera Shake
+            if(state.cameraShake > 0) {
+                camera.position.x = (Math.random() - 0.5) * state.cameraShake;
+                camera.position.y = (Math.random() - 0.5) * state.cameraShake;
+            } else {
+                camera.position.x = 0;
+                camera.position.y = 0;
+            }
+
+
+            // 2. パーティクル移動
+            const positions = starSystem.geometry.attributes.position.array;
+            starSystem.rotation.z += 0.0005;
+
+            for(let i=2; i<positions.length; i+=3) {
+                positions[i] += state.speed; 
+                if(positions[i] > 2000) {
+                    positions[i] -= tunnelLength; 
+                }
+            }
+            starSystem.geometry.attributes.position.needsUpdate = true;
+
+
+            // 3. アーカイブアニメーション & 位置調整
+            if(state.phase === 'arrived') {
+                clickableObjects.forEach(obj => {
+                    const isCore = obj.userData.isCore;
+                    const isFocused = (obj === focusedObj);
+                    const isHovered = (obj === hoveredObj) && !focusedObj;
+                    
+                    // 回転: フォーカス中も自転を続ける (ドラッグ操作と合算される)
+                    // 自転速度
+                    obj.rotation.x += 0.005;
+                    obj.rotation.y += 0.005;
+
+                    // Core特有のアニメーション（脈動）
+                    if (isCore && !isFocused) {
+                        const pulse = 1 + Math.sin(time * 2) * 0.1;
+                    }
+                    
+                    // --- ターゲット計算 ---
+                    let targetPos, targetScale, targetOpacity;
+
+                    if (isFocused) {
+                        // 空いている左側エリアの中心を計算
+                        let targetX = -200; 
+                        let targetZ = 300; 
+                        
+                        if (window.innerWidth >= 800) {
+                            targetX = -220; 
+                        } else {
+                            targetX = 0; 
+                            targetZ = 200; 
+                        }
+
+                        targetPos = new THREE.Vector3(targetX, 0, targetZ);
+                        targetScale = isCore ? 2.5 : 2.0;
+                        targetOpacity = 1.0;
+
+                    } else if (focusedObj) {
+                        // 他がフォーカス中
+                        targetPos = obj.userData.originalPos;
+                        targetScale = 0.8;
+                        targetOpacity = 0.1;
+                    } else {
+                        // 通常時
+                        targetPos = obj.userData.originalPos;
+                        
+                        let baseScale = 1.0;
+                        if (isCore) {
+                            baseScale = 1.2 + Math.sin(time * 1.5) * 0.1;
+                        }
+                        targetScale = isHovered ? baseScale * 1.3 : baseScale;
+                        targetOpacity = isHovered ? 0.6 : (isCore ? 0.4 : 0.2);
+                    }
+
+                    obj.position.lerp(targetPos, 0.08);
+                    obj.scale.setScalar(THREE.MathUtils.lerp(obj.scale.x, targetScale, 0.08));
+                    obj.material.opacity = THREE.MathUtils.lerp(obj.material.opacity, targetOpacity, 0.08);
+                    
+                    // 覚醒モード時の色上書き
+                    let baseColor = new THREE.Color(obj.userData.originalColor);
+                    if(state.isAwakened) {
+                        baseColor = new THREE.Color(0xffd700); // Gold
+                        obj.material.color.lerp(baseColor, 0.1);
+                    }
+
+                    if(obj.children[0]) { // Wireframe
+                        const wireMat = obj.children[0].material;
+                        let targetColor;
+                        
+                        if (state.isAwakened) {
+                             targetColor = new THREE.Color(0xffffff);
+                             wireMat.color.lerp(targetColor, 0.1);
+                        } else {
+                            targetColor = (isFocused || isHovered) ? new THREE.Color(0xffffff) : baseColor;
+                            wireMat.color.lerp(targetColor, 0.1);
+                        }
+                        
+                        wireMat.opacity = THREE.MathUtils.lerp(wireMat.opacity, (isFocused ? 1.0 : (focusedObj ? 0.1 : 0.8)), 0.1);
+                    }
+                    if(obj.children[1]) { // Particles
+                        obj.children[1].material.opacity = THREE.MathUtils.lerp(obj.children[1].material.opacity, (isFocused ? 0.8 : (isCore ? 0.5 : 0)), 0.1);
+                         if(state.isAwakened) obj.children[1].material.color.setHex(0xffd700);
+                    }
+                });
+                
+                // 覚醒時のリンク色変更
+                if (state.isAwakened) {
+                    linksGroup.children.forEach(link => {
+                        link.material.color.setHex(0xffd700);
+                        link.material.opacity = 0.5;
+                    });
+                }
+            }
 
             renderer.render(scene, camera);
         }
 
-        // --- Resize Handler ---
+
+        // --- Sequence Control ---
+        function initiateWarp() {
+            state.phase = 'warping';
+            state.targetSpeed = state.maxWarpSpeed; 
+            
+            document.getElementById('intro-ui').style.opacity = 0;
+            document.getElementById('intro-ui').style.transform = "translate(-50%, -50%) scale(2)";
+            
+            setTimeout(() => {
+                const intro = document.getElementById('intro-ui');
+                if(intro) intro.style.display = 'none';
+            }, 500);
+
+            setTimeout(() => {
+                document.getElementById('flash-overlay').style.opacity = 1;
+
+                setTimeout(() => {
+                    state.phase = 'arrived';
+                    
+                    archiveGroup.visible = true;
+                    const approach = setInterval(() => {
+                        archiveGroup.position.z += (-600 - archiveGroup.position.z) * 0.05;
+                        if(Math.abs(archiveGroup.position.z - (-600)) < 1) {
+                            archiveGroup.position.z = -600;
+                            clearInterval(approach);
+                        }
+                    }, 16);
+
+                    document.getElementById('flash-overlay').style.opacity = 0;
+                    
+                    const mainUI = document.getElementById('main-ui');
+                    mainUI.style.display = 'block';
+                    setTimeout(() => mainUI.style.opacity = 1, 100);
+                    
+                    document.body.classList.add('pointer'); 
+
+                    // HINT LOG for Puzzle
+                    console.log("%c[SYSTEM ALERT] Encrypted Core Detected.", "color: #00e6e6; background: #000; font-size: 14px; padding: 5px;");
+                    console.log("%cHint: The Timeline is Key. Access the archives in chronological order to override security.", "color: #fff; background: #000; padding: 5px;");
+                    console.log("%cSequence: [01] -> [02] -> [03] -> [04]", "color: #aaa; background: #000; padding: 5px;");
+
+                }, 300);
+            }, 1000);
+        }
+
+        // --- Puzzle Trigger ---
+        function triggerAwakening() {
+            if(state.isAwakened) return;
+            state.isAwakened = true;
+            
+            console.log("%c[SYSTEM] ACCESS GRANTED. WELCOME, ADMIN.", "color: #000; background: #ffd700; font-size: 16px; padding: 10px; font-weight: bold;");
+            
+            // フラッシュエフェクト (Gold)
+            const flash = document.getElementById('flash-overlay');
+            flash.style.background = "#ffd700";
+            flash.style.opacity = 0.5;
+            setTimeout(() => { flash.style.opacity = 0; flash.style.background = "#fff"; }, 500);
+            
+            // UI Style Change
+            document.body.classList.add('awakened');
+            document.getElementById('protocol-ver').textContent = "PROTOCOL: AWAKENED // ADMIN";
+            
+            // パーティクル色変更 (Gold)
+            const pColors = starSystem.geometry.attributes.color.array;
+            for(let i=0; i<pColors.length; i+=3) {
+                pColors[i] = 1.0; pColors[i+1] = 0.84; pColors[i+2] = 0.0;
+            }
+            starSystem.geometry.attributes.color.needsUpdate = true;
+            
+            // 霧の色変更
+            scene.fog.color.setHex(0x111100);
+        }
+
+
+        // --- Modal & Focus Logic ---
+        const modal = document.getElementById('archive-modal');
+        const modalTitle = document.getElementById('modal-title-text');
+        const modalBody = document.getElementById('modal-body-text');
+
+        function focusOnObject(mesh) {
+            focusedObj = mesh;
+            
+            // Puzzle Check
+            if (!state.isAwakened) {
+                puzzle.check(mesh.userData.id);
+            }
+            
+            openModal(mesh.userData);
+        }
+
+        function openModal(data) {
+            modalTitle.textContent = data.title;
+            
+            // 覚醒状態かつCoreなら特別なコンテンツを表示
+            if(state.isAwakened && data.id === 5 && data.awakenedContent) {
+                modalBody.innerHTML = data.awakenedContent;
+            } else {
+                modalBody.innerHTML = data.content;
+            }
+            
+            // 色の反映 (覚醒時はGold固定)
+            const colorHex = state.isAwakened ? '#ffd700' : '#' + new THREE.Color(data.originalColor).getHexString();
+            modalTitle.style.color = colorHex;
+            modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
+            
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+        
+        window.closeModal = function() { 
+            modal.classList.remove('active'); 
+            document.body.classList.remove('modal-open');
+            focusedObj = null; 
+        };
+
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Start
         animate();
 
     </script>
