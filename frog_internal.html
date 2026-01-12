@@ -17,7 +17,7 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #0a0000; /* Deep Red/Black for Internal */
+            background-color: #0a0000;
             overflow: hidden;
             font-family: 'Share Tech Mono', monospace;
             user-select: none;
@@ -32,10 +32,12 @@
             height: 100%;
             z-index: 1;
             transition: filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            cursor: crosshair;
         }
         
         body.modal-open #canvas-container {
             filter: brightness(0.4) blur(4px); 
+            pointer-events: none;
         }
 
         /* --- Main UI --- */
@@ -46,9 +48,7 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            pointer-events: none;
-            opacity: 1;
-            display: block;
+            pointer-events: none; /* UIレイヤー自体はクリックを透過 */
         }
 
         .header-info {
@@ -57,6 +57,7 @@
             left: 30px;
             color: rgba(255, 100, 100, 0.8);
             transition: color 0.5s;
+            pointer-events: auto; /* ボタンなどはクリック可能に */
         }
         .header-title {
             font-family: 'Orbitron', sans-serif;
@@ -86,6 +87,7 @@
             border-left: 2px solid #ff0055;
             transition: border-color 0.5s;
             font-family: 'Share Tech Mono', monospace;
+            pointer-events: auto;
         }
         .controls-hint strong {
             color: #ff0055;
@@ -229,7 +231,7 @@
 
         /* --- RESTORED STATE --- */
         body.restored {
-            background-color: #000a14; /* Deep Blue/Green */
+            background-color: #000a14;
         }
         body.restored .header-title { text-shadow: 0 0 20px #00aaff; color: #fff; }
         body.restored .header-info { color: #00aaff; }
@@ -269,7 +271,7 @@
             <div id="sub-title" class="alert-sub">MULTIPLE ORGAN FAILURES DETECTED</div>
         </div>
         <div class="controls-hint">
-            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] DEBUG_CONSOLE</strong>
+            [DRAG] ROTATE &nbsp;//&nbsp; [CLICK] INSPECT &nbsp;//&nbsp; <strong>[F12] CONSOLE</strong>
         </div>
     </div>
 
@@ -302,7 +304,6 @@
     <script>
         // --- State ---
         const state = {
-            phase: 'main', 
             organsSolved: 0,
             isRestored: false
         };
@@ -319,25 +320,22 @@
                 content: `
                     <h3>DIAGNOSIS: <span style="color:#ff3333">VENTRICULAR_RECURSION</span></h3>
                     <p>心拍リズムを制御するループ処理が「終了条件のない再帰」に陥っています。現在、BPM（Beats Per Minute）は計測不能領域（Over 9000）に達しており、CPUが過熱状態です。</p>
-                    
                     <div style="background:rgba(50,0,0,0.6); padding:15px; border-left:3px solid #ff0055; color:#ffaaaa; font-family:'Share Tech Mono'; margin-bottom: 20px;">
                         <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
                         [CRITICAL] Uncaught RangeError: Maximum call stack size exceeded.<br>
                         [WARNING] Myocardium.js is unresponsive.<br>
                         [STATUS] Pulse: <span style="animation:blink 0.1s infinite">ERROR</span>
                     </div>
-
                     <h3>DEBUG_PROTOCOL</h3>
-                    <p>開発者ツール（Console）を使用して、心拍リズムを強制的に正常値へ書き換えてください。正常な人間の安静時心拍数は <code>60</code> です。</p>
+                    <p>コンソール（F12）を使用して、心拍リズムを正常値へ書き換えてください。正常な人間の安静時心拍数は <code>60</code> です。</p>
                     <p>
-                        <strong>Input Command:</strong><br>
-                        <code>sys.heart.setBPM(value)</code>
+                        <strong>Command:</strong><br>
+                        <code>sys.heart.setBPM(60)</code>
                     </p>
                 `,
                 solvedContent: `
                     <h3>STATUS: <span style="color:#00aaff">NORMALIZED</span></h3>
                     <p>再帰ループの修正を確認。心拍リズムは安定した正弦波を描いています。コア温度低下中。</p>
-                    
                     <div style="background:rgba(0,50,80,0.4); padding:15px; border-left:3px solid #00aaff; color:#aee; font-family:'Share Tech Mono';">
                         <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
                         [SUCCESS] Rhythm stabilizer active.<br>
@@ -355,13 +353,11 @@
                 content: `
                     <h3>DIAGNOSIS: <span style="color:#aa00ff">403_FORBIDDEN_GATEWAY</span></h3>
                     <p>思考回路へのアクセスがファイアウォールにより拒否されました。前任の開発者が残した「スパゲッティコード」により、ニューロン接続が迷路化しています。</p>
-                    
                     <div style="background:rgba(20,0,50,0.6); padding:15px; border-left:3px solid #5500ff; color:#ccaaff; font-family:'Share Tech Mono'; margin-bottom: 20px;">
                         <span style="opacity:0.7">>> SECURITY_ALERT</span><br>
                         [ERROR] AuthToken missing in header.<br>
                         [HINT] "パスワードはメモリのゴミ捨て場（Dump）に隠した"
                     </div>
-
                     <h3>DEBUG_PROTOCOL</h3>
                     <p>メモリダンプを実行して隠された認証トークンを探し出し、セキュリティロックを解除してください。</p>
                     <p>
@@ -372,7 +368,6 @@
                 solvedContent: `
                     <h3>STATUS: <span style="color:#00aaff">ACCESS_GRANTED</span></h3>
                     <p>認証成功。ニューラルネットワークの再構築が完了しました。思考プロセスはクリアです。</p>
-                    
                     <div style="background:rgba(0,50,80,0.4); padding:15px; border-left:3px solid #00aaff; color:#aee; font-family:'Share Tech Mono';">
                         <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
                         [SUCCESS] Firewall rules updated.<br>
@@ -390,24 +385,21 @@
                 content: `
                     <h3>DIAGNOSIS: <span style="color:#00ff55">MEMORY_LEAK_OVERFLOW</span></h3>
                     <p>消化管（メモリ領域）がパンク寸前です。解決されなかった <code>Promise</code> や、参照が残ったままのDOM要素がヘドロのように堆積しています。</p>
-                    
                     <div style="background:rgba(0,40,0,0.6); padding:15px; border-left:3px solid #00ff55; color:#aaffaa; font-family:'Share Tech Mono'; margin-bottom: 20px;">
                         <span style="opacity:0.7">>> HEAP_SNAPSHOT</span><br>
                         [FATAL] Allocation failed - JavaScript heap out of memory.<br>
                         [DATA] Garbage Objects: <span style="color:#fff">99,999+</span> (Undigested)
                     </div>
-
                     <h3>DEBUG_PROTOCOL</h3>
                     <p>緊急ガベージコレクション（胃洗浄）を実行し、不要なメモリ領域を強制解放してください。</p>
                     <p>
-                        <strong>Input Command:</strong><br>
+                        <strong>Command:</strong><br>
                         <code>sys.stomach.flush()</code>
                     </p>
                 `,
                 solvedContent: `
                     <h3>STATUS: <span style="color:#00aaff">BUFFER_CLEAN</span></h3>
                     <p>メモリリークの解消を確認。ヒープ領域は正常化され、消化効率は100%に回復しました。</p>
-                    
                     <div style="background:rgba(0,50,80,0.4); padding:15px; border-left:3px solid #00aaff; color:#aee; font-family:'Share Tech Mono';">
                         <span style="opacity:0.7">>> SYSTEM_LOG</span><br>
                         [SUCCESS] Garbage Collection finished.<br>
@@ -418,75 +410,76 @@
         ];
 
         // --- HACKING INTERFACE (Console) ---
+        // シンプルで堅牢な実装に変更: 関数オブジェクトを直接作成する
+        const heartFunc = function() {
+            if (organs[0].solved) return "[HEART] STATUS: STABLE.";
+            return "[HEART] ERROR: BPM UNSTABLE (Over 9000). Use setBPM(60) to fix.";
+        };
+        heartFunc.setBPM = function(val) {
+            if (organs[0].solved) return "Heart is already stable.";
+            if (val === 60) {
+                solveOrgan('heart');
+                console.log("%c[SUCCESS] Heart rhythm stabilized.", "color: #00aaff; font-weight:bold;");
+                return "OK";
+            }
+            console.warn("BPM rejected. Target is 60.");
+            return "FAILED: Invalid Value.";
+        };
+
+        const brainFunc = function() {
+            if (organs[1].solved) return "[BRAIN] STATUS: ONLINE.";
+            return "[BRAIN] ERROR: LOCKED. Check dump() for token.";
+        };
+        brainFunc.dump = function() {
+            console.log("%c[MEMORY DUMP] 00 00 00 CA FE BA BE ...", "color: #aaa");
+            console.log("%c... TOKEN_FOUND: 'NEURAL_LINK_777' ...", "color: #5500ff; font-weight:bold;");
+            return "End of dump.";
+        };
+        brainFunc.unlock = function(token) {
+            if (organs[1].solved) return "Brain is already unlocked.";
+            if (token === 'NEURAL_LINK_777') {
+                solveOrgan('brain');
+                console.log("%c[SUCCESS] Access Granted.", "color: #00aaff; font-weight:bold;");
+                return "OK";
+            }
+            console.error("Access Denied. Invalid Token.");
+            return "FAILED: Incorrect Token.";
+        };
+
+        const stomachFunc = function() {
+            if (organs[2].solved) return "[STOMACH] STATUS: CLEAN.";
+            return "[STOMACH] CRITICAL: OVERFLOW. Use flush() to clear.";
+        };
+        stomachFunc.flush = function() {
+            if (organs[2].solved) return "Stomach is empty.";
+            console.log("Initiating flush sequence...");
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 20;
+                console.log(`Clearing... ${progress}%`);
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    solveOrgan('stomach');
+                    console.log("%c[SUCCESS] Buffer cleared.", "color: #00aaff; font-weight:bold;");
+                }
+            }, 200);
+            return "Processing...";
+        };
+
         window.sys = {
             help: function() {
                 console.group("=== BIO-OS DIAGNOSTICS ===");
                 console.log("%c Available Modules:", "color: #00ffaa");
-                console.log("1. sys.heart - Core Processor");
-                console.log("2. sys.brain - Logic Gate");
-                console.log("3. sys.stomach - Garbage Collector");
+                console.log("1. sys.heart()   - Check Core Processor");
+                console.log("2. sys.brain()   - Check Logic Gate");
+                console.log("3. sys.stomach() - Check Memory Garbage");
+                console.log("%c usage: sys.heart.setBPM(60)", "color: #888");
                 console.groupEnd();
                 return "Waiting for input...";
             },
-            
-            heart: {
-                get status() {
-                    if (organs[0].solved) return "STATUS: STABLE.";
-                    return "WARNING: BPM UNSTABLE (Over 9000). Use setBPM(60) to fix.";
-                },
-                setBPM: function(val) {
-                    if (organs[0].solved) return "Heart is already stable.";
-                    if (val === 60) {
-                        solveOrgan('heart');
-                        return "SUCCESS: Heart rhythm stabilized.";
-                    }
-                    console.warn("BPM rejected. Target is 60.");
-                    return "FAILED: Invalid Value.";
-                }
-            },
-
-            brain: {
-                get status() {
-                    if (organs[1].solved) return "STATUS: ONLINE.";
-                    return "ERROR: LOCKED. Check dump() for token.";
-                },
-                dump: function() {
-                    console.log("%c[MEMORY DUMP] 00 00 00 CA FE BA BE ...", "color: #aaa");
-                    console.log("%c... TOKEN_FOUND: 'NEURAL_LINK_777' ...", "color: #5500ff; font-weight:bold;");
-                    return "End of dump.";
-                },
-                unlock: function(token) {
-                    if (organs[1].solved) return "Brain is already unlocked.";
-                    if (token === 'NEURAL_LINK_777') {
-                        solveOrgan('brain');
-                        return "SUCCESS: Access Granted.";
-                    }
-                    console.error("Access Denied. Invalid Token.");
-                    return "FAILED: Incorrect Token.";
-                }
-            },
-
-            stomach: {
-                get status() {
-                    if (organs[2].solved) return "STATUS: CLEAN.";
-                    return "CRITICAL: OVERFLOW. Use flush() to clear.";
-                },
-                flush: function() {
-                    if (organs[2].solved) return "Stomach is empty.";
-                    console.log("Initiating flush sequence...");
-                    let progress = 0;
-                    const interval = setInterval(() => {
-                        progress += 20;
-                        console.log(`Clearing... ${progress}%`);
-                        if(progress >= 100) {
-                            clearInterval(interval);
-                            solveOrgan('stomach');
-                            console.log("%cSUCCESS: Buffer cleared.", "color: #00ff55");
-                        }
-                    }, 200);
-                    return "Processing...";
-                }
-            }
+            heart: heartFunc,
+            brain: brainFunc,
+            stomach: stomachFunc
         };
 
         function solveOrgan(id) {
@@ -495,25 +488,18 @@
                 organ.solved = true;
                 state.organsSolved++;
                 
-                // Update 3D Object
                 updateOrganVisuals(id);
                 
-                // Update Modal if open
                 const modal = document.getElementById('archive-modal');
-                if(modal.classList.contains('active')) {
-                    const title = document.getElementById('modal-title-text');
-                    // Check if the open modal corresponds to the solved organ
-                    // Use includes or ID check
-                    if(title.textContent.includes(organ.title.split(':')[1].trim())) {
-                         document.getElementById('modal-body-text').innerHTML = organ.solvedContent;
-                         // Update header style to blue
-                         const colorHex = '#00aaff';
-                         title.style.color = colorHex;
-                         title.style.textShadow = `0 0 20px ${colorHex}`;
-                    }
+                const title = document.getElementById('modal-title-text');
+                // モーダルが開いていて、かつタイトルに対象の臓器名が含まれていれば内容を更新
+                if(modal.classList.contains('active') && title.textContent.includes(organ.title.split(':')[1].trim())) {
+                     document.getElementById('modal-body-text').innerHTML = organ.solvedContent;
+                     const colorHex = '#00aaff';
+                     title.style.color = colorHex;
+                     title.style.textShadow = `0 0 20px ${colorHex}`;
                 }
 
-                // Check Win Condition
                 if(state.organsSolved === organs.length) {
                     restoreSystem();
                 }
@@ -526,7 +512,6 @@
             document.getElementById('main-title').innerText = "SYSTEM_RESTORED";
             document.getElementById('sub-title').innerText = "VITAL SIGNS STABLE";
             
-            // White Flash
             const flash = document.createElement('div');
             flash.style.position = 'fixed';
             flash.style.top = 0; flash.style.left = 0;
@@ -548,7 +533,7 @@
         scene.fog = new THREE.FogExp2(0x0a0000, 0.002); 
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-        camera.position.z = 800; // Start at zoomed-in position
+        camera.position.z = 800;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -563,28 +548,21 @@
         controls.minDistance = 200;
         controls.maxDistance = 1500;
 
-        // --- Particles (Blood/Data Stream) ---
+        // --- Particles ---
         const pCount = 5000;
         const pGeo = new THREE.BufferGeometry();
         const pPos = new Float32Array(pCount * 3);
         const pCol = new Float32Array(pCount * 3);
+        const c1 = new THREE.Color(0xff0055);
         
-        const c1 = new THREE.Color(0xff0055); // Red
-        const c2 = new THREE.Color(0x550022); // Dark Red
-        const c3 = new THREE.Color(0x00ffaa); // Green (Healthy)
-
         for(let i=0; i<pCount; i++) {
-            const x = (Math.random() - 0.5) * 2000;
-            const y = (Math.random() - 0.5) * 2000;
-            const z = (Math.random() - 0.5) * 2000;
-            pPos[i*3] = x; pPos[i*3+1] = y; pPos[i*3+2] = z;
-
+            pPos[i*3] = (Math.random() - 0.5) * 2000;
+            pPos[i*3+1] = (Math.random() - 0.5) * 2000;
+            pPos[i*3+2] = (Math.random() - 0.5) * 2000;
             pCol[i*3] = c1.r; pCol[i*3+1] = c1.g; pCol[i*3+2] = c1.b;
         }
-
         pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
         pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
-
         const pMat = new THREE.PointsMaterial({
             size: 3, vertexColors: true, transparent: true, opacity: 0.6,
             blending: THREE.AdditiveBlending, sizeAttenuation: true
@@ -592,23 +570,22 @@
         const particleSystem = new THREE.Points(pGeo, pMat);
         scene.add(particleSystem);
 
-        // --- Organ Objects ---
+        // --- Organ Objects & Hit Boxes ---
         const organMeshes = [];
         
         organs.forEach(data => {
             const group = new THREE.Group();
             group.position.set(data.pos.x, data.pos.y, data.pos.z);
             
+            // 1. Visual Mesh
             let core;
             if (data.geometry === "icosahedron") {
                 const geo = new THREE.IcosahedronGeometry(60, 1);
                 const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
                 core = new THREE.Mesh(geo, mat);
-                // Inner Glow
                 const innerGeo = new THREE.IcosahedronGeometry(40, 0);
                 const innerMat = new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
                 core.add(new THREE.Mesh(innerGeo, innerMat));
-
             } else if (data.geometry === "box_cluster") {
                 core = new THREE.Group();
                 const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
@@ -619,23 +596,27 @@
                     core.add(box);
                 }
             } else {
-                // Sphere Distorted
                 const geo = new THREE.SphereGeometry(50, 16, 16);
                 const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
                 core = new THREE.Mesh(geo, mat);
             }
-
             group.add(core);
-            group.userData = { id: data.id, originalColor: data.color, mesh: core };
-            
-            // Add particles around organ
-            const subPGeo = new THREE.BufferGeometry();
-            const subPPos = [];
-            for(let i=0; i<100; i++) subPPos.push((Math.random()-0.5)*150, (Math.random()-0.5)*150, (Math.random()-0.5)*150);
-            subPGeo.setAttribute('position', new THREE.Float32BufferAttribute(subPPos, 3));
-            const subPMat = new THREE.PointsMaterial({color: data.color, size: 2, transparent: true, opacity: 0.5});
-            group.add(new THREE.Points(subPGeo, subPMat));
 
+            // 2. Hit Box (Large & Invisible)
+            // side: THREE.DoubleSide とすることで、あらゆる角度からのクリックを受け付ける
+            const hitGeo = new THREE.SphereGeometry(100, 16, 16); // サイズを大きめに設定(80->100)
+            const hitMat = new THREE.MeshBasicMaterial({ 
+                color: 0xffffff, 
+                transparent: true, 
+                opacity: 0, 
+                depthWrite: false,
+                side: THREE.DoubleSide 
+            });
+            const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+            hitMesh.userData = { isHitBox: true };
+            group.add(hitMesh);
+
+            group.userData = { id: data.id, originalColor: data.color };
             scene.add(group);
             organMeshes.push(group);
         });
@@ -643,52 +624,58 @@
         function updateOrganVisuals(id) {
             const group = organMeshes.find(m => m.userData.id === id);
             if (!group) return;
-
-            // Change Color to Blue/Cyan
             const newColor = 0x00aaff;
             group.traverse((child) => {
-                if (child.material) {
+                // HitBox以外のマテリアル色を変更
+                if (child.material && !child.userData.isHitBox && child.material.opacity > 0) { 
                     child.material.color.setHex(newColor);
                     if(child.material.emissive) child.material.emissive.setHex(0x0055ff);
                 }
             });
         }
 
-        // --- Interaction Logic ---
+        // --- Interaction Logic (Revised Click Handling) ---
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
-        let mouseDownPos = { x: 0, y: 0 };
-        window.addEventListener('mousedown', (e) => {
-            mouseDownPos.x = e.clientX;
-            mouseDownPos.y = e.clientY;
+        let downPos = { x: 0, y: 0 };
+        let downTime = 0;
+
+        // コンテナに対してイベントを張る
+        container.addEventListener('pointerdown', (e) => {
+            downPos.x = e.clientX;
+            downPos.y = e.clientY;
+            downTime = Date.now();
         });
-        
-        window.addEventListener('mouseup', (event) => {
-            const dx = event.clientX - mouseDownPos.x;
-            const dy = event.clientY - mouseDownPos.y;
-            const distance = Math.sqrt(dx*dx + dy*dy);
-            
-            // If moved more than 5px, it's a drag, ignore click
-            if (distance > 5) return;
 
-            // Proceed with Raycast
-            if (event.target.closest('#archive-modal')) return;
+        container.addEventListener('pointerup', (e) => {
+            // クリック判定: 移動距離が5px以下、かつ押下時間が500ms未満
+            const dx = e.clientX - downPos.x;
+            const dy = e.clientY - downPos.y;
+            const moveDist = Math.sqrt(dx*dx + dy*dy);
+            const duration = Date.now() - downTime;
 
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            if (moveDist < 5 && duration < 500) {
+                // Click confirmed
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(organMeshes, true);
+                raycaster.setFromCamera(mouse, camera);
+                // HitBoxも含めて再帰的に判定
+                const intersects = raycaster.intersectObjects(organMeshes, true);
 
-            if (intersects.length > 0) {
-                // Find parent group
-                let target = intersects[0].object;
-                while(target.parent && !target.userData.id) target = target.parent;
-                if(target.userData.id) openModal(target.userData.id);
+                if (intersects.length > 0) {
+                    let target = intersects[0].object;
+                    // 親グループまで遡ってIDを探す
+                    while(target.parent && !target.userData.id) {
+                        target = target.parent;
+                    }
+                    if(target.userData.id) {
+                        openModal(target.userData.id);
+                    }
+                }
             }
         });
-
 
         // --- Modal Logic ---
         const modal = document.getElementById('archive-modal');
@@ -726,26 +713,19 @@
         function animate() {
             requestAnimationFrame(animate);
             time += 0.01;
-            
-            controls.update(); // Required for damping
+            controls.update();
 
-            // Organ Animation
             organMeshes.forEach(group => {
                 const data = organs.find(o => o.id === group.userData.id);
-                
                 if (data.solved) {
-                    // Stable rotation
                     group.rotation.x += 0.005;
                     group.rotation.y += 0.005;
                     group.scale.set(1, 1, 1);
                 } else {
-                    // Glitchy movement
                     group.rotation.x += 0.01;
                     group.rotation.y += 0.02;
-                    
-                    // Heartbeat / Twitch
                     if (data.id === 'heart') {
-                        const s = 1 + Math.sin(time * 15) * 0.1; // Fast pulse
+                        const s = 1 + Math.sin(time * 15) * 0.1;
                         group.scale.set(s, s, s);
                     } else if (data.id === 'stomach') {
                          group.scale.x = 1 + Math.sin(time*5)*0.1;
@@ -757,27 +737,20 @@
                 }
             });
 
-            // Background Color Shift if restored
             if (state.isRestored) {
                  const c = particleSystem.geometry.attributes.color;
-                 for(let i=0; i<pCount; i++) {
-                     // Slowly turn particles green/blue
-                     c.setXYZ(i, 0, 0.6, 1);
-                 }
+                 for(let i=0; i<pCount; i++) c.setXYZ(i, 0, 0.6, 1);
                  c.needsUpdate = true;
             }
-
             renderer.render(scene, camera);
         }
 
-        // Window Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
         
-        // Initial Message
         console.clear();
         console.log("%c SYSTEM FAILURE // MULTIPLE ORGAN ERRORS DETECTED ", "background: red; color: white; font-size: 16px; padding: 5px;");
         console.log("Type 'sys.help()' to start diagnostics.");
