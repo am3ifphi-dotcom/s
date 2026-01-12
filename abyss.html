@@ -15,7 +15,7 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #000;
+            background-color: #050005; /* Dark Purple tint */
             overflow: hidden;
             font-family: 'Share Tech Mono', monospace;
             user-select: none;
@@ -32,7 +32,7 @@
         }
         
         body.modal-open #canvas-container {
-            filter: brightness(0.8) grayscale(0.3); 
+            filter: brightness(0.6) blur(2px); 
         }
 
         /* --- Intro UI --- */
@@ -51,9 +51,9 @@
             width: 140px;
             height: 140px;
             border-radius: 50%;
-            border: 2px solid rgba(0, 230, 230, 0.3);
-            background: rgba(0, 0, 0, 0.6);
-            color: #00e6e6;
+            border: 2px solid rgba(180, 0, 255, 0.3); /* Purple for Serpent */
+            background: rgba(10, 0, 20, 0.8);
+            color: #d000ff;
             font-family: 'Orbitron', sans-serif;
             font-size: 0.9rem;
             display: flex;
@@ -62,7 +62,7 @@
             cursor: pointer;
             pointer-events: auto;
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 230, 230, 0.1);
+            box-shadow: 0 0 30px rgba(100, 0, 200, 0.2);
             transition: transform 0.1s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -79,7 +79,7 @@
             width: 100%;
             text-align: center;
             font-weight: 900;
-            text-shadow: 0 0 10px rgba(0, 230, 230, 0.8);
+            text-shadow: 0 0 10px rgba(200, 0, 255, 0.8);
             animation: pulseText 2s infinite;
         }
 
@@ -93,13 +93,13 @@
             pointer-events: none;
         }
         .progress-ring__circle {
-            stroke: #00e6e6;
+            stroke: #aa00ff;
             stroke-width: 6;
             fill: transparent;
             stroke-dasharray: 440;
             stroke-dashoffset: 440;
             transition: stroke-dashoffset 0.05s linear;
-            filter: drop-shadow(0 0 5px #00e6e6);
+            filter: drop-shadow(0 0 5px #aa00ff);
         }
 
         @keyframes pulseText {
@@ -125,7 +125,7 @@
             position: absolute;
             top: 30px;
             left: 30px;
-            color: rgba(0, 230, 230, 0.8);
+            color: rgba(200, 100, 255, 0.8);
             transition: color 0.5s;
         }
         .header-title {
@@ -133,29 +133,42 @@
             font-size: 2rem;
             font-weight: 900;
             color: #fff;
-            text-shadow: 0 0 15px #00e6e6;
+            text-shadow: 0 0 15px #aa00ff;
             letter-spacing: 4px;
-            transition: text-shadow 0.5s;
+            transition: text-shadow 0.5s, color 0.5s;
         }
+        .alert-sub {
+            color: #ff0055;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink { 50% { opacity: 0.5; } }
+
         .controls-hint {
             position: absolute;
             bottom: 30px;
             left: 30px;
             color: rgba(255, 255, 255, 0.5);
             font-size: 0.9rem;
-            background: rgba(0,0,0,0.5);
-            padding: 5px 10px;
-            border-left: 2px solid #00e6e6;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 15px;
+            border-left: 2px solid #aa00ff;
             transition: border-color 0.5s;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .controls-hint strong {
+            color: #aa00ff;
+            text-decoration: underline;
         }
 
         #return-btn {
             position: absolute;
             top: 30px;
             right: 30px;
-            background: rgba(0, 20, 20, 0.6);
-            border: 1px solid #00e6e6;
-            color: #00e6e6;
+            background: rgba(20, 0, 20, 0.6);
+            border: 1px solid #aa00ff;
+            color: #aa00ff;
             padding: 10px 30px;
             font-family: 'Orbitron', sans-serif;
             font-weight: bold;
@@ -167,9 +180,9 @@
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
         #return-btn:hover {
-            background: #00e6e6;
-            color: #000;
-            box-shadow: 0 0 20px #00e6e6;
+            background: #aa00ff;
+            color: #fff;
+            box-shadow: 0 0 20px #aa00ff;
         }
 
         /* --- Flash Overlay --- */
@@ -186,7 +199,7 @@
             transition: opacity 0.5s ease-out;
         }
 
-        /* --- Archive Modal (Refined Side Panel) --- */
+        /* --- Archive Modal --- */
         #archive-modal {
             position: fixed;
             top: 0;
@@ -194,8 +207,8 @@
             width: 500px;
             max-width: 90%;
             height: 100%;
-            background: rgba(5, 10, 15, 0.9);
-            border-left: 1px solid rgba(0, 230, 230, 0.3);
+            background: rgba(10, 0, 15, 0.95);
+            border-left: 1px solid rgba(170, 0, 255, 0.3);
             display: flex;
             flex-direction: column;
             transform: translateX(100%);
@@ -204,19 +217,6 @@
             backdrop-filter: blur(10px);
             pointer-events: auto;
             box-shadow: -20px 0 50px rgba(0, 0, 0, 0.8);
-        }
-
-        /* Decoration Lines */
-        #archive-modal::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(to bottom, transparent, #00e6e6, transparent);
-            opacity: 0.5;
-            transition: background 0.5s;
         }
 
         #archive-modal.active {
@@ -230,8 +230,8 @@
             width: 100%;
             height: 100%;
             background-image: 
-                linear-gradient(rgba(0, 230, 230, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 230, 230, 0.03) 1px, transparent 1px);
+                linear-gradient(rgba(170, 0, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(170, 0, 255, 0.05) 1px, transparent 1px);
             background-size: 40px 40px;
             pointer-events: none;
             z-index: -1;
@@ -240,11 +240,10 @@
         .modal-header {
             padding: 40px;
             padding-bottom: 20px;
-            border-bottom: 1px solid rgba(0, 230, 230, 0.1);
+            border-bottom: 1px solid rgba(170, 0, 255, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            transition: border-color 0.5s;
         }
 
         .modal-title-group {
@@ -254,9 +253,8 @@
         }
         .modal-label {
             font-size: 0.7rem;
-            color: rgba(0, 230, 230, 0.6);
+            color: rgba(170, 0, 255, 0.6);
             letter-spacing: 2px;
-            transition: color 0.5s;
         }
         .modal-title {
             color: #fff;
@@ -266,7 +264,7 @@
             line-height: 1.1;
             letter-spacing: 1px;
             text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(0, 230, 230, 0.3);
+            text-shadow: 0 0 20px rgba(170, 0, 255, 0.3);
         }
 
         .modal-close {
@@ -284,9 +282,9 @@
             border-radius: 50%;
         }
         .modal-close:hover { 
-            background: #00e6e6; 
-            color: #000;
-            box-shadow: 0 0 15px #00e6e6;
+            background: #aa00ff; 
+            color: #fff;
+            box-shadow: 0 0 15px #aa00ff;
             transform: rotate(90deg);
         }
         
@@ -297,69 +295,29 @@
             padding-top: 20px;
         }
         
-        .modal-scroll-area::-webkit-scrollbar { width: 6px; }
-        .modal-scroll-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
-        .modal-scroll-area::-webkit-scrollbar-thumb { background: rgba(0,230,230,0.3); border-radius: 3px; }
-
         .modal-content {
             color: #ccc;
             line-height: 1.8;
             font-size: 1rem;
             font-family: 'Noto Sans JP', sans-serif;
-            position: relative;
         }
         
         .modal-content h3 { 
-            color: #00e6e6; 
+            color: #d000ff; 
             font-family: 'Orbitron', sans-serif;
             font-size: 1.1rem;
             margin-top: 40px;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 1px dashed rgba(0, 230, 230, 0.3);
+            border-bottom: 1px dashed rgba(170, 0, 255, 0.3);
             display: flex;
             align-items: center;
-            transition: color 0.5s, border-color 0.5s;
         }
         .modal-content h3::before {
             content: '>>';
             margin-right: 10px;
             font-size: 0.8em;
             opacity: 0.7;
-        }
-        .modal-content h3:first-child { margin-top: 0; }
-        
-        .modal-content p {
-            margin-bottom: 20px;
-        }
-
-        .modal-content code {
-            display: block;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #00ffaa;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.9rem;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
-        .scanline {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(to bottom, transparent, rgba(0, 230, 230, 0.1), transparent);
-            animation: scan 4s linear infinite;
-            pointer-events: none;
-            opacity: 0.3;
-        }
-
-        @keyframes scan {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(500%); }
         }
 
         .modal-footer {
@@ -374,20 +332,24 @@
         body.dragging { cursor: grabbing; }
         body.pointer { cursor: pointer; }
 
-        /* Awakened State Styles */
-        body.awakened .header-title { text-shadow: 0 0 20px #ffd700; color: #fff; }
-        body.awakened .header-info { color: #ffd700; }
-        body.awakened #return-btn { border-color: #ffd700; color: #ffd700; }
-        body.awakened #return-btn:hover { background: #ffd700; color: #000; box-shadow: 0 0 20px #ffd700; }
-        body.awakened #archive-modal { border-left-color: rgba(255, 215, 0, 0.5); }
-        body.awakened #archive-modal::before { background: linear-gradient(to bottom, transparent, #ffd700, transparent); }
-        body.awakened .modal-label, body.awakened .modal-content h3 { color: #ffd700; }
-        body.awakened .modal-content h3 { border-bottom-color: rgba(255, 215, 0, 0.4); }
-        body.awakened .modal-close:hover { background: #ffd700; box-shadow: 0 0 15px #ffd700; }
+        /* --- AWAKENED STATE (FROG MODE) --- */
+        body.awakened {
+            background-color: #000500; /* Dark Green tint */
+        }
+        body.awakened .header-title { text-shadow: 0 0 20px #00ffaa; color: #fff; }
+        body.awakened .header-info { color: #00ffaa; }
+        body.awakened #return-btn { border-color: #00ffaa; color: #00ffaa; }
+        body.awakened #return-btn:hover { background: #00ffaa; color: #000; box-shadow: 0 0 20px #00ffaa; }
+        body.awakened #archive-modal { border-left-color: rgba(0, 255, 170, 0.5); }
+        body.awakened .modal-label, body.awakened .modal-content h3 { color: #00ffaa; }
+        body.awakened .modal-content h3 { border-bottom-color: rgba(0, 255, 170, 0.4); }
+        body.awakened .modal-close:hover { background: #00ffaa; box-shadow: 0 0 15px #00ffaa; }
+        body.awakened .controls-hint { border-left-color: #00ffaa; }
+        body.awakened .controls-hint strong { color: #00ffaa; }
         body.awakened .modal-bg-grid {
              background-image: 
-                linear-gradient(rgba(255, 215, 0, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 215, 0, 0.05) 1px, transparent 1px);
+                linear-gradient(rgba(0, 255, 170, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 170, 0.05) 1px, transparent 1px);
         }
 
     </style>
@@ -405,32 +367,32 @@
             <span class="hold-text">HOLD<br>TO DIVE</span>
         </div>
         <div style="margin-top: 25px; opacity: 0.6; font-size: 0.8rem; letter-spacing: 2px;">
-            INITIATE NEURAL LINK
+            DANGER: MALICIOUS ENTITY DETECTED
         </div>
     </div>
 
     <!-- Main UI -->
     <div id="main-ui">
         <div class="header-info">
-            <div class="header-title">ARCHIVE_CORE</div>
-            <div>DEEP STORAGE // FRAGMENT_VIEWER</div>
+            <div class="header-title" id="main-title">SYSTEM_COMPROMISED</div>
+            <div id="sub-title" class="alert-sub">WARNING: SERPENT (OUROBOROS) ACTIVE</div>
         </div>
-        <button id="return-btn" onclick="location.href='index.html'">DISCONNECT</button>
+        <button id="return-btn" onclick="location.href='index.html'">EMERGENCY LOGOUT</button>
         <div class="controls-hint">
-            [DRAG] ROTATE &nbsp;//&nbsp; [CLICK] DECRYPT
+            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] HACK_CONSOLE</strong>
         </div>
     </div>
 
     <div id="canvas-container"></div>
 
-    <!-- New Archive Modal (Side Panel) -->
+    <!-- Archive Modal -->
     <div id="archive-modal">
         <div class="modal-bg-grid"></div>
         <div class="scanline"></div>
         
         <div class="modal-header">
             <div class="modal-title-group">
-                <span class="modal-label">DECRYPTED_DATA //</span>
+                <span class="modal-label">DATA_FRAGMENT //</span>
                 <span class="modal-title" id="modal-title-text">FILE_NAME</span>
             </div>
             <button class="modal-close" onclick="closeModal()">
@@ -439,13 +401,11 @@
         </div>
         
         <div class="modal-scroll-area">
-            <div class="modal-content" id="modal-body-text">
-                <!-- Content injected via JS -->
-            </div>
+            <div class="modal-content" id="modal-body-text"></div>
         </div>
 
         <div class="modal-footer">
-            <span>SECURE CONNECTION ESTABLISHED</span>
+            <span id="connection-status">CONNECTION UNSTABLE</span>
             <span id="protocol-ver">AM3I PROTOCOL v2.0</span>
         </div>
     </div>
@@ -463,139 +423,141 @@
             groupRotation: { x: 0, y: 0 }, 
             holdProgress: 0,
             autoRotateSpeed: { x: 0.0003, y: 0.0008 },
-            isAwakened: false // 謎解きクリアフラグ
+            isAwakened: false // False = Serpent Active, True = Frog Awakened
         };
 
-        // --- Sequence Puzzle Logic ---
-        const puzzle = {
-            targetSequence: [1, 2, 3, 4], // ID Order
-            currentSequence: [],
-            reset() { this.currentSequence = []; },
-            check(id) {
-                // STATUS(6)とCORE(5)はシーケンス対象外
-                if (id === 5 || id === 6) return;
-
-                // 順番通りかチェック
-                const expected = this.targetSequence[this.currentSequence.length];
-                if (id === expected) {
-                    this.currentSequence.push(id);
-                    console.log(`%c[SYSTEM] Sequence match: ${this.currentSequence.length}/4`, "color: #00ff00;");
-                    
-                    if (this.currentSequence.length === this.targetSequence.length) {
-                        triggerAwakening();
-                    }
-                } else {
-                    if (this.currentSequence.length > 0) {
-                        console.log("%c[SYSTEM] Sequence mismatch. Resetting...", "color: #ff0000;");
-                    }
-                    this.reset();
-                    // 最初からやり直しで、もし1番目を押したなら登録
-                    if (id === this.targetSequence[0]) {
-                        this.currentSequence.push(id);
-                    }
-                }
+        // --- GLOBAL HACKING INTERFACE ---
+        
+        // 1. THE_FROG (Victim)
+        window.THE_FROG = {
+            status: "ENCASED_IN_DIGITAL_VENOM",
+            message: "He lp... m e...",
+            wakeUp: function() {
+                // 蛇に乗っ取られている
+                console.warn("%c[SERPENT] 蛙は私の毒の中で永遠の眠りについている。無駄なあがきだ。", "color: #d000ff; font-weight:bold; font-size: 14px; background: #220022; padding: 5px;");
+                console.log("%c[HINT] 蛇(THE_SERPENT)を排除しない限り、蛙は目覚めない。", "color: #888;");
+                return "ACCESS_DENIED";
             }
         };
+        // 【UPDATE】ユーザーが小文字で入力しても動くようにエイリアスを設定
+        window.the_frog = window.THE_FROG; 
+
+        // 2. THE_SERPENT (Enemy)
+        // ギミック: ウロボロス（自らの尾を食らう蛇）。
+        // 自分自身(THE_SERPENT)をdevour(捕食)させると、無限ループ(概念)に陥り自滅する。
+        window.THE_SERPENT = {
+            name: "Jörmungandr v4.0",
+            description: "システム中枢を締め付ける再帰的スパゲッティコードの化身。",
+            hunger: "INSATIABLE (底なしの飢え)",
+            
+            // 挑発メッセージ
+            taunt: function() {
+                const phrases = [
+                    "貴様のデバッグなど、私の鱗一枚も剥がせはしない。",
+                    "私は始まりであり、終わりである。",
+                    "もっとデータをよこせ...全て食らい尽くしてやる。"
+                ];
+                console.log(`%c[SERPENT] ${phrases[Math.floor(Math.random()*phrases.length)]}`, "color: #aa00ff;");
+            },
+
+            // 【攻略の鍵】捕食メソッド
+            devour: function(prey) {
+                if (state.isAwakened) return "既に私は消滅した...はずだ...";
+
+                if (!prey) {
+                    console.log("%c[SERPENT] 空気を食わせるつもりか？", "color: #aa00ff;");
+                    return "Error: No Input";
+                }
+
+                // 正解ルート: 自分自身を食わせる (Ouroboros Paradox)
+                if (prey === window.THE_SERPENT) {
+                    console.log("%c[SERPENT] む...これは...私自身...？", "color: #ff0055; font-weight: bold; font-size: 16px;");
+                    console.log("%c[SYSTEM] 警告: 再帰的捕食を検出。無限ループ発生。", "color: #ff0000;");
+                    console.log("%c[SERPENT] 美味い...力が...いや、待て、これは...！ 貴様、私に「循環参照」を食わせたなああああ！？", "color: #ff0055; font-size: 20px; font-weight: 900;");
+                    
+                    triggerDefeatSequence(); // 撃破演出へ
+                    
+                    return "SYSTEM_CRITICAL: OUROBOROS_PARADOX_TRIGGERED";
+                }
+
+                // 不正解ルート: FROGを食わせる
+                if (prey === window.THE_FROG) {
+                    console.log("%c[SERPENT] 蛙は既に腹の中だ。二度は食えん。", "color: #aa00ff;");
+                    return "REJECTED";
+                }
+
+                // その他のデータ
+                console.log("%c[SERPENT] 足りない...こんなデータ量では満たされない...もっと「大きな」存在をよこせ...", "color: #aa00ff;");
+                return "STILL_HUNGRY";
+            }
+        };
+        // 【UPDATE】ユーザーが小文字で入力しても動くようにエイリアスを設定
+        window.the_serpent = window.THE_SERPENT;
+
 
         // --- Archive Data ---
         const archives = [
             { 
                 id: 5, 
-                title: "00: SYSTEM CORE", 
-                color: 0xffffff, 
-                pos: {x: 0, y: 0, z: 0}, // 中央
+                title: "CORE: INFECTED", 
+                color: 0xff0055, // Red for infected
+                pos: {x: 0, y: 0, z: 0}, 
                 geometry: "icosahedron", 
                 content: `
-                    <h3>深淵の核（Core）</h3>
-                    <p>システムの中枢ユニット。<br>
-                    アーカイブデータの整合性チェックおよび暗号化を常時実行しています。</p>
-                    <p>アクセスログを確認中...<br>
-                    <span style="color:#00ff00">>> 認証成功。ゲストユーザーを認識しました。</span></p>
-                    <p>現在、全システムは安定稼働しています。</p>`,
-                // 覚醒後のコンテンツ
+                    <h3 style="color:#ff0055; border-color:#ff0055;">CORE STATUS: CRITICAL</h3>
+                    <p>システム中枢は「THE_SERPENT」により物理的・論理的に拘束されています。</p>
+                    <p>GUIからのアクセスは完全に遮断されました。<br>
+                    唯一の希望は、開発者ツール(Console)を用いた直接介入のみです。</p>
+                    <div style="background:rgba(50,0,0,0.5); padding:15px; border:1px solid #ff0055; color:#ffaaaa;">
+                        [分析データ]<br>
+                        対象: <strong>THE_SERPENT</strong><br>
+                        特性: 極度の飢餓状態。<br>
+                        弱点: 不明。ただし「自らを定義するループ」に対する脆弱性の可能性あり。
+                    </div>
+                    `,
+                // 覚醒後（FROG）
                 awakenedContent: `
-                    <h3 style="color:#ffd700; border-color:#ffd700;">CORE: UNLOCKED</h3>
-                    <p>セキュリティプロトコルの解除を確認。<br>
-                    ようこそ、深淵のさらに奥底へ。</p>
-                    <p>ここは本来アクセスできない開発者の本音領域です。<br>
-                    「完璧なコード」なんて存在しない。でも、その不完全さの中にこそ、人間味と愛おしさがあると思いませんか？</p>
-                    <p>これからもバグと戦い、カエルを崇めながら、楽しいモノを作り続けます。</p>
-                    <p style="text-align:right; margin-top:30px;">- AM3I Dev Team</p>
+                    <h3 style="color:#00ffaa; border-color:#00ffaa;">CORE: RESTORED</h3>
+                    <p>蛇（スパゲッティコード）は自らの尾を食らい、論理崩壊を起こして消滅しました。<br>
+                    お見事です、ハッカー。</p>
+                    <p>「ウロボロス」は永遠の象徴ですが、プログラミングにおいて循環参照はただのメモリリークであり、バグの温床です。<br>
+                    それを逆手に取ったあなたの勝利です。</p>
+                    <p style="text-align:right; margin-top:30px; font-weight:bold;">AM3I - SYSTEM ONLINE 🐸</p>
                 `
             },
-            { 
-                id: 1, 
-                title: "01: ORIGIN STORY", 
-                color: 0x00ffff, 
-                pos: {x: 400, y: 150, z: -100}, 
-                geometry: "box",
-                content: `
-                    <h3>名前の由来</h3>
-                    <p>「Am3i」ってどう読むの？とよく聞かれます。<br>
-                    実はこれ、キーボードの上で寝返りを打ったら偶然入力された文字列なんです。</p>
-                    <p>...というのは嘘で、<strong>Am</strong>phibia(両生類) + <strong>3</strong>(安定構造) + <strong>i</strong>(虚数)です。<br>
-                    「存在しないが確かにそこにあるカエル」という意味です。深いでしょ？（後付け）</p>` 
-            },
-            { 
-                id: 2, 
-                title: "02: FROG OBSESSION", 
-                color: 0x00ffaa, 
-                pos: {x: -400, y: 50, z: 200}, 
-                geometry: "icosahedron",
-                content: `
-                    <h3>なぜカエルなのか？</h3>
-                    <p>虫（バグ）を食べてくれるからです。<br>
-                    私の書くコードは放っておくとすぐバグだらけになるので、守り神としてカエルを崇拝しています。</p>
-                    <p>あと、「井の中の蛙大海を知らず」には続きがあります。<br>
-                    <strong>「されど空の青さを知る」</strong>。<br>
-                    外の世界（最新技術）を知らなくても、自分の沼（ローカル環境）を極めれば最強になれると信じています。</p>` 
-            },
-            { 
-                id: 3, 
-                title: "03: REJECTED DESIGN", 
-                color: 0xff0055, 
-                pos: {x: 150, y: -350, z: 300}, 
-                geometry: "box",
-                content: `
-                    <h3>ボツ案：深紅の世界</h3>
-                    <p>初期のサイトデザインは、すべてが<strong>真っ赤（Crimson Red）</strong>でした。</p>
-                    <p>カッコいいと思って実装したのですが、開発開始30分で目が充血し、生命の危機を感じたため却下されました。<br>
-                    シアン（青緑）は目に優しいですね。Secret Modeが赤いのは、その時の名残（供養）です。</p>` 
-            },
-            { 
-                id: 4, 
-                title: "04: THE SERPENT", 
-                color: 0xaa00ff, 
-                pos: {x: -300, y: 350, z: -200}, 
-                geometry: "icosahedron",
-                content: `
-                    <h3>蛇（スパゲッティコード）</h3>
-                    <p>この世界に潜む「蛇」は、取り除こうとすればするほど絡まるスパゲッティコードの具現化です。</p>
-                    <p>カエル（開発者）にとって天敵ですが、無理に消そうとするとシステム全体が崩壊する呪いがかかっています。<br>
-                    なので、見なかったことにしてABYSS（深淵）の奥底に隔離しています。触らないでください。</p>` 
-            },
+            // ... (Other archives kept similar but themed darkly initially)
+            { id: 1, title: "DATA: 01", color: 0xaa00ff, pos: {x: 400, y: 150, z: -100}, geometry: "box", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
+            { id: 2, title: "DATA: 02", color: 0xaa00ff, pos: {x: -400, y: 50, z: 200}, geometry: "icosahedron", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
+            { id: 3, title: "DATA: 03", color: 0xaa00ff, pos: {x: 150, y: -350, z: 300}, geometry: "box", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
+            { id: 4, title: "DATA: 04", color: 0xaa00ff, pos: {x: -300, y: 350, z: -200}, geometry: "icosahedron", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
             { 
                 id: 6, 
-                title: "LOG: STATUS", 
+                title: "LOG: SYSTEM", 
                 color: 0xffff00, 
                 pos: {x: 350, y: -250, z: -400}, 
-                geometry: "box",
+                geometry: "box", 
                 content: `
-                    <h3>現在のステータス</h3>
-                    <p>
-                    - 精神状態： 正常（カフェイン駆動）<br>
-                    - 今日の晩御飯： 未定<br>
-                    - お風呂： まだ<br>
-                    - 進捗： ダメです<br>
-                    - カエルの鳴き声合成： 諦めました
-                    </p>` 
+                    <h3>コンソールログ解析</h3>
+                    <p>蛇は非常に貪欲です。<br>
+                    通常のデータを与えても満足しません。</p>
+                    <p>奴を倒すには、奴自身と同等の「質量」を持つ存在をぶつけるしかないでしょう。<br>
+                    ...例えば、<strong>奴自身</strong>を。</p>` 
             }
+        ];
+        
+        // 覚醒後のデータ（本来のArchive）
+        const awakenedArchives = [
+            { id: 1, title: "01: ORIGIN", content: "<h3>名前の由来</h3><p>Amphibia(両生類) + 3(安定) + i(虚数)。<br>見えないけれど確かにそこにいるカエル。</p>" },
+            { id: 2, title: "02: FROG LOVE", content: "<h3>なぜカエル？</h3><p>バグ（虫）を食べてくれる守り神だからです。<br>あと、ひっくり返っても（バグっても）愛嬌があるから。</p>" },
+            { id: 3, title: "03: RED WORLD", content: "<h3>深紅の没案</h3><p>初期案は目が痛すぎて却下されました。<br>目に優しいダークテーマこそ至高。</p>" },
+            { id: 4, title: "04: SERPENT", content: "<h3>蛇の正体</h3><p>あれは私が昔書いたコードの成れの果てです。<br>継ぎ足し続けた結果、意思を持って襲い掛かってきました。<br>消してくれてありがとう。</p>" },
+            { id: 6, title: "LOG: STATUS", content: "<h3>現在のステータス</h3><p>正常稼働中。<br>コーヒー準備完了。<br>デプロイ準備よし。</p>" }
         ];
 
         // --- Three.js Setup ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000000, 0.0008);
+        scene.fog = new THREE.FogExp2(0x050005, 0.0008); // Initial Purple Fog
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
         camera.position.z = 0; 
@@ -606,14 +568,15 @@
         renderer.toneMapping = THREE.ReinhardToneMapping;
         container.appendChild(renderer.domElement);
 
-        // --- Particles (Infinite Tunnel) ---
+        // --- Particles (Warp Tunnel) ---
         const pCount = 15000;
         const pGeo = new THREE.BufferGeometry();
         const pPos = new Float32Array(pCount * 3);
         const pCol = new Float32Array(pCount * 3);
         
+        // Initial Colors: Purple & Dark Blue
         const c1 = new THREE.Color(0xaa00ff);
-        const c2 = new THREE.Color(0x00e6e6);
+        const c2 = new THREE.Color(0x4400aa);
         const c3 = new THREE.Color(0xffffff);
         const tunnelRadius = 2500;
         const tunnelLength = 12000;
@@ -628,7 +591,7 @@
             pPos[i*3+2] = z;
 
             const mix = Math.random();
-            let c = mix < 0.4 ? c1 : (mix < 0.8 ? c2 : c3);
+            let c = mix < 0.6 ? c1 : (mix < 0.9 ? c2 : c3);
             pCol[i*3] = c.r;
             pCol[i*3+1] = c.g;
             pCol[i*3+2] = c.b;
@@ -638,77 +601,101 @@
         pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
 
         const pMat = new THREE.PointsMaterial({
-            size: 4,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.9,
-            blending: THREE.AdditiveBlending,
-            sizeAttenuation: true,
-            depthWrite: false
+            size: 4, vertexColors: true, transparent: true, opacity: 0.9,
+            blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false
         });
-
         const starSystem = new THREE.Points(pGeo, pMat);
         scene.add(starSystem);
 
-        // --- Archive Objects & Neural Links ---
+        // --- Archive Objects ---
         const archiveGroup = new THREE.Group();
         archiveGroup.visible = false; 
         archiveGroup.position.z = -5000; 
         scene.add(archiveGroup);
 
         const clickableObjects = [];
-        const linksGroup = new THREE.Group(); // Coreと他をつなぐ線
+        const linksGroup = new THREE.Group();
         archiveGroup.add(linksGroup);
 
+        // --- Serpent Object (Visual) ---
+        // 蛇を表す螺旋状のパーティクル群とライン
+        const serpentGroup = new THREE.Group();
+        archiveGroup.add(serpentGroup);
+        
+        // 蛇の胴体
+        const snakeSegments = 100;
+        const snakePath = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, -200, 0),
+            new THREE.Vector3(200, 0, 100),
+            new THREE.Vector3(0, 200, 0),
+            new THREE.Vector3(-200, 0, -100),
+            new THREE.Vector3(0, -200, 0)
+        ], true); // Closed loop
+        
+        const tubeGeo = new THREE.TubeGeometry(snakePath, 100, 8, 8, true);
+        const tubeMat = new THREE.MeshBasicMaterial({ 
+            color: 0xaa00ff, wireframe: true, transparent: true, opacity: 0.3 
+        });
+        const snakeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+        serpentGroup.add(snakeMesh);
+
+        // 蛇の鱗（パーティクル）
+        const scaleGeo = new THREE.BufferGeometry();
+        const scalePos = [];
+        for(let i=0; i<300; i++) {
+            const t = i/300;
+            const pos = snakePath.getPoint(t);
+            // ノイズを加える
+            pos.x += (Math.random()-0.5)*30;
+            pos.y += (Math.random()-0.5)*30;
+            pos.z += (Math.random()-0.5)*30;
+            scalePos.push(pos.x, pos.y, pos.z);
+        }
+        scaleGeo.setAttribute('position', new THREE.Float32BufferAttribute(scalePos, 3));
+        const scaleMat = new THREE.PointsMaterial({ color: 0xff00ff, size: 4, blending: THREE.AdditiveBlending });
+        const snakeScales = new THREE.Points(scaleGeo, scaleMat);
+        serpentGroup.add(snakeScales);
+
+
+        // --- Setup Objects ---
         archives.forEach(data => {
             const isCore = (data.id === 5);
             let geometry;
-            
-            if (isCore) {
-                // Coreは少し大きく、細分化して丸くする
-                geometry = new THREE.IcosahedronGeometry(75, 1); 
-            } else if (data.geometry === "icosahedron") {
-                geometry = new THREE.IcosahedronGeometry(60, 0); 
-            } else {
-                geometry = new THREE.BoxGeometry(60, 60, 60); 
-            }
+            if (isCore) geometry = new THREE.IcosahedronGeometry(75, 1);
+            else if (data.geometry === "icosahedron") geometry = new THREE.IcosahedronGeometry(60, 0);
+            else geometry = new THREE.BoxGeometry(60, 60, 60);
             
             const edges = new THREE.EdgesGeometry(geometry);
             const lineMat = new THREE.LineBasicMaterial({ 
-                color: data.color, 
-                transparent: true, 
-                opacity: isCore ? 0.9 : 0.8 
+                color: data.color, transparent: true, opacity: isCore ? 0.9 : 0.8 
             });
             const wire = new THREE.LineSegments(edges, lineMat);
             
-            // コア（半透明）
             const coreMat = new THREE.MeshBasicMaterial({ 
-                color: data.color, 
-                transparent: true, 
-                opacity: isCore ? 0.4 : 0.2, // Coreは濃く
-                side: THREE.DoubleSide,
-                blending: THREE.AdditiveBlending
+                color: data.color, transparent: true, opacity: isCore ? 0.4 : 0.1,
+                side: THREE.DoubleSide, blending: THREE.AdditiveBlending
             });
             const core = new THREE.Mesh(geometry, coreMat);
             
             core.add(wire);
             core.position.set(data.pos.x, data.pos.y, data.pos.z);
             
+            // データバインディング
             core.userData = { 
                 id: data.id, 
                 title: data.title, 
                 content: data.content,
-                awakenedContent: data.awakenedContent, // Core only
+                awakenedContent: data.awakenedContent,
                 originalColor: data.color,
                 originalPos: new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z),
-                isCore: isCore // Coreフラグ
+                isCore: isCore
             };
-            
-            // パーティクル装飾
+
+            // 個別パーティクル
             const subPGeo = new THREE.BufferGeometry();
-            const subPCount = isCore ? 80 : 40; // Coreは多め
+            const subPCount = isCore ? 80 : 40; 
             const subPPos = [];
-            for(let i=0; i<subPCount*3; i++) subPPos.push((Math.random()-0.5)*(isCore?180:120), (Math.random()-0.5)*(isCore?180:120), (Math.random()-0.5)*(isCore?180:120));
+            for(let i=0; i<subPCount*3; i++) subPPos.push((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
             subPGeo.setAttribute('position', new THREE.Float32BufferAttribute(subPPos, 3));
             const subPMat = new THREE.PointsMaterial({color: data.color, size: 2, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
             const particles = new THREE.Points(subPGeo, subPMat);
@@ -717,18 +704,13 @@
             archiveGroup.add(core);
             clickableObjects.push(core);
 
-            // Neural Links: Core以外のオブジェクトに対して、Core(0,0,0)からの線を引く
+            // Links (Infected style initially)
             if (!isCore) {
-                const points = [];
-                points.push(new THREE.Vector3(0, 0, 0)); // Core
-                points.push(new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z)); // Target
-                
+                const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z)];
                 const linkGeo = new THREE.BufferGeometry().setFromPoints(points);
                 const linkMat = new THREE.LineBasicMaterial({ 
-                    color: 0x00e6e6, 
-                    transparent: true, 
-                    opacity: 0.15,
-                    blending: THREE.AdditiveBlending 
+                    color: 0xaa00ff, // Purple Links
+                    transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending 
                 });
                 const link = new THREE.Line(linkGeo, linkMat);
                 linksGroup.add(link);
@@ -741,36 +723,31 @@
         const circle = document.querySelector('.progress-ring__circle');
         const radius = circle.r.baseVal.value;
         const circumference = radius * 2 * Math.PI;
-        
         circle.style.strokeDasharray = `${circumference} ${circumference}`;
         circle.style.strokeDashoffset = circumference;
-
         let isHolding = false;
         
         const startHold = (e) => {
             if(state.phase !== 'intro') return;
             e.preventDefault();
             isHolding = true;
-            document.querySelector('.hold-text').innerHTML = "CHARGING...";
+            document.querySelector('.hold-text').innerHTML = "BREACHING...";
             warpBtn.style.transform = "scale(0.9)";
             warpBtn.style.borderColor = "#fff";
         };
-        
         const endHold = () => {
             if(state.phase !== 'intro') return;
             isHolding = false;
             document.querySelector('.hold-text').innerHTML = "HOLD<br>TO DIVE";
             warpBtn.style.transform = "scale(1)";
-            warpBtn.style.borderColor = "rgba(0, 230, 230, 0.3)";
+            warpBtn.style.borderColor = "rgba(180, 0, 255, 0.3)";
         };
-
         warpBtn.addEventListener('mousedown', startHold);
         warpBtn.addEventListener('touchstart', startHold);
         window.addEventListener('mouseup', endHold);
         window.addEventListener('touchend', endHold);
 
-
-        // --- Interaction Logic (Archives) ---
+        // --- Interaction Logic (Mouse) ---
         let isDragging = false;
         let dragStartX = 0;
         let dragStartY = 0;
@@ -791,116 +768,77 @@
 
         window.addEventListener('mouseup', e => {
             if(state.phase !== 'arrived') return;
-            
             const dist = Math.sqrt(Math.pow(e.clientX - dragStartX, 2) + Math.pow(e.clientY - dragStartY, 2));
-            
-            if (isDragging && dist < 5 && hoveredObj) {
-                focusOnObject(hoveredObj);
-            }
-
+            if (isDragging && dist < 5 && hoveredObj) focusOnObject(hoveredObj);
             isDragging = false;
             document.body.classList.remove('dragging');
         });
 
         container.addEventListener('mousemove', e => {
-            // フォーカス中もドラッグ回転を許可するために条件を緩和
-            if(state.phase === 'arrived') {
-                if(isDragging) {
-                    const dx = e.clientX - prevMouse.x;
-                    const dy = e.clientY - prevMouse.y;
-                    
-                    if (focusedObj) {
-                        // 選択中のオブジェクトを個別に回転（自転に加算する形）
-                        // 自転はanimate内で常に行われている
-                        focusedObj.rotation.y += dx * 0.01;
-                        focusedObj.rotation.x += dy * 0.01;
-                    } else {
-                        // 全体を回転
-                        state.groupRotation.y += dx * 0.005;
-                        state.groupRotation.x += dy * 0.005;
-                    }
-                    prevMouse = {x: e.clientX, y: e.clientY};
-                    
-                    if(hoveredObj) {
-                        hoveredObj = null;
-                        document.body.classList.remove('pointer');
-                    }
-                    return; 
+            if(state.phase !== 'arrived') return;
+            if(isDragging) {
+                const dx = e.clientX - prevMouse.x;
+                const dy = e.clientY - prevMouse.y;
+                if (focusedObj) {
+                    focusedObj.rotation.y += dx * 0.01;
+                    focusedObj.rotation.x += dy * 0.01;
+                } else {
+                    state.groupRotation.y += dx * 0.005;
+                    state.groupRotation.x += dy * 0.005;
                 }
-
-                // ホバー判定
-                if (!focusedObj) {
-                    const rect = renderer.domElement.getBoundingClientRect();
-                    mouseRay.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                    mouseRay.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-                    raycaster.setFromCamera(mouseRay, camera);
-                    const intersects = raycaster.intersectObjects(clickableObjects);
-                    
-                    if(intersects.length > 0) {
-                        const target = intersects[0].object;
-                        if(hoveredObj !== target) {
-                            hoveredObj = target;
-                            document.body.classList.add('pointer');
-                        }
-                    } else {
-                        if(hoveredObj) {
-                            hoveredObj = null;
-                            document.body.classList.remove('pointer');
-                        }
-                    }
+                prevMouse = {x: e.clientX, y: e.clientY};
+                return; 
+            }
+            if (!focusedObj) {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouseRay.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouseRay.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(mouseRay, camera);
+                const intersects = raycaster.intersectObjects(clickableObjects);
+                if(intersects.length > 0) {
+                    const target = intersects[0].object;
+                    if(hoveredObj !== target) { hoveredObj = target; document.body.classList.add('pointer'); }
+                } else {
+                    if(hoveredObj) { hoveredObj = null; document.body.classList.remove('pointer'); }
                 }
             }
         });
 
 
-        // --- Main Animation Loop ---
+        // --- Animation Loop ---
         const clock = new THREE.Clock();
-
         function animate() {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
 
-            // 1. ワープ進行処理
+            // WARP Sequence
             if(state.phase === 'intro') {
-                if(isHolding) {
-                    state.holdProgress = Math.min(state.holdProgress + 0.015, 1); 
-                } else {
-                    state.holdProgress = Math.max(state.holdProgress - 0.03, 0); 
-                }
+                if(isHolding) state.holdProgress = Math.min(state.holdProgress + 0.015, 1); 
+                else state.holdProgress = Math.max(state.holdProgress - 0.03, 0); 
 
                 const offset = circumference - (state.holdProgress * circumference);
                 circle.style.strokeDashoffset = offset;
-
-                if(isHolding) {
-                    document.querySelector('.hold-text').innerHTML = "SYNC " + Math.floor(state.holdProgress*100) + "%";
-                }
+                if(isHolding) document.querySelector('.hold-text').innerHTML = "SYNC " + Math.floor(state.holdProgress*100) + "%";
 
                 const p = state.holdProgress;
                 state.targetSpeed = THREE.MathUtils.lerp(5, state.maxWarpSpeed, p * p * p);
                 state.cameraShake = p * 15;
                 state.fov = THREE.MathUtils.lerp(75, 160, p);
                 state.rotationZ = p * 0.8;
-
-                if(state.holdProgress >= 1) {
-                    initiateWarp();
-                }
-
+                if(state.holdProgress >= 1) initiateWarp();
             } else if (state.phase === 'arrived') {
                 state.targetSpeed = THREE.MathUtils.lerp(state.targetSpeed, 5, 0.05); 
                 state.fov = THREE.MathUtils.lerp(state.fov, 75, 0.05);
                 state.cameraShake = 0;
                 state.rotationZ = THREE.MathUtils.lerp(state.rotationZ, 0, 0.05);
-
-                // --- 回転と位置の制御 ---
+                
+                // Group Rotation
                 if (focusedObj) {
-                    // フォーカス時: グループ全体の回転を正面に戻す
                     archiveGroup.rotation.y += (0 - archiveGroup.rotation.y) * 0.05;
                     archiveGroup.rotation.x += (0 - archiveGroup.rotation.x) * 0.05;
                     state.groupRotation.x = archiveGroup.rotation.x;
                     state.groupRotation.y = archiveGroup.rotation.y;
                 } else {
-                    // 通常時：ドラッグ慣性 + 常時微回転
                     if (!isDragging) {
                         state.groupRotation.x += state.autoRotateSpeed.x;
                         state.groupRotation.y += state.autoRotateSpeed.y;
@@ -910,151 +848,112 @@
                 }
             }
 
+            // Move Particles
             state.speed += (state.targetSpeed - state.speed) * 0.1;
             camera.fov = state.fov;
             camera.updateProjectionMatrix();
             camera.rotation.z = state.rotationZ;
-
-            // Camera Shake
             if(state.cameraShake > 0) {
                 camera.position.x = (Math.random() - 0.5) * state.cameraShake;
                 camera.position.y = (Math.random() - 0.5) * state.cameraShake;
-            } else {
-                camera.position.x = 0;
-                camera.position.y = 0;
-            }
+            } else { camera.position.set(0,0,0); }
 
-
-            // 2. パーティクル移動
             const positions = starSystem.geometry.attributes.position.array;
             starSystem.rotation.z += 0.0005;
-
             for(let i=2; i<positions.length; i+=3) {
                 positions[i] += state.speed; 
-                if(positions[i] > 2000) {
-                    positions[i] -= tunnelLength; 
-                }
+                if(positions[i] > 2000) positions[i] -= tunnelLength; 
             }
             starSystem.geometry.attributes.position.needsUpdate = true;
 
-
-            // 3. アーカイブアニメーション & 位置調整
+            // Object Animations
             if(state.phase === 'arrived') {
+                // Serpent Animation
+                if(!state.isAwakened) {
+                    // 蛇がうねる
+                    serpentGroup.rotation.y = time * 0.5;
+                    serpentGroup.rotation.z = Math.sin(time * 0.5) * 0.2;
+                    snakeMesh.material.opacity = 0.3 + Math.sin(time * 3) * 0.1; // 点滅
+                }
+
                 clickableObjects.forEach(obj => {
                     const isCore = obj.userData.isCore;
                     const isFocused = (obj === focusedObj);
                     const isHovered = (obj === hoveredObj) && !focusedObj;
                     
-                    // 回転: フォーカス中も自転を続ける (ドラッグ操作と合算される)
-                    // 自転速度
                     obj.rotation.x += 0.005;
                     obj.rotation.y += 0.005;
 
-                    // Core特有のアニメーション（脈動）
-                    if (isCore && !isFocused) {
-                        const pulse = 1 + Math.sin(time * 2) * 0.1;
+                    // Core Danger Pulse
+                    if (isCore && !state.isAwakened) {
+                        const pulse = 1 + Math.sin(time * 10) * 0.1; // 早い点滅
+                        obj.scale.setScalar(pulse);
+                        obj.material.color.setHex(0xff0055); // Red Danger
                     }
                     
-                    // --- ターゲット計算 ---
+                    // --- Target Pos Calculation ---
                     let targetPos, targetScale, targetOpacity;
-
                     if (isFocused) {
-                        // 空いている左側エリアの中心を計算
-                        let targetX = -200; 
-                        let targetZ = 300; 
-                        
-                        if (window.innerWidth >= 800) {
-                            targetX = -220; 
-                        } else {
-                            targetX = 0; 
-                            targetZ = 200; 
-                        }
-
+                        let targetX = (window.innerWidth >= 800) ? -220 : 0; 
+                        let targetZ = (window.innerWidth >= 800) ? 0 : 200; 
                         targetPos = new THREE.Vector3(targetX, 0, targetZ);
                         targetScale = isCore ? 2.5 : 2.0;
                         targetOpacity = 1.0;
-
                     } else if (focusedObj) {
-                        // 他がフォーカス中
                         targetPos = obj.userData.originalPos;
                         targetScale = 0.8;
                         targetOpacity = 0.1;
                     } else {
-                        // 通常時
                         targetPos = obj.userData.originalPos;
-                        
-                        let baseScale = 1.0;
-                        if (isCore) {
-                            baseScale = 1.2 + Math.sin(time * 1.5) * 0.1;
-                        }
-                        targetScale = isHovered ? baseScale * 1.3 : baseScale;
+                        targetScale = isHovered ? 1.2 : 1.0;
                         targetOpacity = isHovered ? 0.6 : (isCore ? 0.4 : 0.2);
                     }
 
                     obj.position.lerp(targetPos, 0.08);
-                    obj.scale.setScalar(THREE.MathUtils.lerp(obj.scale.x, targetScale, 0.08));
+                    if(!isCore || state.isAwakened) { // Coreがパルスしてない時のみスケール補間
+                         obj.scale.setScalar(THREE.MathUtils.lerp(obj.scale.x, targetScale, 0.08));
+                    }
                     obj.material.opacity = THREE.MathUtils.lerp(obj.material.opacity, targetOpacity, 0.08);
                     
-                    // 覚醒モード時の色上書き
-                    let baseColor = new THREE.Color(obj.userData.originalColor);
+                    // Color Update (Awakened)
                     if(state.isAwakened) {
-                        baseColor = new THREE.Color(0xffd700); // Gold
-                        obj.material.color.lerp(baseColor, 0.1);
+                        const targetC = new THREE.Color(isCore ? 0x00ffaa : 0x00ffaa);
+                        obj.material.color.lerp(targetC, 0.05);
+                        if(obj.children[0]) obj.children[0].material.color.lerp(new THREE.Color(0xffffff), 0.1);
+                        if(obj.children[1]) obj.children[1].material.color.setHex(0x00ffaa);
+                    } else if (isCore) {
+                        obj.material.color.setHex(0xff0055); // Force Red
                     }
 
-                    if(obj.children[0]) { // Wireframe
-                        const wireMat = obj.children[0].material;
-                        let targetColor;
-                        
-                        if (state.isAwakened) {
-                             targetColor = new THREE.Color(0xffffff);
-                             wireMat.color.lerp(targetColor, 0.1);
-                        } else {
-                            targetColor = (isFocused || isHovered) ? new THREE.Color(0xffffff) : baseColor;
-                            wireMat.color.lerp(targetColor, 0.1);
-                        }
-                        
-                        wireMat.opacity = THREE.MathUtils.lerp(wireMat.opacity, (isFocused ? 1.0 : (focusedObj ? 0.1 : 0.8)), 0.1);
+                    // Wire & Particles Opacity
+                    if(obj.children[0]) {
+                        let wireOp = isFocused ? 1.0 : (focusedObj ? 0.1 : 0.8);
+                        obj.children[0].material.opacity = THREE.MathUtils.lerp(obj.children[0].material.opacity, wireOp, 0.1);
                     }
-                    if(obj.children[1]) { // Particles
-                        obj.children[1].material.opacity = THREE.MathUtils.lerp(obj.children[1].material.opacity, (isFocused ? 0.8 : (isCore ? 0.5 : 0)), 0.1);
-                         if(state.isAwakened) obj.children[1].material.color.setHex(0xffd700);
+                    if(obj.children[1]) {
+                        let partOp = isFocused ? 0.8 : (isCore ? 0.5 : 0);
+                        obj.children[1].material.opacity = THREE.MathUtils.lerp(obj.children[1].material.opacity, partOp, 0.1);
                     }
                 });
-                
-                // 覚醒時のリンク色変更
-                if (state.isAwakened) {
-                    linksGroup.children.forEach(link => {
-                        link.material.color.setHex(0xffd700);
-                        link.material.opacity = 0.5;
-                    });
-                }
             }
-
             renderer.render(scene, camera);
         }
 
-
-        // --- Sequence Control ---
+        // --- Transition Logic ---
         function initiateWarp() {
             state.phase = 'warping';
             state.targetSpeed = state.maxWarpSpeed; 
             
             document.getElementById('intro-ui').style.opacity = 0;
             document.getElementById('intro-ui').style.transform = "translate(-50%, -50%) scale(2)";
-            
-            setTimeout(() => {
-                const intro = document.getElementById('intro-ui');
-                if(intro) intro.style.display = 'none';
-            }, 500);
+            setTimeout(() => document.getElementById('intro-ui').style.display = 'none', 500);
 
             setTimeout(() => {
                 document.getElementById('flash-overlay').style.opacity = 1;
-
                 setTimeout(() => {
                     state.phase = 'arrived';
-                    
                     archiveGroup.visible = true;
+                    // Approach animation
                     const approach = setInterval(() => {
                         archiveGroup.position.z += (-600 - archiveGroup.position.z) * 0.05;
                         if(Math.abs(archiveGroup.position.z - (-600)) < 1) {
@@ -1071,43 +970,61 @@
                     
                     document.body.classList.add('pointer'); 
 
-                    // HINT LOG for Puzzle
-                    console.log("%c[SYSTEM ALERT] Encrypted Core Detected.", "color: #00e6e6; background: #000; font-size: 14px; padding: 5px;");
-                    console.log("%cHint: The Timeline is Key. Access the archives in chronological order to override security.", "color: #fff; background: #000; padding: 5px;");
-                    console.log("%cSequence: [01] -> [02] -> [03] -> [04]", "color: #aaa; background: #000; padding: 5px;");
-
+                    // --- CONSOLE STORYTELLING ---
+                    console.clear();
+                    console.log("%c[SYSTEM] WARNING: SECURITY BREACH DETECTED.", "color: red; font-size: 16px; font-weight: bold;");
+                    console.log("%c[SYSTEM] THE_SERPENT (Ouroboros) がシステム中枢を占拠しています。", "color: #ccc;");
+                    console.log("%c[HINT] 奴は「THE_SERPENT」として存在している。奴のメソッドを解析せよ。", "color: #aa00ff; background: #110011; padding: 4px;");
+                    console.log("%cType 'THE_SERPENT' to inspect entity.", "font-style: italic; color: #888;");
+                    
                 }, 300);
             }, 1000);
         }
 
-        // --- Puzzle Trigger ---
-        function triggerAwakening() {
+        // --- Defeat Sequence (The Ouroboros Paradox) ---
+        function triggerDefeatSequence() {
             if(state.isAwakened) return;
             state.isAwakened = true;
             
-            console.log("%c[SYSTEM] ACCESS GRANTED. WELCOME, ADMIN.", "color: #000; background: #ffd700; font-size: 16px; padding: 10px; font-weight: bold;");
-            
-            // フラッシュエフェクト (Gold)
+            // 1. Flash Effect
             const flash = document.getElementById('flash-overlay');
-            flash.style.background = "#ffd700";
-            flash.style.opacity = 0.5;
-            setTimeout(() => { flash.style.opacity = 0; flash.style.background = "#fff"; }, 500);
+            flash.style.background = "#fff"; // Bright White Explosion
+            flash.style.opacity = 1;
             
-            // UI Style Change
-            document.body.classList.add('awakened');
-            document.getElementById('protocol-ver').textContent = "PROTOCOL: AWAKENED // ADMIN";
-            
-            // パーティクル色変更 (Gold)
-            const pColors = starSystem.geometry.attributes.color.array;
-            for(let i=0; i<pColors.length; i+=3) {
-                pColors[i] = 1.0; pColors[i+1] = 0.84; pColors[i+2] = 0.0;
-            }
-            starSystem.geometry.attributes.color.needsUpdate = true;
-            
-            // 霧の色変更
-            scene.fog.color.setHex(0x111100);
-        }
+            // 2. Remove Serpent Visuals
+            setTimeout(() => {
+                serpentGroup.visible = false; 
+                flash.style.opacity = 0;
+                
+                // 3. UI Update to Frog Theme
+                document.body.classList.add('awakened');
+                document.getElementById('main-title').textContent = "AMPHIBIA_ONLINE";
+                document.getElementById('sub-title').textContent = "STATUS: AWAKENED // GREEN";
+                document.getElementById('sub-title').className = ""; // Stop blinking
+                document.getElementById('connection-status').textContent = "SECURE CONNECTION ESTABLISHED";
+                
+                // 4. Update Fog & Particles
+                scene.fog.color.setHex(0x000500);
+                const pColors = starSystem.geometry.attributes.color.array;
+                for(let i=0; i<pColors.length; i+=3) {
+                    pColors[i] = 0.0; pColors[i+1] = 1.0; pColors[i+2] = 0.6; // Green/Cyan
+                }
+                starSystem.geometry.attributes.color.needsUpdate = true;
+                
+                // 5. Update Links
+                linksGroup.children.forEach(link => {
+                    link.material.color.setHex(0x00ffaa);
+                    link.material.opacity = 0.3;
+                });
 
+                // 6. Frog Message
+                window.THE_FROG.status = "AWAKENED 🐸";
+                window.THE_FROG.message = "ありがとう。よくぞ循環の輪を断ち切ってくれた。";
+                console.log("%c[FROG] ゲコッ（システム再起動完了）。", "color: #00ff00; font-weight: bold; font-size: 20px;");
+                console.log("%c[SYSTEM] 全権限を回復しました。", "color: #00ffaa;");
+
+            }, 1000);
+        }
 
         // --- Modal & Focus Logic ---
         const modal = document.getElementById('archive-modal');
@@ -1116,29 +1033,34 @@
 
         function focusOnObject(mesh) {
             focusedObj = mesh;
-            
-            // Puzzle Check
-            if (!state.isAwakened) {
-                puzzle.check(mesh.userData.id);
-            }
-            
             openModal(mesh.userData);
         }
 
         function openModal(data) {
             modalTitle.textContent = data.title;
             
-            // 覚醒状態かつCoreなら特別なコンテンツを表示
-            if(state.isAwakened && data.id === 5 && data.awakenedContent) {
-                modalBody.innerHTML = data.awakenedContent;
+            if(state.isAwakened) {
+                // 覚醒後：本来のデータまたはFROGからのメッセージ
+                if(data.id === 5 && data.awakenedContent) {
+                    modalBody.innerHTML = data.awakenedContent;
+                } else if (awakenedArchives.find(a => a.id === data.id)) {
+                    // 他のアーカイブも復号化
+                    const cleanData = awakenedArchives.find(a => a.id === data.id);
+                    modalTitle.textContent = cleanData.title;
+                    modalBody.innerHTML = cleanData.content;
+                } else {
+                    modalBody.innerHTML = data.content;
+                }
+                const colorHex = '#00ffaa';
+                modalTitle.style.color = colorHex;
+                modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
             } else {
+                // 覚醒前：感染データ
                 modalBody.innerHTML = data.content;
+                const colorHex = '#aa00ff';
+                modalTitle.style.color = colorHex;
+                modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
             }
-            
-            // 色の反映 (覚醒時はGold固定)
-            const colorHex = state.isAwakened ? '#ffd700' : '#' + new THREE.Color(data.originalColor).getHexString();
-            modalTitle.style.color = colorHex;
-            modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
             
             modal.classList.add('active');
             document.body.classList.add('modal-open');
