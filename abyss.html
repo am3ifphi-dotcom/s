@@ -353,6 +353,25 @@
                 linear-gradient(90deg, rgba(0, 255, 170, 0.05) 1px, transparent 1px);
         }
 
+        /* --- GLITCH FX --- */
+        @keyframes glitch-anim-1 {
+            0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+            20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+            40% { clip-path: inset(10% 0 50% 0); transform: translate(-2px, 2px); }
+            60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+            80% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, 1px); }
+            100% { clip-path: inset(10% 0 60% 0); transform: translate(1px, -1px); }
+        }
+        body.glitching {
+            animation: glitch-anim-1 0.1s infinite linear alternate-reverse;
+            filter: invert(1) hue-rotate(180deg) contrast(2);
+        }
+        body.glitching * {
+            color: red !important;
+            border-color: red !important;
+            font-family: 'Courier New', Courier, monospace !important;
+        }
+
     </style>
 </head>
 <body>
@@ -468,6 +487,14 @@
                     return "ReferenceError: prey is not defined";
                 }
 
+                // GLITCH ROUTE: Frogを食わせると世界が壊れる
+                if (prey === window.THE_FROG || prey === window.the_frog) {
+                    console.clear();
+                    console.log("%c[SERPENT] 蛙...？ 貴様、よせ！ そのオブジェクトは `null` 参照の可能性が...ッ！！！", "color: #ff0000; font-size: 20px; font-weight: 900; background:black;");
+                    triggerGlitchSequence();
+                    return "CRITICAL ERROR: SEGMENTATION FAULT // WORLD CORRUPTION";
+                }
+
                 // 正解ルート: 自分自身を食わせる
                 if (prey === window.THE_SERPENT) {
                     console.log("%c[SERPENT] ぐああっ！再帰呼び出しの脱出条件書き忘れたあああ！！Stack Overflow！！", "color: #ff0055; font-weight: bold; font-size: 16px;");
@@ -477,12 +504,6 @@
                     triggerDefeatSequence(); 
                     
                     return "FATAL ERROR: KILLED BY RECURSION";
-                }
-
-                // 不正解ルート
-                if (prey === window.THE_FROG) {
-                    console.log("%c[SERPENT] そいつはもうバグまみれで美味しくない。", "color: #aa00ff;");
-                    return "REJECTED_PROMISE";
                 }
 
                 // その他のデータ
@@ -1081,6 +1102,45 @@
                 console.log("%c[SYSTEM] 全てのアーカイブが復号化されました。", "color: #00ffaa;");
 
             }, 1000);
+        }
+
+        // --- GLITCH SEQUENCE (BAD END?) ---
+        function triggerGlitchSequence() {
+            // 画面をGlitch
+            document.body.classList.add('glitching');
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('canvas-container').style.filter = "contrast(10) hue-rotate(90deg)";
+            
+            // コンソール暴走
+            let counter = 0;
+            const glitchInterval = setInterval(() => {
+                const err = Math.random() > 0.5 ? "FATAL ERROR" : "undefined is not a function";
+                console.error(`[CRITICAL] ${err} at 0x${Math.floor(Math.random()*1000000).toString(16)}`);
+                
+                if(Math.random() > 0.8) {
+                    console.warn("System overheating...");
+                }
+                
+                // カメラをランダムに揺らす
+                camera.position.x = (Math.random() - 0.5) * 1000;
+                camera.position.y = (Math.random() - 0.5) * 1000;
+                camera.rotation.z = Math.random() * Math.PI;
+                scene.fog.color.setHex(Math.random() * 0xffffff);
+                
+                counter++;
+                if(counter > 50) {
+                    clearInterval(glitchInterval);
+                    console.log("%c[SYSTEM] REBOOTING INTO SAFE MODE (AMPHIBIA_OS)...", "color: #00ff00; background: black; font-size: 20px;");
+                    
+                    // 遷移アニメーション
+                    document.body.style.backgroundColor = "#000";
+                    document.getElementById('canvas-container').style.opacity = 0;
+                    
+                    setTimeout(() => {
+                        window.location.href = "frog.html";
+                    }, 2000);
+                }
+            }, 50);
         }
 
         // --- Modal & Focus Logic ---
