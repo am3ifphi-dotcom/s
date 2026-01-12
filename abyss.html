@@ -458,7 +458,10 @@
                 return "PROMISE_PENDING_FOREVER";
             }
         };
+        // 【重要】ユーザーが devtools で frog と打てるようにグローバル変数に登録
         window.the_frog = window.THE_FROG; 
+        window.flog = window.THE_FROG; // Typo support for user convenience
+        window.frog = window.THE_FROG; // ここを追加！
 
         // 2. THE_SERPENT (Enemy)
         window.THE_SERPENT = {
@@ -482,13 +485,33 @@
             devour: function(prey) {
                 if (state.isAwakened) return "既にリファクタリング（消滅）済みです。";
 
+                // 引数チェック: 文字列で渡された場合の処理
+                let isFrog = false;
+                let isSelf = false;
+
+                if (typeof prey === 'string') {
+                    const lowerPrey = prey.toLowerCase();
+                    if (lowerPrey === 'frog' || lowerPrey === 'flog' || lowerPrey === 'the_frog') {
+                        isFrog = true;
+                    } else if (lowerPrey === 'serpent' || lowerPrey === 'the_serpent') {
+                        isSelf = true;
+                    }
+                } else {
+                    // オブジェクト比較
+                    if (prey === window.THE_FROG || prey === window.the_frog || prey === window.flog || prey === window.frog) {
+                        isFrog = true;
+                    } else if (prey === window.THE_SERPENT || prey === window.the_serpent || prey === window.serpent) {
+                        isSelf = true;
+                    }
+                }
+
                 if (!prey) {
                     console.log("%c[SERPENT] `undefined` を食わせる気か？ JSエンジンの気持ちも考えろ。", "color: #aa00ff;");
                     return "ReferenceError: prey is not defined";
                 }
 
                 // GLITCH ROUTE: Frogを食わせると世界が壊れる
-                if (prey === window.THE_FROG || prey === window.the_frog) {
+                if (isFrog) {
                     console.clear();
                     console.log("%c[SERPENT] 蛙...？ 貴様、よせ！ そのオブジェクトは `null` 参照の可能性が...ッ！！！", "color: #ff0000; font-size: 20px; font-weight: 900; background:black;");
                     triggerGlitchSequence();
@@ -496,7 +519,7 @@
                 }
 
                 // 正解ルート: 自分自身を食わせる
-                if (prey === window.THE_SERPENT) {
+                if (isSelf) {
                     console.log("%c[SERPENT] ぐああっ！再帰呼び出しの脱出条件書き忘れたあああ！！Stack Overflow！！", "color: #ff0055; font-weight: bold; font-size: 16px;");
                     console.log("%c[SYSTEM] 警告: Maximum call stack size exceeded.", "color: #ff0000;");
                     console.log("%c[SERPENT] 貴様...私に「技術的負債」を押し付けるとは...卑怯な...", "color: #ff0055; font-size: 14px;");
@@ -512,6 +535,7 @@
             }
         };
         window.the_serpent = window.THE_SERPENT;
+        window.serpent = window.THE_SERPENT; // これも追加して入力しやすく
 
 
         // --- Archive Data (Initial / Infected) ---
