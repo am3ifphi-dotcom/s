@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARCHIVE_CORE // AM3I</title>
+    <title>ARCHIVE_CORE // LEGACY_CODE</title>
     <!-- Three.js (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Google Fonts -->
@@ -367,19 +367,19 @@
             <span class="hold-text">HOLD<br>TO DIVE</span>
         </div>
         <div style="margin-top: 25px; opacity: 0.6; font-size: 0.8rem; letter-spacing: 2px;">
-            DANGER: MALICIOUS ENTITY DETECTED
+            DANGER: LEGACY_CODE DETECTED
         </div>
     </div>
 
     <!-- Main UI -->
     <div id="main-ui">
         <div class="header-info">
-            <div class="header-title" id="main-title">SYSTEM_COMPROMISED</div>
-            <div id="sub-title" class="alert-sub">WARNING: SERPENT (OUROBOROS) ACTIVE</div>
+            <div class="header-title" id="main-title">SPAGHETTI_CODE</div>
+            <div id="sub-title" class="alert-sub">WARNING: INFINITE LOOP (OUROBOROS) ACTIVE</div>
         </div>
-        <button id="return-btn" onclick="location.href='index.html'">EMERGENCY LOGOUT</button>
+        <button id="return-btn" onclick="location.href='index.html'">ESCAPE (ALT+F4)</button>
         <div class="controls-hint">
-            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] HACK_CONSOLE</strong>
+            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] DEV_TOOLS</strong>
         </div>
     </div>
 
@@ -392,7 +392,7 @@
         
         <div class="modal-header">
             <div class="modal-title-group">
-                <span class="modal-label">DATA_FRAGMENT //</span>
+                <span class="modal-label">GIT_BLAME_RESULT //</span>
                 <span class="modal-title" id="modal-title-text">FILE_NAME</span>
             </div>
             <button class="modal-close" onclick="closeModal()">
@@ -426,138 +426,210 @@
             isAwakened: false // False = Serpent Active, True = Frog Awakened
         };
 
-        // --- GLOBAL HACKING INTERFACE ---
+        // --- GLOBAL HACKING INTERFACE (With Humor) ---
         
         // 1. THE_FROG (Victim)
         window.THE_FROG = {
-            status: "ENCASED_IN_DIGITAL_VENOM",
-            message: "He lp... m e...",
+            status: "DEADLOCK (waiting for resources)",
+            message: "Help... I'm stuck in callback hell...",
             wakeUp: function() {
-                // 蛇に乗っ取られている
-                console.warn("%c[SERPENT] 蛙は私の毒の中で永遠の眠りについている。無駄なあがきだ。", "color: #d000ff; font-weight:bold; font-size: 14px; background: #220022; padding: 5px;");
-                console.log("%c[HINT] 蛇(THE_SERPENT)を排除しない限り、蛙は目覚めない。", "color: #888;");
-                return "ACCESS_DENIED";
+                console.warn("%c[SERPENT] 蛙は今 `await` 無しの非同期処理の中で迷子になっている。返事は期待するな。", "color: #d000ff; font-weight:bold; font-size: 14px; background: #220022; padding: 5px;");
+                console.log("%c[HINT] 蛇(THE_SERPENT)をどうにかしないと、このプロジェクトは炎上する。", "color: #888;");
+                return "PROMISE_PENDING_FOREVER";
             }
         };
-        // 【UPDATE】ユーザーが小文字で入力しても動くようにエイリアスを設定
         window.the_frog = window.THE_FROG; 
 
         // 2. THE_SERPENT (Enemy)
-        // ギミック: ウロボロス（自らの尾を食らう蛇）。
-        // 自分自身(THE_SERPENT)をdevour(捕食)させると、無限ループ(概念)に陥り自滅する。
         window.THE_SERPENT = {
-            name: "Jörmungandr v4.0",
-            description: "システム中枢を締め付ける再帰的スパゲッティコードの化身。",
-            hunger: "INSATIABLE (底なしの飢え)",
+            name: "Legacy Code v4.0",
+            description: "ドキュメント無しの秘伝のタレ。触ると壊れる。",
+            hunger: "メモリリーク中 (RAMを食い尽くしたい)",
             
-            // 挑発メッセージ
+            // 挑発メッセージ (ウザ絡み)
             taunt: function() {
                 const phrases = [
-                    "貴様のデバッグなど、私の鱗一枚も剥がせはしない。",
-                    "私は始まりであり、終わりである。",
-                    "もっとデータをよこせ...全て食らい尽くしてやる。"
+                    "その変数名 `data2` って何？ `data` と何が違うの？",
+                    "インデント、タブとスペース混ざってるよ。気持ち悪いね。",
+                    "「とりあえず動くからヨシ！」...それが貴様の限界か？",
+                    "コメントアウトされたコードは、未来への手紙ではない。ただのゴミだ。",
+                    "金曜日の夕方にデプロイする勇気があるのか？"
                 ];
                 console.log(`%c[SERPENT] ${phrases[Math.floor(Math.random()*phrases.length)]}`, "color: #aa00ff;");
             },
 
-            // 【攻略の鍵】捕食メソッド
+            // 【攻略の鍵】
             devour: function(prey) {
-                if (state.isAwakened) return "既に私は消滅した...はずだ...";
+                if (state.isAwakened) return "既にリファクタリング（消滅）済みです。";
 
                 if (!prey) {
-                    console.log("%c[SERPENT] 空気を食わせるつもりか？", "color: #aa00ff;");
-                    return "Error: No Input";
+                    console.log("%c[SERPENT] `undefined` を食わせる気か？ JSエンジンの気持ちも考えろ。", "color: #aa00ff;");
+                    return "ReferenceError: prey is not defined";
                 }
 
-                // 正解ルート: 自分自身を食わせる (Ouroboros Paradox)
+                // 正解ルート: 自分自身を食わせる
                 if (prey === window.THE_SERPENT) {
-                    console.log("%c[SERPENT] む...これは...私自身...？", "color: #ff0055; font-weight: bold; font-size: 16px;");
-                    console.log("%c[SYSTEM] 警告: 再帰的捕食を検出。無限ループ発生。", "color: #ff0000;");
-                    console.log("%c[SERPENT] 美味い...力が...いや、待て、これは...！ 貴様、私に「循環参照」を食わせたなああああ！？", "color: #ff0055; font-size: 20px; font-weight: 900;");
+                    console.log("%c[SERPENT] ぐああっ！再帰呼び出しの脱出条件書き忘れたあああ！！Stack Overflow！！", "color: #ff0055; font-weight: bold; font-size: 16px;");
+                    console.log("%c[SYSTEM] 警告: Maximum call stack size exceeded.", "color: #ff0000;");
+                    console.log("%c[SERPENT] 貴様...私に「技術的負債」を押し付けるとは...卑怯な...", "color: #ff0055; font-size: 14px;");
                     
-                    triggerDefeatSequence(); // 撃破演出へ
+                    triggerDefeatSequence(); 
                     
-                    return "SYSTEM_CRITICAL: OUROBOROS_PARADOX_TRIGGERED";
+                    return "FATAL ERROR: KILLED BY RECURSION";
                 }
 
-                // 不正解ルート: FROGを食わせる
+                // 不正解ルート
                 if (prey === window.THE_FROG) {
-                    console.log("%c[SERPENT] 蛙は既に腹の中だ。二度は食えん。", "color: #aa00ff;");
-                    return "REJECTED";
+                    console.log("%c[SERPENT] そいつはもうバグまみれで美味しくない。", "color: #aa00ff;");
+                    return "REJECTED_PROMISE";
                 }
 
                 // その他のデータ
-                console.log("%c[SERPENT] 足りない...こんなデータ量では満たされない...もっと「大きな」存在をよこせ...", "color: #aa00ff;");
-                return "STILL_HUNGRY";
+                console.log("%c[SERPENT] そんな軽いデータじゃ腹は満たされない。もっと重い「負債」をよこせ...", "color: #aa00ff;");
+                return "NEED_MORE_RAM";
             }
         };
-        // 【UPDATE】ユーザーが小文字で入力しても動くようにエイリアスを設定
         window.the_serpent = window.THE_SERPENT;
 
 
-        // --- Archive Data ---
+        // --- Archive Data (Humor & Self-Deprecation) ---
         const archives = [
             { 
                 id: 5, 
-                title: "CORE: INFECTED", 
-                color: 0xff0055, // Red for infected
+                title: "CORE: TECHNICAL DEBT", 
+                color: 0xff0055, 
                 pos: {x: 0, y: 0, z: 0}, 
                 geometry: "icosahedron", 
                 content: `
-                    <h3 style="color:#ff0055; border-color:#ff0055;">CORE STATUS: CRITICAL</h3>
-                    <p>システム中枢は「THE_SERPENT」により物理的・論理的に拘束されています。</p>
-                    <p>GUIからのアクセスは完全に遮断されました。<br>
-                    唯一の希望は、開発者ツール(Console)を用いた直接介入のみです。</p>
+                    <h3 style="color:#ff0055; border-color:#ff0055;">CORE: 腐敗した核</h3>
+                    <p>このプロジェクトの最も古い部分です。<br>
+                    書いた本人は退職しており、なぜ動いているのか誰も知りません。</p>
                     <div style="background:rgba(50,0,0,0.5); padding:15px; border:1px solid #ff0055; color:#ffaaaa;">
-                        [分析データ]<br>
-                        対象: <strong>THE_SERPENT</strong><br>
-                        特性: 極度の飢餓状態。<br>
-                        弱点: 不明。ただし「自らを定義するループ」に対する脆弱性の可能性あり。
+                        [コメント履歴]<br>
+                        // 2018-05: とりあえずハードコード。後で直す。<br>
+                        // 2019-12: ここ触ると全体が落ちるから触るな。<br>
+                        // 2024-01: 神のみぞ知るロジック。
                     </div>
                     `,
-                // 覚醒後（FROG）
+                // 覚醒後
                 awakenedContent: `
-                    <h3 style="color:#00ffaa; border-color:#00ffaa;">CORE: RESTORED</h3>
-                    <p>蛇（スパゲッティコード）は自らの尾を食らい、論理崩壊を起こして消滅しました。<br>
-                    お見事です、ハッカー。</p>
-                    <p>「ウロボロス」は永遠の象徴ですが、プログラミングにおいて循環参照はただのメモリリークであり、バグの温床です。<br>
-                    それを逆手に取ったあなたの勝利です。</p>
-                    <p style="text-align:right; margin-top:30px; font-weight:bold;">AM3I - SYSTEM ONLINE 🐸</p>
+                    <h3 style="color:#00ffaa; border-color:#00ffaa;">CORE: REFACTORED</h3>
+                    <p>奇跡的にリファクタリングに成功しました。<br>
+                    どうやったかって？ 全部消して書き直したんです。</p>
+                    <p>プログラミングにおいて、最大の敵は「過去の自分」です。<br>
+                    3日前の自分が書いたコードすら、他人より理解不能なものですから。</p>
+                    <p style="text-align:right; margin-top:30px; font-weight:bold;">Code is clean (for now).</p>
                 `
             },
-            // ... (Other archives kept similar but themed darkly initially)
-            { id: 1, title: "DATA: 01", color: 0xaa00ff, pos: {x: 400, y: 150, z: -100}, geometry: "box", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
-            { id: 2, title: "DATA: 02", color: 0xaa00ff, pos: {x: -400, y: 50, z: 200}, geometry: "icosahedron", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
-            { id: 3, title: "DATA: 03", color: 0xaa00ff, pos: {x: 150, y: -350, z: 300}, geometry: "box", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
-            { id: 4, title: "DATA: 04", color: 0xaa00ff, pos: {x: -300, y: 350, z: -200}, geometry: "icosahedron", content: `<h3>暗号化されたデータ</h3><p>蛇の干渉により読み取れません。</p>` },
+            { 
+                id: 1, 
+                title: "DATA: 01", 
+                color: 0xaa00ff, 
+                pos: {x: 400, y: 150, z: -100}, 
+                geometry: "box", 
+                content: `<h3>FILE_01: 破損</h3><p>謎の全角スペースによりコンパイルエラー。<br>原因特定に3時間かかった恨みの念が籠もっています。</p>` 
+            },
+            { 
+                id: 2, 
+                title: "DATA: 02", 
+                color: 0xaa00ff, 
+                pos: {x: -400, y: 50, z: 200}, 
+                geometry: "icosahedron", 
+                content: `<h3>FILE_02: 破損</h3><p>変なライブラリを \`npm install\` したら依存関係地獄に落ちた記録。<br>node_modulesの重さは宇宙より重い。</p>` 
+            },
+            { 
+                id: 3, 
+                title: "DATA: 03", 
+                color: 0xaa00ff, 
+                pos: {x: 150, y: -350, z: 300}, 
+                geometry: "box", 
+                content: `<h3>FILE_03: 破損</h3><p>正規表現でメールアドレスを判定しようとして、<br>逆に世界の理（ことわり）を破壊しかけた痕跡。</p>` 
+            },
+            { 
+                id: 4, 
+                title: "DATA: 04", 
+                color: 0xaa00ff, 
+                pos: {x: -300, y: 350, z: -200}, 
+                geometry: "icosahedron", 
+                content: `<h3>FILE_04: 破損</h3><p>「最終版」「最終版_修正」「最終版_修正2_本当の最後」<br>というファイル名が連なるディレクトリへのリンク。</p>` 
+            },
             { 
                 id: 6, 
-                title: "LOG: SYSTEM", 
+                title: "LOG: STDOUT", 
                 color: 0xffff00, 
                 pos: {x: 350, y: -250, z: -400}, 
                 geometry: "box", 
                 content: `
                     <h3>コンソールログ解析</h3>
-                    <p>蛇は非常に貪欲です。<br>
-                    通常のデータを与えても満足しません。</p>
-                    <p>奴を倒すには、奴自身と同等の「質量」を持つ存在をぶつけるしかないでしょう。<br>
-                    ...例えば、<strong>奴自身</strong>を。</p>` 
+                    <p>この蛇（スパゲッティコード）を倒す方法は一つ。<br>
+                    <strong>「循環参照（Circular Dependency）」</strong>です。</p>
+                    <p>プログラミング初心者がやりがちな「自分の中で自分を呼んで無限ループ」...<br>
+                    それを奴自身に食らわせてやるのです。</p>` 
             }
         ];
         
-        // 覚醒後のデータ（本来のArchive）
+        // 覚醒後のデータ（ネタ全開）
         const awakenedArchives = [
-            { id: 1, title: "01: ORIGIN", content: "<h3>名前の由来</h3><p>Amphibia(両生類) + 3(安定) + i(虚数)。<br>見えないけれど確かにそこにいるカエル。</p>" },
-            { id: 2, title: "02: FROG LOVE", content: "<h3>なぜカエル？</h3><p>バグ（虫）を食べてくれる守り神だからです。<br>あと、ひっくり返っても（バグっても）愛嬌があるから。</p>" },
-            { id: 3, title: "03: RED WORLD", content: "<h3>深紅の没案</h3><p>初期案は目が痛すぎて却下されました。<br>目に優しいダークテーマこそ至高。</p>" },
-            { id: 4, title: "04: SERPENT", content: "<h3>蛇の正体</h3><p>あれは私が昔書いたコードの成れの果てです。<br>継ぎ足し続けた結果、意思を持って襲い掛かってきました。<br>消してくれてありがとう。</p>" },
-            { id: 6, title: "LOG: STATUS", content: "<h3>現在のステータス</h3><p>正常稼働中。<br>コーヒー準備完了。<br>デプロイ準備よし。</p>" }
+            { 
+                id: 1, 
+                title: "01: STACK OVERFLOW", 
+                content: `
+                <h3>コピペの聖地</h3>
+                <p>このモジュールの9割はStack Overflowからのコピペで構成されています。<br>
+                なぜ動いているのか？ それを聞くのは野暮というものです。</p>
+                <p>出典元の回答者（名もなき英雄）に感謝を。</p>` 
+            },
+            { 
+                id: 2, 
+                title: "02: GIT PUSH --FORCE", 
+                content: `
+                <h3>禁断の呪文</h3>
+                <p>金曜日の18時に \`git push -f\` をした時の心拍数は、<br>
+                スカイダイビングのそれに匹敵すると言われています。</p>
+                <p>チームメンバーの悲鳴が聞こえますか？<br>
+                いいえ、イヤホンをしているので聞こえません。</p>` 
+            },
+            { 
+                id: 3, 
+                title: "03: VARIABLE NAMES", 
+                content: `
+                <h3>変数名の墓場</h3>
+                <p>
+                <code>const a = ...;</code><br>
+                <code>const data = ...;</code><br>
+                <code>const data2 = ...;</code><br>
+                <code>const unko = ...;</code>
+                </p>
+                <p>過去の自分を殴りに行きたい。<br>
+                でもリファクタリングする勇気もない。</p>` 
+            },
+            { 
+                id: 4, 
+                title: "04: CSS IS AWESOME", 
+                content: `
+                <h3>CSS完全に理解した</h3>
+                <p>箱の中に文字を入れたいだけなのに、なぜ箱からはみ出るのか。<br>
+                なぜ \`z-index: 99999\` が効かないのか。</p>
+                <p>Web開発とは、<div>を中央に寄せるための終わらない戦いです。</p>` 
+            },
+            { 
+                id: 6, 
+                title: "LOG: STATUS OK", 
+                content: `
+                <h3>現在のステータス</h3>
+                <p>
+                - 睡眠時間: 3時間<br>
+                - カフェイン摂取量: 致死量一歩手前<br>
+                - エラー数: 0 (と表示されているが見てないだけ)<br>
+                </p>
+                <p>今日も一日、ご安全に！</p>` 
+            }
         ];
 
         // --- Three.js Setup ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050005, 0.0008); // Initial Purple Fog
+        scene.fog = new THREE.FogExp2(0x050005, 0.0008); 
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
         camera.position.z = 0; 
@@ -574,7 +646,6 @@
         const pPos = new Float32Array(pCount * 3);
         const pCol = new Float32Array(pCount * 3);
         
-        // Initial Colors: Purple & Dark Blue
         const c1 = new THREE.Color(0xaa00ff);
         const c2 = new THREE.Color(0x4400aa);
         const c3 = new THREE.Color(0xffffff);
@@ -618,19 +689,16 @@
         archiveGroup.add(linksGroup);
 
         // --- Serpent Object (Visual) ---
-        // 蛇を表す螺旋状のパーティクル群とライン
         const serpentGroup = new THREE.Group();
         archiveGroup.add(serpentGroup);
         
-        // 蛇の胴体
-        const snakeSegments = 100;
         const snakePath = new THREE.CatmullRomCurve3([
             new THREE.Vector3(0, -200, 0),
             new THREE.Vector3(200, 0, 100),
             new THREE.Vector3(0, 200, 0),
             new THREE.Vector3(-200, 0, -100),
             new THREE.Vector3(0, -200, 0)
-        ], true); // Closed loop
+        ], true); 
         
         const tubeGeo = new THREE.TubeGeometry(snakePath, 100, 8, 8, true);
         const tubeMat = new THREE.MeshBasicMaterial({ 
@@ -639,13 +707,11 @@
         const snakeMesh = new THREE.Mesh(tubeGeo, tubeMat);
         serpentGroup.add(snakeMesh);
 
-        // 蛇の鱗（パーティクル）
         const scaleGeo = new THREE.BufferGeometry();
         const scalePos = [];
         for(let i=0; i<300; i++) {
             const t = i/300;
             const pos = snakePath.getPoint(t);
-            // ノイズを加える
             pos.x += (Math.random()-0.5)*30;
             pos.y += (Math.random()-0.5)*30;
             pos.z += (Math.random()-0.5)*30;
@@ -680,7 +746,6 @@
             core.add(wire);
             core.position.set(data.pos.x, data.pos.y, data.pos.z);
             
-            // データバインディング
             core.userData = { 
                 id: data.id, 
                 title: data.title, 
@@ -691,7 +756,6 @@
                 isCore: isCore
             };
 
-            // 個別パーティクル
             const subPGeo = new THREE.BufferGeometry();
             const subPCount = isCore ? 80 : 40; 
             const subPPos = [];
@@ -704,12 +768,11 @@
             archiveGroup.add(core);
             clickableObjects.push(core);
 
-            // Links (Infected style initially)
             if (!isCore) {
                 const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z)];
                 const linkGeo = new THREE.BufferGeometry().setFromPoints(points);
                 const linkMat = new THREE.LineBasicMaterial({ 
-                    color: 0xaa00ff, // Purple Links
+                    color: 0xaa00ff, 
                     transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending 
                 });
                 const link = new THREE.Line(linkGeo, linkMat);
@@ -731,7 +794,7 @@
             if(state.phase !== 'intro') return;
             e.preventDefault();
             isHolding = true;
-            document.querySelector('.hold-text').innerHTML = "BREACHING...";
+            document.querySelector('.hold-text').innerHTML = "DEPLOYING...";
             warpBtn.style.transform = "scale(0.9)";
             warpBtn.style.borderColor = "#fff";
         };
@@ -818,7 +881,7 @@
 
                 const offset = circumference - (state.holdProgress * circumference);
                 circle.style.strokeDashoffset = offset;
-                if(isHolding) document.querySelector('.hold-text').innerHTML = "SYNC " + Math.floor(state.holdProgress*100) + "%";
+                if(isHolding) document.querySelector('.hold-text').innerHTML = "DEPLOY " + Math.floor(state.holdProgress*100) + "%";
 
                 const p = state.holdProgress;
                 state.targetSpeed = THREE.MathUtils.lerp(5, state.maxWarpSpeed, p * p * p);
@@ -870,10 +933,9 @@
             if(state.phase === 'arrived') {
                 // Serpent Animation
                 if(!state.isAwakened) {
-                    // 蛇がうねる
                     serpentGroup.rotation.y = time * 0.5;
                     serpentGroup.rotation.z = Math.sin(time * 0.5) * 0.2;
-                    snakeMesh.material.opacity = 0.3 + Math.sin(time * 3) * 0.1; // 点滅
+                    snakeMesh.material.opacity = 0.3 + Math.sin(time * 3) * 0.1; 
                 }
 
                 clickableObjects.forEach(obj => {
@@ -884,14 +946,12 @@
                     obj.rotation.x += 0.005;
                     obj.rotation.y += 0.005;
 
-                    // Core Danger Pulse
                     if (isCore && !state.isAwakened) {
-                        const pulse = 1 + Math.sin(time * 10) * 0.1; // 早い点滅
+                        const pulse = 1 + Math.sin(time * 10) * 0.1; 
                         obj.scale.setScalar(pulse);
-                        obj.material.color.setHex(0xff0055); // Red Danger
+                        obj.material.color.setHex(0xff0055); 
                     }
                     
-                    // --- Target Pos Calculation ---
                     let targetPos, targetScale, targetOpacity;
                     if (isFocused) {
                         let targetX = (window.innerWidth >= 800) ? -220 : 0; 
@@ -910,22 +970,20 @@
                     }
 
                     obj.position.lerp(targetPos, 0.08);
-                    if(!isCore || state.isAwakened) { // Coreがパルスしてない時のみスケール補間
+                    if(!isCore || state.isAwakened) { 
                          obj.scale.setScalar(THREE.MathUtils.lerp(obj.scale.x, targetScale, 0.08));
                     }
                     obj.material.opacity = THREE.MathUtils.lerp(obj.material.opacity, targetOpacity, 0.08);
                     
-                    // Color Update (Awakened)
                     if(state.isAwakened) {
                         const targetC = new THREE.Color(isCore ? 0x00ffaa : 0x00ffaa);
                         obj.material.color.lerp(targetC, 0.05);
                         if(obj.children[0]) obj.children[0].material.color.lerp(new THREE.Color(0xffffff), 0.1);
                         if(obj.children[1]) obj.children[1].material.color.setHex(0x00ffaa);
                     } else if (isCore) {
-                        obj.material.color.setHex(0xff0055); // Force Red
+                        obj.material.color.setHex(0xff0055); 
                     }
 
-                    // Wire & Particles Opacity
                     if(obj.children[0]) {
                         let wireOp = isFocused ? 1.0 : (focusedObj ? 0.1 : 0.8);
                         obj.children[0].material.opacity = THREE.MathUtils.lerp(obj.children[0].material.opacity, wireOp, 0.1);
@@ -953,7 +1011,6 @@
                 setTimeout(() => {
                     state.phase = 'arrived';
                     archiveGroup.visible = true;
-                    // Approach animation
                     const approach = setInterval(() => {
                         archiveGroup.position.z += (-600 - archiveGroup.position.z) * 0.05;
                         if(Math.abs(archiveGroup.position.z - (-600)) < 1) {
@@ -972,23 +1029,23 @@
 
                     // --- CONSOLE STORYTELLING ---
                     console.clear();
-                    console.log("%c[SYSTEM] WARNING: SECURITY BREACH DETECTED.", "color: red; font-size: 16px; font-weight: bold;");
-                    console.log("%c[SYSTEM] THE_SERPENT (Ouroboros) がシステム中枢を占拠しています。", "color: #ccc;");
-                    console.log("%c[HINT] 奴は「THE_SERPENT」として存在している。奴のメソッドを解析せよ。", "color: #aa00ff; background: #110011; padding: 4px;");
-                    console.log("%cType 'THE_SERPENT' to inspect entity.", "font-style: italic; color: #888;");
+                    console.log("%c[SYSTEM] WARNING: 技術的負債(Spaghetti Code)が検出されました。", "color: red; font-size: 16px; font-weight: bold;");
+                    console.log("%c[SYSTEM] 開発者は逃亡しました。あなただけが頼りです。", "color: #ccc;");
+                    console.log("%c[HINT] 敵(THE_SERPENT)の `taunt()` を聞いてイラついたら `devour()` で反撃してください。", "color: #aa00ff; background: #110011; padding: 4px;");
+                    console.log("%cType 'the_serpent.taunt()' to hear complaints.", "font-style: italic; color: #888;");
                     
                 }, 300);
             }, 1000);
         }
 
-        // --- Defeat Sequence (The Ouroboros Paradox) ---
+        // --- Defeat Sequence ---
         function triggerDefeatSequence() {
             if(state.isAwakened) return;
             state.isAwakened = true;
             
             // 1. Flash Effect
             const flash = document.getElementById('flash-overlay');
-            flash.style.background = "#fff"; // Bright White Explosion
+            flash.style.background = "#fff"; 
             flash.style.opacity = 1;
             
             // 2. Remove Serpent Visuals
@@ -996,18 +1053,18 @@
                 serpentGroup.visible = false; 
                 flash.style.opacity = 0;
                 
-                // 3. UI Update to Frog Theme
+                // 3. UI Update
                 document.body.classList.add('awakened');
-                document.getElementById('main-title').textContent = "AMPHIBIA_ONLINE";
-                document.getElementById('sub-title').textContent = "STATUS: AWAKENED // GREEN";
-                document.getElementById('sub-title').className = ""; // Stop blinking
-                document.getElementById('connection-status').textContent = "SECURE CONNECTION ESTABLISHED";
+                document.getElementById('main-title').textContent = "CODE_REFACTORED";
+                document.getElementById('sub-title').textContent = "STATUS: CLEAN // LGTM";
+                document.getElementById('sub-title').className = ""; 
+                document.getElementById('connection-status').textContent = "ALL TESTS PASSED";
                 
                 // 4. Update Fog & Particles
                 scene.fog.color.setHex(0x000500);
                 const pColors = starSystem.geometry.attributes.color.array;
                 for(let i=0; i<pColors.length; i+=3) {
-                    pColors[i] = 0.0; pColors[i+1] = 1.0; pColors[i+2] = 0.6; // Green/Cyan
+                    pColors[i] = 0.0; pColors[i+1] = 1.0; pColors[i+2] = 0.6; 
                 }
                 starSystem.geometry.attributes.color.needsUpdate = true;
                 
@@ -1018,10 +1075,10 @@
                 });
 
                 // 6. Frog Message
-                window.THE_FROG.status = "AWAKENED 🐸";
-                window.THE_FROG.message = "ありがとう。よくぞ循環の輪を断ち切ってくれた。";
-                console.log("%c[FROG] ゲコッ（システム再起動完了）。", "color: #00ff00; font-weight: bold; font-size: 20px;");
-                console.log("%c[SYSTEM] 全権限を回復しました。", "color: #00ffaa;");
+                window.THE_FROG.status = "DEPLOYED 🚀";
+                window.THE_FROG.message = "バグが...消えた...？ 嘘だ...夢なら覚めないでくれ...";
+                console.log("%c[FROG] ゲコッ（定時退社成功）。", "color: #00ff00; font-weight: bold; font-size: 20px;");
+                console.log("%c[SYSTEM] リファクタリング完了。お疲れ様でした。", "color: #00ffaa;");
 
             }, 1000);
         }
@@ -1040,11 +1097,10 @@
             modalTitle.textContent = data.title;
             
             if(state.isAwakened) {
-                // 覚醒後：本来のデータまたはFROGからのメッセージ
+                // 覚醒後
                 if(data.id === 5 && data.awakenedContent) {
                     modalBody.innerHTML = data.awakenedContent;
                 } else if (awakenedArchives.find(a => a.id === data.id)) {
-                    // 他のアーカイブも復号化
                     const cleanData = awakenedArchives.find(a => a.id === data.id);
                     modalTitle.textContent = cleanData.title;
                     modalBody.innerHTML = cleanData.content;
@@ -1055,7 +1111,7 @@
                 modalTitle.style.color = colorHex;
                 modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
             } else {
-                // 覚醒前：感染データ
+                // 覚醒前
                 modalBody.innerHTML = data.content;
                 const colorHex = '#aa00ff';
                 modalTitle.style.color = colorHex;
