@@ -76,6 +76,65 @@
             opacity: 0.1;
         }
 
+        /* --- 遷移用ハイパードライブ・オーバーレイ --- */
+        .warp-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 20000; /* 最前面 */
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .warp-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        canvas#warpCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .warp-message {
+            position: absolute;
+            color: #fff;
+            font-family: 'Orbitron';
+            font-size: 2rem;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px #fff;
+            z-index: 20001;
+            opacity: 0;
+        }
+        
+        .whiteout-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 20002;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease-in;
+        }
+        
+        .whiteout-flash.active {
+            opacity: 1;
+            transition: opacity 0.2s cubic-bezier(0.1, 0.9, 0.2, 1.0); /* 急激に光る */
+        }
+
         /* --- 3Dホログラム --- */
         .hologram-container {
             position: fixed;
@@ -372,21 +431,22 @@
         }
         
         .avatar:hover {
-            transform: scale(1.1) rotate(5deg);
+            transform: scale(1.1);
             box-shadow: var(--glow-strong);
         }
 
-        .avatar:active {
-            animation: frogJump 0.6s ease-out;
+        /* 蛙のグリッチエフェクト */
+        .avatar.glitch-active {
+            animation: frogGlitch 0.2s linear infinite;
         }
 
-        @keyframes frogJump {
-            0% { transform: scale(1) translateY(0); }
-            30% { transform: scale(1.2, 0.8) translateY(0); }
-            50% { transform: scale(0.9, 1.1) translateY(-50px) rotate(20deg); }
-            70% { transform: scale(1.1, 0.9) translateY(-20px) rotate(-10deg); }
-            85% { transform: scale(0.95, 1.05) translateY(0); }
-            100% { transform: scale(1) translateY(0); }
+        @keyframes frogGlitch {
+            0% { transform: translate(0); filter: hue-rotate(0deg); }
+            20% { transform: translate(-5px, 5px); filter: hue-rotate(90deg) contrast(1.5); }
+            40% { transform: translate(-5px, -5px); filter: hue-rotate(180deg); }
+            60% { transform: translate(5px, 5px); filter: hue-rotate(270deg) contrast(1.5); }
+            80% { transform: translate(5px, -5px); filter: hue-rotate(0deg); }
+            100% { transform: translate(0); filter: hue-rotate(0deg); }
         }
 
         .frog-speech {
@@ -877,8 +937,8 @@
         }
 
         .glitch-text:hover {
-            animation: glitch 0.3s infinite;
             color: var(--primary-color);
+            text-shadow: 2px 0 var(--accent-color), -2px 0 blue;
         }
 
         /* --- カーソルトレイル --- */
@@ -920,59 +980,6 @@
             background: #00ffff;
         }
         
-        /* --- 隠し要素: Akira Reveal --- */
-        .secret-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-            perspective: 1500px; /* 3D効果用 */
-        }
-        
-        .secret-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        .secret-page {
-            width: 80%;
-            max-width: 600px;
-            height: auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            transform-origin: left center;
-            transform: rotateY(-90deg); /* 閉じた本のように初期状態は横向き */
-            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 0 50px rgba(0, 230, 230, 0.2);
-            position: relative;
-        }
-        
-        .secret-overlay.active .secret-page {
-            transform: rotateY(0deg); /* ページが開く */
-        }
-        
-        /* ページめくり効果のディテール */
-        .secret-page::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 40px;
-            background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
-            pointer-events: none;
-        }
-
     </style>
 </head>
 <body>
@@ -980,6 +987,15 @@
     <canvas class="matrix-bg" id="matrixCanvas"></canvas>
     <div class="scanline"></div>
     
+    <!-- 遷移アニメーション用オーバーレイ -->
+    <div id="warp-overlay" class="warp-overlay">
+        <canvas id="warpCanvas"></canvas>
+        <div class="warp-message" id="warpMessage">INITIATING HYPER DIVE...</div>
+    </div>
+    
+    <!-- ホワイトアウト用フラッシュ -->
+    <div id="whiteout-flash" class="whiteout-flash"></div>
+
     <!-- ホログラム演出 -->
     <div class="hologram-container" id="hologram">
         <div class="hologram-ring"></div>
@@ -987,7 +1003,7 @@
         <div class="hologram-ring"></div>
     </div>
 
-    <!-- ステータス表示 (VISITORS削除) -->
+    <!-- ステータス表示 -->
     <div class="status-display">
         <div><span class="status-label">SYSTEM TIME</span></div>
         <div class="status-value" id="currentTime">00:00:00</div>
@@ -1025,14 +1041,14 @@
             <h1 class="section-title">USER PROFILE</h1>
             <div class="profile-card">
                 <div class="avatar" onclick="frogClick(event)">
-                    <div class="frog-speech" id="frogSpeech">ケロケロ🐸</div>
+                    <div class="frog-speech" id="frogSpeech">ACCESS DENIED</div>
                     <i class="fas fa-frog"></i>
                 </div>
                 <div class="profile-info">
                     <h2 class="glitch-text">Am3i (蛙鳴)</h2>
-                    <!-- 隠し要素トリガー -->
-                    <p id="special-thanks-trigger" style="cursor: help; transition: color 0.3s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color=''">
-                        Special thanks - Akira(shotacon)
+                    <!-- 隠し要素トリガー (警告テキスト) -->
+                    <p id="special-thanks-trigger" style="cursor: pointer; transition: all 0.3s; display: inline-block; font-family: 'Orbitron'; letter-spacing: 1px; color: #666; border: 1px dashed #444; padding: 2px 8px; margin-top: 5px;" onmouseover="this.style.color='var(--accent-color)'; this.style.borderColor='var(--accent-color)'" onmouseout="this.style.color='#666'; this.style.borderColor='#444'">
+                        ⚠️ DANGER: SYSTEM_CORE // DO NOT TOUCH
                     </p>
                     <p style="margin-top: 1rem; color: #ccc; line-height: 1.6;">
                         GitHubにてツールやゲームを公開しています。サイバーパンクなUIと使いやすさの両立を目指して開発中。<br>
@@ -1198,19 +1214,6 @@
     </main>
 </div>
 
-<!-- 隠し画像オーバーレイ -->
-<div id="secret-overlay" class="secret-overlay" onclick="closeSecret()">
-    <div class="secret-page" onclick="event.stopPropagation()">
-        <img src="akira.png" alt="Akira" style="width: 100%; height: auto; border-radius: 5px; display: block;">
-        <div style="text-align: center; margin-top: 15px; color: #333; font-family: serif; font-style: italic;">
-            "SECRET ARCHIVE ACCESSED"
-        </div>
-        <div style="text-align: center; margin-top: 10px;">
-            <button onclick="closeSecret()" style="background: #333; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px;">CLOSE</button>
-        </div>
-    </div>
-</div>
-
 <!-- ターミナル -->
 <div class="terminal" id="terminal">
     <div class="terminal-header">
@@ -1241,12 +1244,15 @@
     const fontSize = 14;
     const columns = canvas.width / fontSize;
     const drops = Array(Math.floor(columns)).fill(1);
+    
+    // Matrix color (動的変更用変数)
+    let matrixColor = '#00e6e6';
 
     function drawMatrix() {
         ctx.fillStyle = 'rgba(5, 5, 5, 0.05)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        ctx.fillStyle = '#00e6e6';
+        ctx.fillStyle = matrixColor;
         ctx.font = fontSize + 'px monospace';
         
         for (let i = 0; i < drops.length; i++) {
@@ -1260,7 +1266,7 @@
         }
     }
 
-    setInterval(drawMatrix, 35);
+    const matrixInterval = setInterval(drawMatrix, 35);
 
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
@@ -1304,52 +1310,143 @@
         }, 2000);
     }
 
-    // --- 蛙クリック ---
-    const frogMessages = [
-        'ケロケロ🐸',
-        'ゲコゲコ！',
-        'ピョン！',
-        '雨が好き☔',
-        'コーディング中💻',
-        'バグ見つけた🐛',
-        'Am3i参上！',
-        'いろいろやります✨'
-    ];
+    // --- 蛙クリック (Glitch & Secret Access) ---
     let frogClickCount = 0;
+    let frogTimer;
 
     function frogClick(event) {
-        const speech = document.getElementById('frogSpeech');
-        const randomMsg = frogMessages[Math.floor(Math.random() * frogMessages.length)];
-        speech.textContent = randomMsg;
-        speech.classList.add('show');
-        
-        setTimeout(() => {
-            speech.classList.remove('show');
-        }, 2000);
-
-        // 波紋エフェクト
         const avatar = event.currentTarget;
-        const ripple = document.createElement('div');
-        ripple.className = 'ripple';
-        ripple.style.position = 'absolute';
-        ripple.style.top = '0';
-        ripple.style.left = '0';
-        avatar.appendChild(ripple);
         
+        // 1. グリッチエフェクト発動
+        avatar.classList.add('glitch-active');
         setTimeout(() => {
-            ripple.remove();
-        }, 1000);
+            avatar.classList.remove('glitch-active');
+        }, 300);
 
-        // パーティクル生成
-        createParticle('🐸', event.pageX, event.pageY);
-        
+        // Speech
+        const speech = document.getElementById('frogSpeech');
+        speech.textContent = Math.random() > 0.5 ? "ERROR..." : "bzzzt...";
+        speech.classList.add('show');
+        setTimeout(() => speech.classList.remove('show'), 500);
+
+        // 2. 連打判定
         frogClickCount++;
-        if (frogClickCount === 10) {
-            showAchievement('🐸 Achievement: Frog Master!');
+        
+        // タイマーリセット
+        clearTimeout(frogTimer);
+        frogTimer = setTimeout(() => {
+            frogClickCount = 0; // 一定時間放置でリセット
+        }, 1000); // 1秒以内に次のクリックがないとリセット
+
+        // 3. 連打回数到達で隠しページへ遷移 (ハイパードライブ)
+        if (frogClickCount >= 5) {
+            triggerHyperDrive();
+            frogClickCount = 0;
         }
-        if (frogClickCount === 50) {
-            showAchievement('🎉 Secret Achievement: Frog Whisperer!');
+    }
+
+    // --- ハイパードライブ・アニメーション ---
+    function triggerHyperDrive() {
+        const overlay = document.getElementById('warp-overlay');
+        const warpCanvas = document.getElementById('warpCanvas');
+        const warpCtx = warpCanvas.getContext('2d');
+        const message = document.getElementById('warpMessage');
+        const whiteout = document.getElementById('whiteout-flash');
+        
+        overlay.classList.add('active');
+        
+        // Resize canvas
+        warpCanvas.width = window.innerWidth;
+        warpCanvas.height = window.innerHeight;
+
+        // Stop other background animations for performance
+        clearInterval(matrixInterval);
+
+        // Star settings
+        const stars = [];
+        const starCount = 1000;
+        let speed = 0.5;
+        let acceleration = 1.05;
+
+        // Initialize stars
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: (Math.random() - 0.5) * warpCanvas.width * 2,
+                y: (Math.random() - 0.5) * warpCanvas.height * 2,
+                z: Math.random() * warpCanvas.width
+            });
         }
+
+        function animateWarp() {
+            warpCtx.fillStyle = '#000000';
+            // 残像効果
+            warpCtx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
+
+            const cx = warpCanvas.width / 2;
+            const cy = warpCanvas.height / 2;
+
+            speed *= acceleration; // 加速
+
+            for (let i = 0; i < stars.length; i++) {
+                const star = stars[i];
+                star.z -= speed;
+
+                if (star.z <= 0) {
+                    star.z = warpCanvas.width;
+                    star.x = (Math.random() - 0.5) * warpCanvas.width * 2;
+                    star.y = (Math.random() - 0.5) * warpCanvas.height * 2;
+                }
+
+                const k = 128.0 / star.z;
+                const px = star.x * k + cx;
+                const py = star.y * k + cy;
+
+                if (px >= 0 && px <= warpCanvas.width && py >= 0 && py <= warpCanvas.height) {
+                    const size = (1 - star.z / warpCanvas.width) * 5;
+                    const shade = parseInt((1 - star.z / warpCanvas.width) * 255);
+                    
+                    // 色の変化（青 -> 赤 -> 白）
+                    let color = `rgb(${shade}, ${shade}, ${shade})`;
+                    if (speed > 50) color = `rgb(${shade}, 0, 0)`; // Red shift
+                    if (speed > 100) color = `rgb(0, ${shade}, ${shade})`; // Cyan shift
+                    if (speed > 200) color = '#ffffff'; // Whiteout approach
+
+                    warpCtx.fillStyle = color;
+                    warpCtx.beginPath();
+                    // 線状に引き延ばす
+                    const len = speed * 0.5;
+                    const angle = Math.atan2(py - cy, px - cx);
+                    
+                    warpCtx.moveTo(px, py);
+                    warpCtx.lineTo(px + Math.cos(angle) * len, py + Math.sin(angle) * len);
+                    warpCtx.strokeStyle = color;
+                    warpCtx.lineWidth = size;
+                    warpCtx.stroke();
+                }
+            }
+
+            // メッセージ表示
+            if (speed > 10 && speed < 100) {
+                message.style.opacity = 1;
+                message.textContent = "INITIATING HYPER DIVE...";
+            } else if (speed > 100) {
+                message.style.color = "red";
+                message.textContent = "WARNING: REALITY BREACH DETECTED";
+                message.style.transform = `translate(${Math.random()*10 - 5}px, ${Math.random()*10 - 5}px)`; // Shake
+            }
+
+            // ホワイトアウト & 遷移
+            if (speed > 300) {
+                whiteout.classList.add('active');
+                setTimeout(() => {
+                    window.location.href = "secret.html";
+                }, 500);
+            } else {
+                requestAnimationFrame(animateWarp);
+            }
+        }
+
+        animateWarp();
     }
 
     // --- パーティクル生成 ---
@@ -1461,6 +1558,8 @@
             if (Math.random() > 0.7) {
                 const trail = document.createElement('div');
                 trail.className = 'cursor-trail';
+                // トレイルの色を現在のテーマカラーに合わせる
+                trail.style.background = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
                 trail.style.left = e.pageX + 'px';
                 trail.style.top = e.pageY + 'px';
                 document.body.appendChild(trail);
@@ -1470,18 +1569,61 @@
         }, 50);
     });
 
-    // --- 隠し要素制御 (Akira Reveal) ---
+    // --- 隠し要素制御 (System Alert Gimmick) ---
     const thanksTrigger = document.getElementById('special-thanks-trigger');
-    const secretOverlay = document.getElementById('secret-overlay');
+    let isSystemUnstable = false;
 
-    thanksTrigger.addEventListener('click', function() {
-        secretOverlay.classList.add('active');
-        createParticle('🔓', event.pageX, event.pageY);
+    thanksTrigger.addEventListener('click', function(event) {
+        if (isSystemUnstable) return;
+        isSystemUnstable = true;
+        
+        // エフェクト開始
+        createParticle('⚠️', event.pageX, event.pageY);
+        
+        // 現在の色を保存
+        const root = document.documentElement;
+        const originalPrimary = getComputedStyle(root).getPropertyValue('--primary-color');
+        
+        // RED ALERT モード
+        root.style.setProperty('--primary-color', '#ff0000');
+        matrixColor = '#ff0000'; // Matrixも赤く
+        
+        // 画面シェイク
+        document.body.style.animation = 'glitch 0.1s infinite';
+        
+        // 警告オーバーレイ
+        const warning = document.createElement('div');
+        warning.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0000;
+            background: rgba(0,0,0,0.9);
+            border: 4px solid #ff0000;
+            padding: 3rem 5rem;
+            font-size: 3rem;
+            font-weight: 900;
+            z-index: 10000;
+            font-family: 'Orbitron';
+            text-shadow: 0 0 20px red;
+            pointer-events: none;
+            text-align: center;
+            box-shadow: 0 0 50px red;
+            animation: pulse 0.5s infinite;
+        `;
+        warning.innerHTML = "SYSTEM FAILURE<br><span style='font-size:1.5rem'>UNAUTHORIZED ACCESS DETECTED</span>";
+        document.body.appendChild(warning);
+
+        // 2秒後に復帰
+        setTimeout(() => {
+            root.style.setProperty('--primary-color', originalPrimary);
+            matrixColor = '#00e6e6';
+            document.body.style.animation = 'none';
+            warning.remove();
+            isSystemUnstable = false;
+        }, 2000);
     });
-
-    function closeSecret() {
-        secretOverlay.classList.remove('active');
-    }
 
     // --- 初期化 ---
     window.addEventListener('load', () => {
