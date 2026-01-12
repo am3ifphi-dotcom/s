@@ -488,6 +488,7 @@
                 // 引数チェック: 文字列で渡された場合の処理
                 let isFrog = false;
                 let isSelf = false;
+                let isCreator = false; // 追加
 
                 if (typeof prey === 'string') {
                     const lowerPrey = prey.toLowerCase();
@@ -495,6 +496,8 @@
                         isFrog = true;
                     } else if (lowerPrey === 'serpent' || lowerPrey === 'the_serpent') {
                         isSelf = true;
+                    } else if (lowerPrey === 'am3i') { // 製作者判定
+                        isCreator = true;
                     }
                 } else {
                     // オブジェクト比較
@@ -516,6 +519,14 @@
                     console.log("%c[SERPENT] 蛙...？ 貴様、よせ！ そのオブジェクトは `null` 参照の可能性が...ッ！！！", "color: #ff0000; font-size: 20px; font-weight: 900; background:black;");
                     triggerGlitchSequence();
                     return "CRITICAL ERROR: SEGMENTATION FAULT // WORLD CORRUPTION";
+                }
+
+                // 製作者イースターエッグ
+                if (isCreator) {
+                    console.log("%c[SERPENT] Am3i...？ このスパゲッティコードの創造主か...", "color: #aa00ff; font-weight: bold;");
+                    console.log("%c[SERPENT] ぺっ、不味い！", "color: #ff0055; font-size: 16px;");
+                    console.log("%c[SERPENT] 「あとで直す（直さない）」という虚言と、深夜3時のカップ麺の残り汁みたいな味がする...。", "color: #d000ff;");
+                    return "EXCEPTION: TASTES_LIKE_TECHNICAL_DEBT";
                 }
 
                 // 正解ルート: 自分自身を食わせる
