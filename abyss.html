@@ -15,10 +15,11 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #050005; /* Dark Purple tint */
+            background-color: #050005; /* Initial Dark Purple */
             overflow: hidden;
             font-family: 'Share Tech Mono', monospace;
             user-select: none;
+            transition: background-color 2s ease;
         }
 
         #canvas-container {
@@ -367,7 +368,7 @@
             <span class="hold-text">HOLD<br>TO DIVE</span>
         </div>
         <div style="margin-top: 25px; opacity: 0.6; font-size: 0.8rem; letter-spacing: 2px;">
-            DANGER: LEGACY_CODE DETECTED
+            DANGER: MALICIOUS ENTITY DETECTED
         </div>
     </div>
 
@@ -377,9 +378,9 @@
             <div class="header-title" id="main-title">SPAGHETTI_CODE</div>
             <div id="sub-title" class="alert-sub">WARNING: INFINITE LOOP (OUROBOROS) ACTIVE</div>
         </div>
-        <button id="return-btn" onclick="location.href='index.html'">ESCAPE (ALT+F4)</button>
+        <button id="return-btn" onclick="location.href='index.html'">DISCONNECT</button>
         <div class="controls-hint">
-            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] DEV_TOOLS</strong>
+            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] HACK_CONSOLE</strong>
         </div>
     </div>
 
@@ -392,7 +393,7 @@
         
         <div class="modal-header">
             <div class="modal-title-group">
-                <span class="modal-label">GIT_BLAME_RESULT //</span>
+                <span class="modal-label">DATA_FRAGMENT //</span>
                 <span class="modal-title" id="modal-title-text">FILE_NAME</span>
             </div>
             <button class="modal-close" onclick="closeModal()">
@@ -426,7 +427,7 @@
             isAwakened: false // False = Serpent Active, True = Frog Awakened
         };
 
-        // --- GLOBAL HACKING INTERFACE (With Humor) ---
+        // --- GLOBAL HACKING INTERFACE ---
         
         // 1. THE_FROG (Victim)
         window.THE_FROG = {
@@ -492,7 +493,8 @@
         window.the_serpent = window.THE_SERPENT;
 
 
-        // --- Archive Data (Humor & Self-Deprecation) ---
+        // --- Archive Data (Initial / Infected) ---
+        // 蛇に侵食されている状態
         const archives = [
             { 
                 id: 5, 
@@ -511,15 +513,14 @@
                         // 2024-01: 神のみぞ知るロジック。
                     </div>
                     `,
-                // 覚醒後
+                // 覚醒後に置き換わるコンテンツ（ユーザー指定のもの）
                 awakenedContent: `
-                    <h3 style="color:#00ffaa; border-color:#00ffaa;">CORE: REFACTORED</h3>
-                    <p>奇跡的にリファクタリングに成功しました。<br>
-                    どうやったかって？ 全部消して書き直したんです。</p>
-                    <p>プログラミングにおいて、最大の敵は「過去の自分」です。<br>
-                    3日前の自分が書いたコードすら、他人より理解不能なものですから。</p>
-                    <p style="text-align:right; margin-top:30px; font-weight:bold;">Code is clean (for now).</p>
-                `
+                    <h3>深淵の核（Core）</h3>
+                    <p>思考の吹き溜まり、黒歴史の保管庫へようこそ。<br>
+                    ここは全てのアーカイブを統括する中枢ユニットです。</p>
+                    <p>あなたが普段見ている綺麗なWebサイトの裏側には、無数の <code>// TODO: fix later</code> コメントと、深夜テンションで書いたポエムが埋まっています。</p>
+                    <p>ここまで到達してくれてありがとう。<br>
+                    光の射す表の世界（index.html）へ戻るまで、ゆっくりしていってください。</p>`
             },
             { 
                 id: 1, 
@@ -568,61 +569,60 @@
             }
         ];
         
-        // 覚醒後のデータ（ネタ全開）
+        // --- Awakened Data (User Provided Content) ---
+        // 蛇撃破後に表示される本来のデータ
         const awakenedArchives = [
             { 
                 id: 1, 
-                title: "01: STACK OVERFLOW", 
+                title: "01: ORIGIN STORY", 
                 content: `
-                <h3>コピペの聖地</h3>
-                <p>このモジュールの9割はStack Overflowからのコピペで構成されています。<br>
-                なぜ動いているのか？ それを聞くのは野暮というものです。</p>
-                <p>出典元の回答者（名もなき英雄）に感謝を。</p>` 
+                    <h3>名前の由来</h3>
+                    <p>「Am3i」ってどう読むの？とよく聞かれます。<br>
+                    実はこれ、キーボードの上で寝返りを打ったら偶然入力された文字列なんです。</p>
+                    <p>...というのは嘘で、<strong>Am</strong>phibia(両生類) + <strong>3</strong>(安定構造) + <strong>i</strong>(虚数)です。<br>
+                    「存在しないが確かにそこにあるカエル」という意味です。深いでしょ？（後付け）</p>` 
             },
             { 
                 id: 2, 
-                title: "02: GIT PUSH --FORCE", 
+                title: "02: FROG OBSESSION", 
                 content: `
-                <h3>禁断の呪文</h3>
-                <p>金曜日の18時に \`git push -f\` をした時の心拍数は、<br>
-                スカイダイビングのそれに匹敵すると言われています。</p>
-                <p>チームメンバーの悲鳴が聞こえますか？<br>
-                いいえ、イヤホンをしているので聞こえません。</p>` 
+                    <h3>なぜカエルなのか？</h3>
+                    <p>虫（バグ）を食べてくれるからです。<br>
+                    私の書くコードは放っておくとすぐバグだらけになるので、守り神としてカエルを崇拝しています。</p>
+                    <p>あと、「井の中の蛙大海を知らず」には続きがあります。<br>
+                    <strong>「されど空の青さを知る」</strong>。<br>
+                    外の世界（最新技術）を知らなくても、自分の沼（ローカル環境）を極めれば最強になれると信じています。</p>` 
             },
             { 
                 id: 3, 
-                title: "03: VARIABLE NAMES", 
+                title: "03: REJECTED DESIGN", 
                 content: `
-                <h3>変数名の墓場</h3>
-                <p>
-                <code>const a = ...;</code><br>
-                <code>const data = ...;</code><br>
-                <code>const data2 = ...;</code><br>
-                <code>const unko = ...;</code>
-                </p>
-                <p>過去の自分を殴りに行きたい。<br>
-                でもリファクタリングする勇気もない。</p>` 
+                    <h3>ボツ案：深紅の世界</h3>
+                    <p>初期のサイトデザインは、すべてが<strong>真っ赤（Crimson Red）</strong>でした。</p>
+                    <p>カッコいいと思って実装したのですが、開発開始30分で目が充血し、生命の危機を感じたため却下されました。<br>
+                    シアン（青緑）は目に優しいですね。Secret Modeが赤いのは、その時の名残（供養）です。</p>` 
             },
             { 
                 id: 4, 
-                title: "04: CSS IS AWESOME", 
+                title: "04: THE SERPENT", 
                 content: `
-                <h3>CSS完全に理解した</h3>
-                <p>箱の中に文字を入れたいだけなのに、なぜ箱からはみ出るのか。<br>
-                なぜ \`z-index: 99999\` が効かないのか。</p>
-                <p>Web開発とは、<div>を中央に寄せるための終わらない戦いです。</p>` 
+                    <h3>蛇（スパゲッティコード）</h3>
+                    <p>この世界に潜む「蛇」は、取り除こうとすればするほど絡まるスパゲッティコードの具現化です。</p>
+                    <p>カエル（開発者）にとって天敵ですが、無理に消そうとするとシステム全体が崩壊する呪いがかかっています。<br>
+                    なので、見なかったことにしてABYSS（深淵）の奥底に隔離しています。触らないでください。</p>` 
             },
             { 
                 id: 6, 
-                title: "LOG: STATUS OK", 
+                title: "LOG: STATUS", 
                 content: `
-                <h3>現在のステータス</h3>
-                <p>
-                - 睡眠時間: 3時間<br>
-                - カフェイン摂取量: 致死量一歩手前<br>
-                - エラー数: 0 (と表示されているが見てないだけ)<br>
-                </p>
-                <p>今日も一日、ご安全に！</p>` 
+                    <h3>現在のステータス</h3>
+                    <p>
+                    - 精神状態： 正常（カフェイン駆動）<br>
+                    - 今日の晩御飯： 未定<br>
+                    - お風呂： まだ<br>
+                    - 進捗： ダメです<br>
+                    - カエルの鳴き声合成： 諦めました
+                    </p>` 
             }
         ];
 
@@ -1055,10 +1055,10 @@
                 
                 // 3. UI Update
                 document.body.classList.add('awakened');
-                document.getElementById('main-title').textContent = "CODE_REFACTORED";
-                document.getElementById('sub-title').textContent = "STATUS: CLEAN // LGTM";
+                document.getElementById('main-title').textContent = "ARCHIVE_CORE";
+                document.getElementById('sub-title').textContent = "STATUS: AM3I // ONLINE";
                 document.getElementById('sub-title').className = ""; 
-                document.getElementById('connection-status').textContent = "ALL TESTS PASSED";
+                document.getElementById('connection-status').textContent = "SECURE CONNECTION";
                 
                 // 4. Update Fog & Particles
                 scene.fog.color.setHex(0x000500);
@@ -1075,10 +1075,10 @@
                 });
 
                 // 6. Frog Message
-                window.THE_FROG.status = "DEPLOYED 🚀";
+                window.THE_FROG.status = "AWAKENED 🐸";
                 window.THE_FROG.message = "バグが...消えた...？ 嘘だ...夢なら覚めないでくれ...";
-                console.log("%c[FROG] ゲコッ（定時退社成功）。", "color: #00ff00; font-weight: bold; font-size: 20px;");
-                console.log("%c[SYSTEM] リファクタリング完了。お疲れ様でした。", "color: #00ffaa;");
+                console.log("%c[FROG] ゲコッ（システム正常化）。", "color: #00ff00; font-weight: bold; font-size: 20px;");
+                console.log("%c[SYSTEM] 全てのアーカイブが復号化されました。", "color: #00ffaa;");
 
             }, 1000);
         }
@@ -1097,7 +1097,7 @@
             modalTitle.textContent = data.title;
             
             if(state.isAwakened) {
-                // 覚醒後
+                // 覚醒後: 本来のデータを表示
                 if(data.id === 5 && data.awakenedContent) {
                     modalBody.innerHTML = data.awakenedContent;
                 } else if (awakenedArchives.find(a => a.id === data.id)) {
@@ -1111,7 +1111,7 @@
                 modalTitle.style.color = colorHex;
                 modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
             } else {
-                // 覚醒前
+                // 覚醒前: 破損データを表示
                 modalBody.innerHTML = data.content;
                 const colorHex = '#aa00ff';
                 modalTitle.style.color = colorHex;
