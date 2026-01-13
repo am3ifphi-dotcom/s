@@ -274,7 +274,7 @@
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 2s;
+            transition: opacity 0.5s;
             backdrop-filter: blur(5px);
         }
         #ending-overlay.active {
@@ -282,6 +282,7 @@
             pointer-events: auto;
         }
         .ending-content {
+            position: relative;
             text-align: center;
             color: #00aaff;
             font-family: 'Orbitron', sans-serif;
@@ -320,6 +321,54 @@
         }
         .secret-hint span { color: #004455; cursor: help; }
 
+        .ending-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: 1px solid rgba(0, 170, 255, 0.3);
+            color: #00aaff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .ending-close-btn:hover {
+            background: #00aaff;
+            color: #000;
+        }
+
+        /* Re-open button for ending message */
+        #frog-recall-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #00ffaa;
+            border-radius: 50%;
+            color: #00ffaa;
+            font-size: 1.5rem;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.3);
+        }
+        #frog-recall-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #frog-recall-btn:hover {
+            transform: scale(1.1);
+            background: rgba(0, 255, 170, 0.2);
+        }
+
         /* --- Intro Overlay --- */
         #intro-overlay {
             position: fixed;
@@ -340,11 +389,26 @@
         }
         @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 0.9; } }
 
+        /* --- Warp Overlay --- */
+        #warp-whiteout {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+            transition: opacity 1s ease-in;
+        }
+        #warp-whiteout.active {
+            opacity: 1;
+        }
+
     </style>
 </head>
 <body>
 
     <div class="scanline"></div>
+    <div id="warp-whiteout"></div>
 
     <!-- Intro Text -->
     <div id="intro-overlay">
@@ -388,6 +452,9 @@
     <!-- Ending Overlay -->
     <div id="ending-overlay">
         <div class="ending-content">
+            <button class="ending-close-btn" onclick="closeEnding()">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="frog-icon"><i class="fas fa-frog"></i></div>
             <div class="ending-title">SYSTEM RESTORED</div>
             <div class="ending-text">
@@ -405,12 +472,18 @@
         </div>
     </div>
 
+    <!-- Recall Button -->
+    <div id="frog-recall-btn" onclick="openEnding()">
+        <i class="fas fa-frog"></i>
+    </div>
+
     <script>
         // --- State ---
         const state = {
             organsSolved: 0,
             isRestored: false,
-            introMode: true // イントロモードフラグ
+            introMode: true,
+            warping: false // ワープ演出用フラグ
         };
 
         // --- ORGAN DATA ---
@@ -582,7 +655,6 @@
             heart: heartFunc,
             brain: brainFunc,
             stomach: stomachFunc,
-            // 隠しメソッドはまだ定義しない（クリア後に追加）
         };
 
         function solveOrgan(id) {
@@ -631,17 +703,26 @@
 
             // エンディングオーバーレイの表示
             setTimeout(() => {
-                document.getElementById('ending-overlay').classList.add('active');
+                openEnding();
+                document.getElementById('frog-recall-btn').classList.add('visible');
                 
                 // 隠しコマンドの追加
                 window.sys.dive = function() {
-                    console.log("%c DIVE SEQUENCE INITIATED...", "color: #ff0055; font-size: 1.5em;");
-                    document.body.style.transition = "opacity 2s";
-                    document.body.style.opacity = 0;
+                    console.log("%c WARP DRIVE ENGAGED...", "color: #ff0055; font-size: 1.5em; font-weight:bold;");
+                    
+                    // Warp Trigger
+                    state.warping = true;
+
+                    // Fade to white after a delay
+                    setTimeout(() => {
+                        document.getElementById('warp-whiteout').classList.add('active');
+                    }, 2000);
+
+                    // Redirect
                     setTimeout(() => {
                         window.location.href = './cosmic_frog.html';
-                    }, 2000);
-                    return "GOODBYE.";
+                    }, 3500);
+                    return "ENTERING HYPERSPACE...";
                 };
                 
                 console.log("%c[SYSTEM] Hidden route unlocked.", "color: #00ff00");
@@ -649,14 +730,22 @@
             }, 2000);
         }
 
+        // --- Ending UI Logic ---
+        window.closeEnding = function() {
+            document.getElementById('ending-overlay').classList.remove('active');
+        };
+        window.openEnding = function() {
+            if (!state.isRestored) return;
+            document.getElementById('ending-overlay').classList.add('active');
+        };
+
         // --- Three.js Setup ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x0a0000, 0.002); 
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-        // 初期カメラ位置（イントロ用）
-        camera.position.set(0, 0, 2000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, 0, 2000); // イントロ開始位置
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -668,7 +757,6 @@
         const tunnelPoints = [];
         for (let i = 0; i <= 50; i++) {
             const z = 2000 - i * 100;
-            // 少しうねらせる
             const x = Math.sin(i * 0.2) * 200;
             const y = Math.cos(i * 0.2) * 200;
             tunnelPoints.push(new THREE.Vector3(x, y, z));
@@ -684,7 +772,6 @@
         const tunnelMesh = new THREE.Mesh(tunnelGeo, tunnelMat);
         tunnelGroup.add(tunnelMesh);
         
-        // イントロ中の装飾（流れるパーティクル）
         const introPGeo = new THREE.BufferGeometry();
         const introPPos = new Float32Array(1000 * 3);
         for(let i=0; i<1000; i++) {
@@ -700,61 +787,70 @@
         scene.add(tunnelGroup);
 
 
-        // --- Main Scene Objects (Initially hidden or far away) ---
+        // --- Main Scene Objects ---
         const mainGroup = new THREE.Group();
-        mainGroup.visible = false; // イントロ終わるまで隠す
+        mainGroup.visible = false;
+        mainGroup.scale.set(0, 0, 0); // 出現時のスケールアニメーション用
         scene.add(mainGroup);
 
-        // --- OrbitControls (Initially disabled) ---
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.enableZoom = true;
         controls.minDistance = 200;
         controls.maxDistance = 1500;
-        controls.enabled = false; // イントロ中は操作不可
+        controls.enabled = false;
 
         // --- Main Scene Particles ---
-        const pCount = 5000;
+        const pCount = 6000;
         const pGeo = new THREE.BufferGeometry();
         const pPos = new Float32Array(pCount * 3);
         const pCol = new Float32Array(pCount * 3);
         const c1 = new THREE.Color(0xff0055);
         
         for(let i=0; i<pCount; i++) {
-            pPos[i*3] = (Math.random() - 0.5) * 2000;
-            pPos[i*3+1] = (Math.random() - 0.5) * 2000;
-            pPos[i*3+2] = (Math.random() - 0.5) * 2000;
+            pPos[i*3] = (Math.random() - 0.5) * 2500;
+            pPos[i*3+1] = (Math.random() - 0.5) * 2500;
+            pPos[i*3+2] = (Math.random() - 0.5) * 2500;
             pCol[i*3] = c1.r; pCol[i*3+1] = c1.g; pCol[i*3+2] = c1.b;
         }
         pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
         pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
         const pMat = new THREE.PointsMaterial({
-            size: 3, vertexColors: true, transparent: true, opacity: 0.6,
+            size: 3, vertexColors: true, transparent: true, opacity: 0.7, // 明るく
             blending: THREE.AdditiveBlending, sizeAttenuation: true
         });
         const particleSystem = new THREE.Points(pGeo, pMat);
         mainGroup.add(particleSystem);
 
-        // --- Organ Objects & Hit Boxes ---
+        // --- Organ Objects ---
         const organMeshes = [];
         
         organs.forEach(data => {
             const group = new THREE.Group();
             group.position.set(data.pos.x, data.pos.y, data.pos.z);
             
-            // 1. Visual Mesh
+            // 視認性を上げる設定: opacityアップ, AdditiveBlending
             let core;
             if (data.geometry === "icosahedron") {
                 const geo = new THREE.IcosahedronGeometry(60, 1);
-                const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
+                const mat = new THREE.MeshBasicMaterial({ 
+                    color: data.color, wireframe: true, transparent: true, opacity: 0.7, // 0.5 -> 0.7
+                    blending: THREE.AdditiveBlending 
+                });
                 core = new THREE.Mesh(geo, mat);
                 const innerGeo = new THREE.IcosahedronGeometry(40, 0);
-                const innerMat = new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+                const innerMat = new THREE.MeshBasicMaterial({ 
+                    color: data.color, transparent: true, opacity: 0.6, // 0.3 -> 0.6
+                    blending: THREE.AdditiveBlending 
+                });
                 core.add(new THREE.Mesh(innerGeo, innerMat));
             } else if (data.geometry === "box_cluster") {
                 core = new THREE.Group();
-                const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
+                const mat = new THREE.MeshBasicMaterial({ 
+                    color: data.color, wireframe: true, transparent: true, opacity: 0.7,
+                    blending: THREE.AdditiveBlending 
+                });
                 for(let i=0; i<5; i++) {
                     const box = new THREE.Mesh(new THREE.BoxGeometry(40,40,40), mat);
                     box.position.set((Math.random()-0.5)*50, (Math.random()-0.5)*50, (Math.random()-0.5)*50);
@@ -763,12 +859,15 @@
                 }
             } else {
                 const geo = new THREE.SphereGeometry(50, 16, 16);
-                const mat = new THREE.MeshBasicMaterial({ color: data.color, wireframe: true, transparent: true, opacity: 0.5 });
+                const mat = new THREE.MeshBasicMaterial({ 
+                    color: data.color, wireframe: true, transparent: true, opacity: 0.7,
+                    blending: THREE.AdditiveBlending
+                });
                 core = new THREE.Mesh(geo, mat);
             }
             group.add(core);
 
-            // 2. Hit Box
+            // Hit Box
             const hitGeo = new THREE.SphereGeometry(100, 16, 16);
             const hitMat = new THREE.MeshBasicMaterial({ 
                 color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide 
@@ -789,6 +888,7 @@
             group.traverse((child) => {
                 if (child.material && !child.userData.isHitBox && child.material.opacity > 0) { 
                     child.material.color.setHex(newColor);
+                    child.material.opacity = 0.8; // クリア時はさらに明るく
                     if(child.material.emissive) child.material.emissive.setHex(0x0055ff);
                 }
             });
@@ -797,19 +897,18 @@
         // --- Interaction Logic ---
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
-        
         let downPos = { x: 0, y: 0 };
         let downTime = 0;
 
         container.addEventListener('pointerdown', (e) => {
-            if(state.introMode) return; // イントロ中は無視
+            if(state.introMode || state.warping) return;
             downPos.x = e.clientX;
             downPos.y = e.clientY;
             downTime = Date.now();
         });
 
         container.addEventListener('pointerup', (e) => {
-            if(state.introMode) return;
+            if(state.introMode || state.warping) return;
             const dx = e.clientX - downPos.x;
             const dy = e.clientY - downPos.y;
             const moveDist = Math.sqrt(dx*dx + dy*dy);
@@ -859,34 +958,28 @@
 
         // --- Intro Logic ---
         let introTime = 0;
-        const introDuration = 300; // frames
+        const introDuration = 300; 
         
         function updateIntro() {
             introTime++;
             const t = introTime / introDuration;
             
-            // カメラをチューブに沿って移動させる
             if (t < 1) {
-                const pos = tunnelPath.getPointAt(1 - t); // 後ろから前へ
+                const pos = tunnelPath.getPointAt(1 - t);
                 const lookAtPos = tunnelPath.getPointAt(Math.max(0, 1 - t - 0.05));
                 camera.position.copy(pos);
                 camera.lookAt(lookAtPos);
-                
-                // 回転を加えて疾走感を出す
                 camera.rotation.z += 0.05;
                 
-                // 最後のフェード
                 if(t > 0.8) {
                     document.getElementById('intro-text').style.opacity = (1 - t) * 5;
                     tunnelMesh.material.opacity = (1-t) * 0.3;
                 }
             } else {
-                // Intro Finish
                 state.introMode = false;
                 scene.remove(tunnelGroup);
                 mainGroup.visible = true;
                 
-                // カメラ位置をメイン用にセット
                 camera.position.set(0, 0, 800);
                 camera.rotation.set(0, 0, 0);
                 controls.enabled = true;
@@ -908,17 +1001,39 @@
 
             if (state.introMode) {
                 updateIntro();
+            } else if (state.warping) {
+                // ワープ演出: カメラの前進 + FOV拡大
+                const speed = 20;
+                camera.position.z -= speed;
+                
+                if (camera.fov < 120) {
+                    camera.fov += 0.5;
+                    camera.updateProjectionMatrix();
+                }
+
+                // パーティクルを後ろに流す
+                particleSystem.rotation.z += 0.05;
+                particleSystem.scale.z += 0.1; // 伸びる演出
+                
+                // 揺れ
+                camera.position.x += (Math.random() - 0.5) * 5;
+                camera.position.y += (Math.random() - 0.5) * 5;
+
             } else {
                 // Main Loop
                 time += 0.01;
                 controls.update();
+
+                // 出現時の拡大アニメーション（フェードイン代替）
+                if (mainGroup.visible && mainGroup.scale.x < 1) {
+                    mainGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.05);
+                }
 
                 organMeshes.forEach(group => {
                     const data = organs.find(o => o.id === group.userData.id);
                     if (data.solved) {
                         group.rotation.x += 0.005;
                         group.rotation.y += 0.005;
-                        group.scale.set(1, 1, 1);
                     } else {
                         group.rotation.x += 0.01;
                         group.rotation.y += 0.02;
@@ -928,9 +1043,6 @@
                         } else if (data.id === 'stomach') {
                             group.scale.x = 1 + Math.sin(time*5)*0.1;
                             group.scale.y = 1 + Math.cos(time*4)*0.1;
-                        } else {
-                            if(Math.random() < 0.05) group.scale.setScalar(1 + Math.random()*0.3);
-                            else group.scale.setScalar(1);
                         }
                     }
                 });
@@ -939,6 +1051,11 @@
                     const c = particleSystem.geometry.attributes.color;
                     for(let i=0; i<pCount; i++) c.setXYZ(i, 0, 0.6, 1);
                     c.needsUpdate = true;
+                    // 平和な回転
+                    mainGroup.rotation.y += 0.002;
+                } else {
+                    // 通常時のゆっくり回転
+                    mainGroup.rotation.y += 0.0005;
                 }
             }
             
