@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COSMIC PARADISE // PARADISE</title>
+    <!-- Three.js (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;800&family=Orbitron:wght@500;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #020005; /* より深い漆黒 */
+            overflow: hidden;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        /* --- White Start Layer (No Text) --- */
+        #white-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff;
+            z-index: 300;
+            transition: opacity 2s ease-in-out;
+            pointer-events: none;
+        }
+
+        /* --- Main UI --- */
+        #ui-layer {
+            position: absolute;
+            top: 30px; left: 30px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 2s ease;
+            display: none;
+        }
+        #ui-layer.visible { opacity: 1; }
+
+        h1 {
+            font-size: 2.5rem; margin: 0;
+            background: linear-gradient(to right, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px; background: rgba(0,0,0,0.3);
+            padding: 5px 15px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: inline-block;
+        }
+
+        /* 詳細パネル */
+        #info-panel {
+            position: absolute;
+            top: 50%; right: 40px;
+            transform: translateY(-50%) translateX(150%);
+            width: 340px;
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-left: 4px solid #00ffaa;
+            backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+            opacity: 0;
+            pointer-events: auto;
+            z-index: 20;
+        }
+        #info-panel.active { transform: translateY(-50%) translateX(0); opacity: 1; }
+
+        .panel-header {
+            display: flex; align-items: center; gap: 15px;
+            margin-bottom: 20px; padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel-icon {
+            width: 50px; height: 50px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #000;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #00ffff, #ffffff);
+        }
+        #info-panel h2 { margin: 0; color: #fff; font-size: 1.4rem; font-weight: 700; }
+        #info-panel p { font-size: 0.95rem; line-height: 1.8; color: #d0d0d0; margin-bottom: 25px; }
+
+        .close-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.1); border: none;
+            width: 30px; height: 30px; border-radius: 50%;
+            color: #fff; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .close-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+
+        .action-btn {
+            display: block; width: 100%; padding: 15px;
+            background: linear-gradient(90deg, #00ffaa, #00aaff);
+            border: none; border-radius: 12px;
+            color: #000; font-weight: 800; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 170, 0.4); }
+
+        /* カーソルラベル */
+        #cursor-label {
+            position: absolute;
+            background: rgba(5, 10, 20, 0.85);
+            color: #fff;
+            padding: 8px 16px; border-radius: 30px;
+            font-weight: 700; font-size: 0.85rem;
+            pointer-events: none; opacity: 0;
+            transform: scale(0.8); transition: 0.2s;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 30; display: flex; align-items: center; gap: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        #cursor-label.visible { opacity: 1; transform: scale(1); }
+        .label-dot { width: 8px; height: 8px; border-radius: 50%; background: #00ffff; box-shadow: 0 0 5px currentColor; }
+
+        .nav-hint {
+            position: absolute; bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 20px;
+            pointer-events: none; opacity: 0;
+            transition: opacity 2s ease;
+        }
+        .nav-hint.visible { opacity: 0.7; }
+        .hint-item {
+            background: rgba(0,0,0,0.5); padding: 8px 15px;
+            border-radius: 20px; font-size: 0.8rem;
+            display: flex; align-items: center; gap: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .hint-item i { color: #00ffaa; }
+
+    </style>
+</head>
+<body>
+
+    <!-- White Start Screen -->
+    <div id="white-layer"></div>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Main UI -->
+    <div id="ui-layer">
+        <h1>NIRVANA-09</h1>
+        <div class="subtitle"><i class="fas fa-check-circle" style="color:#00ffaa"></i> 楽園システム稼働中</div>
+    </div>
+
+    <div id="cursor-label"><span class="label-dot"></span><span id="label-text">Facility</span></div>
+
+    <div id="info-panel">
+        <button class="close-btn" onclick="resetView(event)"><i class="fas fa-times"></i></button>
+        <div class="panel-header">
+            <div class="panel-icon" id="panel-icon"><i class="fas fa-star"></i></div>
+            <h2 id="panel-title">施設名</h2>
+        </div>
+        <div id="panel-content">
+            <p>説明</p>
+        </div>
+        <button class="action-btn" onclick="alert('Have a nice trip!')">VISIT AREA</button>
+    </div>
+
+    <div class="nav-hint" id="nav-hint">
+        <div class="hint-item"><i class="fas fa-mouse-pointer"></i> クリックで探索</div>
+        <div class="hint-item"><i class="fas fa-arrows-alt"></i> ドラッグで回転</div>
+        <div class="hint-item"><i class="fas fa-search-plus"></i> ホイールでズーム</div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const config = {
+            bgColor: 0x020005,
+            planetSize: 4.5,
+            frogColor: 0x99ff99,
+            warpColor: 0x00ffff,
+            starColor: 0xffffff
+        };
+
+        const state = {
+            phase: 'white_out', // white_out -> warping -> arriving -> arrived
+            warpSpeed: 0,
+            targetWarpSpeed: 0,
+            cameraShake: 0,
+            fov: 150
+        };
+
+        // --- Facilities Data ---
+        const facilities = [
+            { id: 'library', name: '記憶の図書館', icon: 'fa-book-open', description: 'かつての叡智が結晶となって保存されています。', color: 0x00ffff, phi: 1.2, theta: 0, type: 'library' },
+            { id: 'garden', name: 'ヒーリング・ガーデン', icon: 'fa-leaf', description: 'デジタル植物による究極の癒やし空間。', color: 0x66ff66, phi: 1.8, theta: 1.5, type: 'garden' },
+            { id: 'observatory', name: '星読みの天文台', icon: 'fa-moon', description: '未来を観測する巨大望遠鏡。', color: 0xaaaaff, phi: 1.0, theta: 3.5, type: 'observatory' },
+            { id: 'market', name: '流星マーケット', icon: 'fa-store', description: '銀河の特産品が集まる市場。', color: 0xffaa00, phi: 2.2, theta: 2.5, type: 'market' },
+            { id: 'fountain', name: '始りの泉', icon: 'fa-water', description: '生命エネルギーが湧き出る泉。', color: 0x0088ff, phi: 2.5, theta: 5.0, type: 'fountain' },
+            { id: 'shrine', name: 'カエルの神殿', icon: 'fa-torii-gate', description: 'コズミック・フロッグを祀る聖地。', color: 0xff5555, phi: 1.5, theta: 4.5, type: 'torii' },
+            { id: 'server', name: 'モノリス・サーバー', icon: 'fa-server', description: '世界の法則を記述する石板。', color: 0x888888, phi: 2.0, theta: 0.8, type: 'monolith' },
+            { id: 'cafe', name: '銀河カフェ', icon: 'fa-mug-hot', description: '一息つける休憩所。', color: 0xff99cc, phi: 1.4, theta: 5.8, type: 'cafe' }
+        ];
+
+        // --- Globals ---
+        let scene, camera, renderer, controls;
+        let planetGroup, frogGroup, poiGroup;
+        let warpStars, midStars, farStars;
+        let raycaster, mouse;
+        let hoveredObj = null;
+        let targetCameraPos = null;
+        let targetControlsTarget = null;
+        let isFocusing = false;
+        let clock = new THREE.Clock();
+
+        // --- Init ---
+        function init() {
+            scene = new THREE.Scene();
+            
+            // 霧（Fog）設定: 遠くを暗闇に溶け込ませる
+            // ワープ中は濃く、到着後は薄く変化させる
+            scene.fog = new THREE.Fog(config.bgColor, 50, 6000); 
+
+            // カメラ設定
+            camera = new THREE.PerspectiveCamera(150, window.innerWidth / window.innerHeight, 0.1, 30000); 
+            // 初期位置：ワープトンネルの奥
+            camera.position.z = 10000; 
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+            controls.minDistance = 8;
+            controls.maxDistance = 40;
+            controls.enablePan = false;
+            controls.enabled = false;
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Setup Scene Elements
+            setupLights();
+            createStarField(); // 強化された星空
+            createPlanet();
+            createCuteFrog();
+            createFacilities();
+            
+            planetGroup.visible = true; 
+
+            window.addEventListener('resize', onResize);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('click', onClick);
+
+            // Sequence
+            startSequence();
+            animate();
+        }
+
+        // --- Seamless Transition Sequence ---
+        function startSequence() {
+            // 1. 白画面からフェードアウト (1s delay)
+            setTimeout(() => {
+                const whiteLayer = document.getElementById('white-layer');
+                whiteLayer.style.opacity = 0;
+                
+                // 裏ではワープ開始
+                state.phase = 'warping';
+                state.warpSpeed = 200; // 高速移動
+                state.targetWarpSpeed = 200;
+
+                setTimeout(() => whiteLayer.style.display = 'none', 2000);
+
+                // 2. ワープ空間を航行 (カメラはZ=10000からスタート)
+                // 3秒かけて惑星に急接近する
+                setTimeout(() => {
+                    startApproach();
+                }, 1500); 
+
+            }, 1000); 
+        }
+
+        function startApproach() {
+            state.phase = 'arriving';
+            
+            // 星の速度を落とす
+            state.targetWarpSpeed = 0.2;
+            
+            const startZ = 10000;
+            const endZ = 16;
+            const startFOV = 150;
+            const endFOV = 50;
+            
+            // Fogの調整用
+            const startFogNear = 50;
+            const endFogNear = 100;
+            const startFogFar = 6000;
+            const endFogFar = 15000; // 視界をクリアに
+
+            let progress = 0;
+            
+            const approachLoop = () => {
+                // スムーズな加速と減速 (Cubic Ease Out)
+                // 後半ゆっくりになることで着陸感を出す
+                progress += 0.005; 
+                const t = Math.min(progress, 1);
+                
+                // 独自のイージング: 前半速く、最後はふわっと
+                const ease = 1 - Math.pow(1 - t, 4);
+
+                // カメラ位置更新
+                camera.position.z = startZ + (endZ - startZ) * ease;
+                camera.fov = startFOV + (endFOV - startFOV) * ease;
+                camera.updateProjectionMatrix();
+
+                // 霧を晴らす
+                scene.fog.near = startFogNear + (endFogNear - startFogNear) * ease;
+                scene.fog.far = startFogFar + (endFogFar - startFogFar) * ease;
+
+                // 惑星を回転させてお出迎え
+                planetGroup.rotation.y = (1 - ease) * Math.PI; 
+
+                if (t < 1) {
+                    requestAnimationFrame(approachLoop);
+                } else {
+                    // 到着完了
+                    state.phase = 'arrived';
+                    controls.enabled = true;
+                    state.warpSpeed = 0.2; // 完全に静止させずゆっくり流す
+                    
+                    document.getElementById('ui-layer').classList.add('visible');
+                    document.getElementById('ui-layer').style.display = 'block';
+                    document.getElementById('nav-hint').classList.add('visible');
+                }
+            };
+            approachLoop();
+        }
+
+        // --- 3D Objects Construction ---
+        
+        function setupLights() {
+            const ambient = new THREE.AmbientLight(0x404060, 1.2);
+            scene.add(ambient);
+            const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+            sun.position.set(20, 30, 20);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            scene.add(sun);
+            const rim = new THREE.SpotLight(0x00ffff, 2, 50);
+            rim.position.set(-20, 10, -10);
+            rim.lookAt(0, 0, 0);
+            scene.add(rim);
+        }
+
+        // --- 強化された星空 (Enhanced Starfield) ---
+        function createStarField() {
+            // 1. Far Stars (Dense Background)
+            const farGeo = new THREE.BufferGeometry();
+            const farCount = 8000;
+            const farPos = new Float32Array(farCount * 3);
+            const farCol = new Float32Array(farCount * 3);
+            for(let i=0; i<farCount; i++) {
+                const x = (Math.random() - 0.5) * 30000;
+                const y = (Math.random() - 0.5) * 30000;
+                const z = (Math.random() - 0.5) * 30000;
+                farPos[i*3] = x; farPos[i*3+1] = y; farPos[i*3+2] = z;
+                
+                // 色に変化をつける
+                const color = new THREE.Color().setHSL(Math.random(), 0.5, 0.8);
+                farCol[i*3] = color.r; farCol[i*3+1] = color.g; farCol[i*3+2] = color.b;
+            }
+            farGeo.setAttribute('position', new THREE.BufferAttribute(farPos, 3));
+            farGeo.setAttribute('color', new THREE.BufferAttribute(farCol, 3));
+            const farMat = new THREE.PointsMaterial({
+                size: 3, vertexColors: true, transparent: true, opacity: 0.8, sizeAttenuation: false
+            });
+            farStars = new THREE.Points(farGeo, farMat);
+            scene.add(farStars);
+
+            // 2. Mid Stars (Floating Particles)
+            const midGeo = new THREE.BufferGeometry();
+            const midCount = 3000;
+            const midPos = new Float32Array(midCount * 3);
+            for(let i=0; i<midCount*3; i++) midPos[i] = (Math.random() - 0.5) * 10000;
+            midGeo.setAttribute('position', new THREE.BufferAttribute(midPos, 3));
+            const midMat = new THREE.PointsMaterial({color: 0xaaccff, size: 4, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
+            midStars = new THREE.Points(midGeo, midMat);
+            scene.add(midStars);
+
+            // 3. Warp Stars (Tunnel Effect)
+            const warpGeo = new THREE.BufferGeometry();
+            const warpCount = 4000;
+            const warpPos = new Float32Array(warpCount * 3);
+            const warpCol = new Float32Array(warpCount * 3);
+            const c1 = new THREE.Color(0x00ffff);
+            const c2 = new THREE.Color(0xff00ff);
+            
+            for(let i=0; i<warpCount; i++) {
+                // トンネル状配置
+                const r = 800 + Math.random() * 4000;
+                const theta = Math.random() * Math.PI * 2;
+                const z = (Math.random() - 0.5) * 40000;
+                
+                warpPos[i*3] = r * Math.cos(theta);
+                warpPos[i*3+1] = r * Math.sin(theta);
+                warpPos[i*3+2] = z;
+
+                const c = Math.random() > 0.5 ? c1 : c2;
+                warpCol[i*3] = c.r; warpCol[i*3+1] = c.g; warpCol[i*3+2] = c.b;
+            }
+            warpGeo.setAttribute('position', new THREE.BufferAttribute(warpPos, 3));
+            warpGeo.setAttribute('color', new THREE.BufferAttribute(warpCol, 3));
+            const warpMat = new THREE.PointsMaterial({
+                size: 5, vertexColors: true, transparent: true, opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            warpStars = new THREE.Points(warpGeo, warpMat);
+            scene.add(warpStars);
+        }
+
+        function createPlanet() {
+            planetGroup = new THREE.Group();
+            
+            const ocean = new THREE.Mesh(new THREE.IcosahedronGeometry(config.planetSize, 4), new THREE.MeshPhysicalMaterial({ color: 0x1144aa, roughness: 0.2, metalness: 0.1, transmission: 0.4, opacity: 0.9, transparent: true }));
+            planetGroup.add(ocean);
+            planetGroup.add(new THREE.Mesh(new THREE.IcosahedronGeometry(config.planetSize * 0.5, 2), new THREE.MeshBasicMaterial({ color: 0x00ffff })));
+            planetGroup.add(new THREE.Mesh(new THREE.IcosahedronGeometry(config.planetSize * 1.25, 3), new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.15, side: THREE.BackSide, blending: THREE.AdditiveBlending })));
+
+            // ★岩の生成 (増量 & 衝突回避)
+            const landMat = new THREE.MeshStandardMaterial({ color: 0x44cc88, flatShading: true, roughness: 0.8 });
+            
+            // パラメータ調整
+            const maxRocks = 50; // 岩の数を大幅増量
+            const maxAttempts = 500; // 試行回数
+            const frogSafeDist = 1.0; // 北極からの安全距離(ラジアン)
+            const facilitySafeDist = 0.6; // 施設からの安全距離(ラジアン)
+
+            let rockCount = 0;
+            const existingPositions = []; // 衝突判定用に保存
+
+            // 施設の位置を保存
+            facilities.forEach(fac => {
+                existingPositions.push({ phi: fac.phi, theta: fac.theta, type: 'facility' });
+            });
+
+            for(let i=0; i<maxAttempts && rockCount < maxRocks; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                // 全球に分布させるが、極端な南極・北極は避ける
+                const phi = Math.acos(2 * Math.random() - 1); 
+
+                // 1. カエル（北極）との距離チェック
+                // 北極(phi=0)からの距離はphiそのもの
+                if (phi < frogSafeDist) continue;
+
+                // 2. 南極付近も少し空ける（見栄えのため）
+                if (phi > Math.PI - 0.3) continue;
+
+                // 3. 既存の施設・岩との距離チェック
+                let collision = false;
+                const p1 = new THREE.Vector3().setFromSphericalCoords(1, phi, theta);
+
+                for(let item of existingPositions) {
+                    const p2 = new THREE.Vector3().setFromSphericalCoords(1, item.phi, item.theta);
+                    // 距離閾値 (施設とは大きく離す、岩同士はある程度近くてもいい)
+                    const threshold = (item.type === 'facility') ? facilitySafeDist : 0.25;
+                    
+                    if (p1.distanceTo(p2) < threshold) {
+                        collision = true;
+                        break;
+                    }
+                }
+
+                if (!collision) {
+                    const r = config.planetSize;
+                    const size = Math.random() * 0.6 + 0.4;
+                    const land = new THREE.Mesh(new THREE.DodecahedronGeometry(size, 0), landMat);
+                    
+                    land.position.setFromSphericalCoords(r, phi, theta);
+                    land.lookAt(0,0,0);
+                    land.castShadow = true; land.receiveShadow = true;
+                    
+                    // ランダム回転
+                    land.rotation.z = Math.random() * Math.PI;
+                    land.rotation.y = Math.random() * Math.PI;
+
+                    planetGroup.add(land);
+                    
+                    existingPositions.push({ phi: phi, theta: theta, type: 'rock' });
+                    rockCount++;
+                }
+            }
+            scene.add(planetGroup);
+        }
+
+        function createCuteFrog() {
+            frogGroup = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: config.frogColor, roughness: 0.4 });
+            const bellyMat = new THREE.MeshStandardMaterial({ color: 0xffffdd });
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(1.3, 32, 24), mat);
+            head.scale.set(1.1, 0.8, 1); head.position.y = 0.5; head.castShadow = true;
+            frogGroup.add(head);
+
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 24), mat);
+            body.position.y = -0.5; body.scale.y = 0.9; body.castShadow = true;
+            frogGroup.add(body);
+            
+            const belly = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 24), bellyMat);
+            belly.position.set(0, -0.5, 0.55); belly.scale.set(1.1, 0.9, 0.4);
+            frogGroup.add(belly);
+
+            // Eyes
+            const eyeW = new THREE.MeshBasicMaterial({color:0xffffff});
+            const eyeB = new THREE.MeshBasicMaterial({color:0x111111});
+            function makeEye(x) {
+                const g = new THREE.Group();
+                const base = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 24), mat);
+                const white = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 24), eyeW); white.position.set(0, 0.15, 0.25);
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 24), eyeB); pupil.position.set(0, 0.18, 0.52);
+                const shine = new THREE.Mesh(new THREE.SphereGeometry(0.06), eyeW); shine.position.set(0.08, 0.25, 0.65);
+                g.add(base, white, pupil, shine); g.position.set(x, 1.2, 0.3); g.rotation.x = -0.3; g.rotation.y = x * 0.2; return g;
+            }
+            frogGroup.add(makeEye(0.7), makeEye(-0.7));
+
+            // Mouth
+            const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.04, 8, 16, Math.PI), new THREE.MeshBasicMaterial({color:0x336633}));
+            mouth.rotation.z = Math.PI; mouth.position.set(0, 0.5, 0.95); mouth.rotation.x = 0.3;
+            frogGroup.add(mouth);
+
+            // Cheeks
+            const cheekGeo = new THREE.CircleGeometry(0.2, 16);
+            const cheekMat = new THREE.MeshBasicMaterial({color:0xffaaaa, transparent:true, opacity:0.6});
+            const cL = new THREE.Mesh(cheekGeo, cheekMat); cL.position.set(0.9, 0.6, 0.75); cL.rotation.y = 0.8;
+            const cR = new THREE.Mesh(cheekGeo, cheekMat); cR.position.set(-0.9, 0.6, 0.75); cR.rotation.y = -0.8;
+            frogGroup.add(cL, cR);
+
+            // Crown
+            const crown = new THREE.Group();
+            const cBase = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 0.4, 8), new THREE.MeshStandardMaterial({color:0xffcc00, metalness:0.6, roughness:0.2}));
+            const cGem = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshBasicMaterial({color:0xff0066}));
+            cGem.position.z = 0.4; cGem.position.y = 0.1; crown.add(cBase, cGem);
+            crown.position.set(0.5, 1.8, 0); crown.rotation.z = -0.4; crown.userData = {isCrown:true};
+            frogGroup.add(crown);
+
+            // Limbs
+            const limbGeo = new THREE.SphereGeometry(0.25, 16, 16); limbGeo.scale(1, 1.5, 1);
+            const armL = new THREE.Mesh(limbGeo, mat); armL.position.set(0.8, -0.3, 0.5); armL.rotation.set(-0.5, 0, -0.5);
+            const armR = new THREE.Mesh(limbGeo, mat); armR.position.set(-0.8, -0.3, 0.5); armR.rotation.set(-0.5, 0, 0.5);
+            const legL = new THREE.Mesh(limbGeo, mat); legL.position.set(0.6, -0.9, 0.4); legL.rotation.x = -1.5;
+            const legR = new THREE.Mesh(limbGeo, mat); legR.position.set(-0.6, -0.9, 0.4); legR.rotation.x = -1.5;
+            frogGroup.add(armL, armR, legL, legR);
+
+            frogGroup.position.set(0, config.planetSize + 0.8, 0);
+            planetGroup.add(frogGroup);
+        }
+
+        // --- FACILITIES ---
+        function createFacilities() {
+            poiGroup = new THREE.Group();
+            facilities.forEach(data => {
+                const group = new THREE.Group();
+                const r = config.planetSize;
+                const x = r * Math.sin(data.phi) * Math.sin(data.theta);
+                const y = r * Math.cos(data.phi);
+                const z = r * Math.sin(data.phi) * Math.cos(data.theta);
+                group.position.set(x, y, z);
+                group.lookAt(0, 0, 0);
+
+                const mat = new THREE.MeshStandardMaterial({ color: data.color, emissive: data.color, emissiveIntensity: 0.3, roughness: 0.2 });
+                const mainMesh = new THREE.Group();
+
+                if (data.type === 'torii') {
+                    const bar1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.12, 0.12), mat); bar1.position.y = 0.4;
+                    const bar2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.15, 0.15), mat); bar2.position.y = 0.7;
+                    const col1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), mat); col1.position.set(-0.5, 0.2, 0);
+                    const col2 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), mat); col2.position.set(0.5, 0.2, 0);
+                    mainMesh.add(bar1, bar2, col1, col2);
+                } else if (data.type === 'library') {
+                    const cover = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.8), mat);
+                    const pageL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.7), new THREE.MeshStandardMaterial({color:0xffffff}));
+                    pageL.position.set(-0.3, 0.05, 0); pageL.rotation.z = 0.1;
+                    const pageR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.7), new THREE.MeshStandardMaterial({color:0xffffff}));
+                    pageR.position.set(0.3, 0.05, 0); pageR.rotation.z = -0.1;
+                    mainMesh.add(cover, pageL, pageR); mainMesh.rotation.x = Math.PI/2; mainMesh.position.y = 0.3;
+                } else if (data.type === 'garden') {
+                    const trunkMat = new THREE.MeshStandardMaterial({color:0x8B4513});
+                    for(let i=0; i<3; i++) {
+                        const t = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.4), trunkMat);
+                        const l = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 5), mat);
+                        const subG = new THREE.Group(); subG.add(t, l); l.position.y = 0.3; t.position.y = 0;
+                        subG.position.set(Math.sin(i*2.1)*0.4, 0, Math.cos(i*2.1)*0.4); mainMesh.add(subG);
+                    }
+                } else if (data.type === 'observatory') {
+                    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16, 0, Math.PI*2, 0, Math.PI/2), mat);
+                    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3), mat); cyl.position.y = -0.15;
+                    const tele = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.6), mat);
+                    tele.rotation.z = Math.PI/4; tele.position.set(0.3, 0.3, 0); mainMesh.add(dome, cyl, tele);
+                } else if (data.type === 'market') {
+                    const base = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.4, 0.5), new THREE.MeshStandardMaterial({color:0x8B4513}));
+                    const roof = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.4, 4), mat); roof.rotation.y = Math.PI/4; roof.position.y = 0.5;
+                    const pole1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), mat); pole1.position.set(0.35, 0.2, 0.2);
+                    const pole2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), mat); pole2.position.set(-0.35, 0.2, 0.2);
+                    mainMesh.add(base, roof, pole1, pole2);
+                } else if (data.type === 'fountain') {
+                    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.2, 16), mat);
+                    const midCol = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 0.5, 8), mat); midCol.position.y = 0.35;
+                    const midBasin = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.1, 0.15, 16), mat); midBasin.position.y = 0.6;
+                    const topCol = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8), mat); topCol.position.y = 0.8;
+                    const topBasin = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.05, 0.1, 16), mat); topBasin.position.y = 1.0;
+                    const water = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshBasicMaterial({color:0xaaddff, transparent:true, opacity:0.8})); water.position.y = 1.1;
+                    mainMesh.add(base, midCol, midBasin, topCol, topBasin, water);
+                } else if (data.type === 'cafe') {
+                    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.4), mat);
+                    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.05, 8, 16, Math.PI), mat);
+                    handle.position.set(0.25, 0, 0); handle.rotation.z = -Math.PI/2;
+                    const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.08), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.6})); s1.position.set(0, 0.4, 0);
+                    const s2 = s1.clone(); s2.position.set(0.1, 0.55, 0); mainMesh.add(cup, handle, s1, s2);
+                } else if (data.type === 'monolith') {
+                    const m1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), mat);
+                    const m2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), mat); m2.position.set(0.3, -0.3, 0.2); m2.rotation.y = 0.5;
+                    const m3 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.2), mat); m3.position.set(-0.3, -0.2, -0.1); m3.rotation.y = -0.5;
+                    mainMesh.add(m1, m2, m3);
+                }
+
+                if(data.type !== 'library' && data.type !== 'market' && data.type !== 'fountain' && data.type !== 'cafe' && data.type !== 'torii') {
+                    mainMesh.rotation.x = -Math.PI/2;
+                } else if (data.type === 'torii' || data.type === 'market' || data.type === 'cafe' || data.type === 'fountain') {
+                    mainMesh.rotation.x = -Math.PI/2; mainMesh.position.z = -0.3;
+                }
+                group.add(mainMesh);
+
+                const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.15, 4, 8), new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending }));
+                beam.rotation.x = -Math.PI/2; beam.position.z = -2; group.add(beam);
+
+                const hitBox = new THREE.Mesh(new THREE.SphereGeometry(1.5), new THREE.MeshBasicMaterial({ visible: false }));
+                hitBox.userData = { isPOI: true, info: data }; group.add(hitBox);
+                
+                group.userData = { isPOIGroup: true, info: data };
+                poiGroup.add(group);
+            });
+            planetGroup.add(poiGroup);
+        }
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Starfield Animation
+            // 1. Warp Stars (Tunnel Effect)
+            if (warpStars) {
+                const pos = warpStars.geometry.attributes.position.array;
+                state.warpSpeed += (state.targetWarpSpeed - state.warpSpeed) * 0.05;
+                for(let i=2; i<pos.length; i+=3) {
+                    pos[i] += state.warpSpeed;
+                    if(pos[i] > 15000) pos[i] -= 30000;
+                }
+                warpStars.geometry.attributes.position.needsUpdate = true;
+                warpStars.rotation.z += 0.002 * (state.warpSpeed / 100);
+            }
+            // 2. Mid Stars
+            if (midStars) {
+                midStars.rotation.y += 0.0002;
+                midStars.rotation.x += 0.0001;
+            }
+
+            // Arrived Logic
+            if (state.phase === 'arrived') {
+                if (!isFocusing && !document.getElementById('info-panel').classList.contains('active')) {
+                    raycaster.setFromCamera(mouse, camera);
+                    let targets = [];
+                    poiGroup.children.forEach(g => {
+                        g.children.forEach(c => { if (c.userData.isPOI) targets.push(c); });
+                    });
+                    const intersects = raycaster.intersectObjects(targets);
+                    const label = document.getElementById('cursor-label');
+                    const labelText = document.getElementById('label-text');
+                    const labelDot = document.querySelector('.label-dot');
+
+                    if (intersects.length > 0) {
+                        const hit = intersects[0].object;
+                        if (hoveredObj !== hit) {
+                            hoveredObj = hit;
+                            document.body.style.cursor = 'pointer';
+                            hit.parent.scale.setScalar(1.2);
+                            labelText.textContent = hit.userData.info.name;
+                            const hex = '#' + hit.userData.info.color.toString(16).padStart(6, '0');
+                            labelDot.style.background = hex;
+                            labelDot.style.boxShadow = `0 0 10px ${hex}`;
+                            label.classList.add('visible');
+                        }
+                    } else {
+                        if (hoveredObj) {
+                            hoveredObj.parent.scale.setScalar(1);
+                            hoveredObj = null;
+                            document.body.style.cursor = 'default';
+                            label.classList.remove('visible');
+                        }
+                    }
+                }
+
+                if (targetCameraPos) {
+                    camera.position.lerp(targetCameraPos, 0.05);
+                    if (camera.position.distanceTo(targetCameraPos) < 0.5 && !isFocusing && camera.position.z > 15) {
+                        controls.autoRotate = true;
+                        targetCameraPos = null;
+                    }
+                }
+                if (targetControlsTarget) {
+                    controls.target.lerp(targetControlsTarget, 0.05);
+                }
+
+                if(frogGroup) {
+                    frogGroup.position.y = (config.planetSize + 0.8) + Math.sin(time * 2) * 0.1;
+                    frogGroup.children.forEach(c => {
+                        if(c.userData.isCrown) {
+                            c.position.y = 1.8 + Math.sin(time*3)*0.05;
+                            c.rotation.z = -0.4 + Math.sin(time)*0.1;
+                        }
+                    });
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- Event Handlers ---
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        function onMouseMove(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            const label = document.getElementById('cursor-label');
+            label.style.left = (e.clientX + 20) + 'px';
+            label.style.top = (e.clientY + 20) + 'px';
+        }
+        function onClick(e) {
+            if(document.getElementById('info-panel').classList.contains('active')) return;
+            if(hoveredObj) focusOnFacility(hoveredObj.userData.info, hoveredObj.parent);
+        }
+
+        function focusOnFacility(data, group) {
+            isFocusing = true;
+            controls.autoRotate = false;
+            
+            const panel = document.getElementById('info-panel');
+            document.getElementById('panel-title').textContent = data.name;
+            document.getElementById('panel-content').innerHTML = `<p>${data.description}</p>`;
+            
+            const iconBox = document.getElementById('panel-icon');
+            iconBox.innerHTML = `<i class="fas ${data.icon}"></i>`;
+            const hex = '#' + data.color.toString(16).padStart(6, '0');
+            iconBox.style.background = `linear-gradient(135deg, ${hex}, #ffffff)`;
+            
+            panel.classList.add('active');
+
+            const worldPos = new THREE.Vector3();
+            group.getWorldPosition(worldPos);
+            targetControlsTarget = worldPos.clone();
+            const dir = worldPos.clone().normalize();
+            targetCameraPos = dir.multiplyScalar(config.planetSize + 6);
+        }
+
+        window.resetView = function(e) {
+            if(e) e.stopPropagation();
+            isFocusing = false;
+            document.getElementById('info-panel').classList.remove('active');
+            targetCameraPos = new THREE.Vector3(0, 5, 16);
+            targetControlsTarget = new THREE.Vector3(0, 0, 0);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>
