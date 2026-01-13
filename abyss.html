@@ -1,525 +1,525 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARCHIVE_CORE // LEGACY_CODE</title>
-    <!-- Three.js (CDN) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;900&family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #050005; /* Initial Dark Purple */
-            overflow: hidden;
-            font-family: 'Share Tech Mono', monospace;
-            user-select: none;
-            transition: background-color 2s ease;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCHIVE_CORE // LEGACY_CODE</title>
+<!-- Three.js (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;900&family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            transition: filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-        
-        body.modal-open #canvas-container {
-            filter: brightness(0.6) blur(2px); 
-        }
+<style>
+body {
+margin: 0;
+padding: 0;
+background-color: #050005; /* Initial Dark Purple */
+overflow: hidden;
+font-family: 'Share Tech Mono', monospace;
+user-select: none;
+transition: background-color 2s ease;
+}
 
-        /* --- Intro UI --- */
-        #intro-ui {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: #fff;
-            z-index: 20;
-            transition: opacity 0.5s;
-        }
+#canvas-container {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: 1;
+transition: filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 
-        .hold-btn {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            border: 2px solid rgba(180, 0, 255, 0.3); /* Purple for Serpent */
-            background: rgba(10, 0, 20, 0.8);
-            color: #d000ff;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            pointer-events: auto;
-            position: relative;
-            box-shadow: 0 0 30px rgba(100, 0, 200, 0.2);
-            transition: transform 0.1s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin: 0 auto;
-            backdrop-filter: blur(5px);
-        }
-        
-        .hold-btn:active {
-            transform: scale(0.95);
-        }
+body.modal-open #canvas-container {
+filter: brightness(0.6) blur(2px); 
+}
 
-        .hold-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            font-weight: 900;
-            text-shadow: 0 0 10px rgba(200, 0, 255, 0.8);
-            animation: pulseText 2s infinite;
-        }
+/* --- Intro UI --- */
+#intro-ui {
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+text-align: center;
+color: #fff;
+z-index: 20;
+transition: opacity 0.5s;
+}
 
-        .progress-ring {
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            width: 150px;
-            height: 150px;
-            transform: rotate(-90deg);
-            pointer-events: none;
-        }
-        .progress-ring__circle {
-            stroke: #aa00ff;
-            stroke-width: 6;
-            fill: transparent;
-            stroke-dasharray: 440;
-            stroke-dashoffset: 440;
-            transition: stroke-dashoffset 0.05s linear;
-            filter: drop-shadow(0 0 5px #aa00ff);
-        }
+.hold-btn {
+width: 140px;
+height: 140px;
+border-radius: 50%;
+border: 2px solid rgba(180, 0, 255, 0.3); /* Purple for Serpent */
+background: rgba(10, 0, 20, 0.8);
+color: #d000ff;
+font-family: 'Orbitron', sans-serif;
+font-size: 0.9rem;
+display: flex;
+justify-content: center;
+align-items: center;
+cursor: pointer;
+pointer-events: auto;
+position: relative;
+box-shadow: 0 0 30px rgba(100, 0, 200, 0.2);
+transition: transform 0.1s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
+text-transform: uppercase;
+letter-spacing: 2px;
+margin: 0 auto;
+backdrop-filter: blur(5px);
+}
 
-        @keyframes pulseText {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
+.hold-btn:active {
+transform: scale(0.95);
+}
 
-        /* --- Main UI --- */
-        #main-ui {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 1.5s ease-in;
-            display: none;
-        }
+.hold-text {
+position: absolute;
+width: 100%;
+text-align: center;
+font-weight: 900;
+text-shadow: 0 0 10px rgba(200, 0, 255, 0.8);
+animation: pulseText 2s infinite;
+}
 
-        .header-info {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            color: rgba(200, 100, 255, 0.8);
-            transition: color 0.5s;
-        }
-        .header-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 0 0 15px #aa00ff;
-            letter-spacing: 4px;
-            transition: text-shadow 0.5s, color 0.5s;
-        }
-        .alert-sub {
-            color: #ff0055;
-            font-weight: bold;
-            animation: blink 1s infinite;
-        }
-        
-        @keyframes blink { 50% { opacity: 0.5; } }
+.progress-ring {
+position: absolute;
+top: -5px;
+left: -5px;
+width: 150px;
+height: 150px;
+transform: rotate(-90deg);
+pointer-events: none;
+}
+.progress-ring__circle {
+stroke: #aa00ff;
+stroke-width: 6;
+fill: transparent;
+stroke-dasharray: 440;
+stroke-dashoffset: 440;
+transition: stroke-dashoffset 0.05s linear;
+filter: drop-shadow(0 0 5px #aa00ff);
+}
 
-        .controls-hint {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
-            background: rgba(0,0,0,0.8);
-            padding: 8px 15px;
-            border-left: 2px solid #aa00ff;
-            transition: border-color 0.5s;
-            font-family: 'Share Tech Mono', monospace;
-        }
-        .controls-hint strong {
-            color: #aa00ff;
-            text-decoration: underline;
-        }
+@keyframes pulseText {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.6; }
+}
 
-        #return-btn {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            background: rgba(20, 0, 20, 0.6);
-            border: 1px solid #aa00ff;
-            color: #aa00ff;
-            padding: 10px 30px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
-            cursor: pointer;
-            pointer-events: auto;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-        }
-        #return-btn:hover {
-            background: #aa00ff;
-            color: #fff;
-            box-shadow: 0 0 20px #aa00ff;
-        }
+/* --- Main UI --- */
+#main-ui {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: 10;
+pointer-events: none;
+opacity: 0;
+transition: opacity 1.5s ease-in;
+display: none;
+}
 
-        /* --- Flash Overlay --- */
-        #flash-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #fff;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease-out;
-        }
+.header-info {
+position: absolute;
+top: 30px;
+left: 30px;
+color: rgba(200, 100, 255, 0.8);
+transition: color 0.5s;
+}
+.header-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 2rem;
+font-weight: 900;
+color: #fff;
+text-shadow: 0 0 15px #aa00ff;
+letter-spacing: 4px;
+transition: text-shadow 0.5s, color 0.5s;
+}
+.alert-sub {
+color: #ff0055;
+font-weight: bold;
+animation: blink 1s infinite;
+}
 
-        /* --- Archive Modal --- */
-        #archive-modal {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 500px;
-            max-width: 90%;
-            height: 100%;
-            background: rgba(10, 0, 15, 0.95);
-            border-left: 1px solid rgba(170, 0, 255, 0.3);
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-            z-index: 200;
-            backdrop-filter: blur(10px);
-            pointer-events: auto;
-            box-shadow: -20px 0 50px rgba(0, 0, 0, 0.8);
-        }
+@keyframes blink { 50% { opacity: 0.5; } }
 
-        #archive-modal.active {
-            transform: translateX(0);
-        }
+.controls-hint {
+position: absolute;
+bottom: 30px;
+left: 30px;
+color: rgba(255, 255, 255, 0.5);
+font-size: 0.9rem;
+background: rgba(0,0,0,0.8);
+padding: 8px 15px;
+border-left: 2px solid #aa00ff;
+transition: border-color 0.5s;
+font-family: 'Share Tech Mono', monospace;
+}
+.controls-hint strong {
+color: #aa00ff;
+text-decoration: underline;
+}
 
-        .modal-bg-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(170, 0, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(170, 0, 255, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: -1;
-        }
+#return-btn {
+position: absolute;
+top: 30px;
+right: 30px;
+background: rgba(20, 0, 20, 0.6);
+border: 1px solid #aa00ff;
+color: #aa00ff;
+padding: 10px 30px;
+font-family: 'Orbitron', sans-serif;
+font-weight: bold;
+cursor: pointer;
+pointer-events: auto;
+transition: all 0.3s;
+text-transform: uppercase;
+letter-spacing: 2px;
+clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+#return-btn:hover {
+background: #aa00ff;
+color: #fff;
+box-shadow: 0 0 20px #aa00ff;
+}
 
-        .modal-header {
-            padding: 40px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(170, 0, 255, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
+/* --- Flash Overlay --- */
+#flash-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: #fff;
+z-index: 100;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.5s ease-out;
+}
 
-        .modal-title-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .modal-label {
-            font-size: 0.7rem;
-            color: rgba(170, 0, 255, 0.6);
-            letter-spacing: 2px;
-        }
-        .modal-title {
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 1.8rem;
-            line-height: 1.1;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(170, 0, 255, 0.3);
-        }
+/* --- Archive Modal --- */
+#archive-modal {
+position: fixed;
+top: 0;
+right: 0;
+width: 500px;
+max-width: 90%;
+height: 100%;
+background: rgba(10, 0, 15, 0.95);
+border-left: 1px solid rgba(170, 0, 255, 0.3);
+display: flex;
+flex-direction: column;
+transform: translateX(100%);
+transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+z-index: 200;
+backdrop-filter: blur(10px);
+pointer-events: auto;
+box-shadow: -20px 0 50px rgba(0, 0, 0, 0.8);
+}
 
-        .modal-close {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-radius: 50%;
-        }
-        .modal-close:hover { 
-            background: #aa00ff; 
-            color: #fff;
-            box-shadow: 0 0 15px #aa00ff;
-            transform: rotate(90deg);
-        }
-        
-        .modal-scroll-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 40px;
-            padding-top: 20px;
-        }
-        
-        .modal-content {
-            color: #ccc;
-            line-height: 1.8;
-            font-size: 1rem;
-            font-family: 'Noto Sans JP', sans-serif;
-        }
-        
-        .modal-content h3 { 
-            color: #d000ff; 
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            margin-top: 40px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed rgba(170, 0, 255, 0.3);
-            display: flex;
-            align-items: center;
-        }
-        .modal-content h3::before {
-            content: '>>';
-            margin-right: 10px;
-            font-size: 0.8em;
-            opacity: 0.7;
-        }
+#archive-modal.active {
+transform: translateX(0);
+}
 
-        .modal-footer {
-            padding: 20px 40px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.3);
-            display: flex;
-            justify-content: space-between;
-        }
+.modal-bg-grid {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-image: 
+linear-gradient(rgba(170, 0, 255, 0.05) 1px, transparent 1px),
+linear-gradient(90deg, rgba(170, 0, 255, 0.05) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: -1;
+}
 
-        body.dragging { cursor: grabbing; }
-        body.pointer { cursor: pointer; }
+.modal-header {
+padding: 40px;
+padding-bottom: 20px;
+border-bottom: 1px solid rgba(170, 0, 255, 0.2);
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+}
 
-        /* --- AWAKENED STATE (FROG MODE) --- */
-        body.awakened {
-            background-color: #000500; /* Dark Green tint */
-        }
-        body.awakened .header-title { text-shadow: 0 0 20px #00ffaa; color: #fff; }
-        body.awakened .header-info { color: #00ffaa; }
-        body.awakened #return-btn { border-color: #00ffaa; color: #00ffaa; }
-        body.awakened #return-btn:hover { background: #00ffaa; color: #000; box-shadow: 0 0 20px #00ffaa; }
-        body.awakened #archive-modal { border-left-color: rgba(0, 255, 170, 0.5); }
-        body.awakened .modal-label, body.awakened .modal-content h3 { color: #00ffaa; }
-        body.awakened .modal-content h3 { border-bottom-color: rgba(0, 255, 170, 0.4); }
-        body.awakened .modal-close:hover { background: #00ffaa; box-shadow: 0 0 15px #00ffaa; }
-        body.awakened .controls-hint { border-left-color: #00ffaa; }
-        body.awakened .controls-hint strong { color: #00ffaa; }
-        body.awakened .modal-bg-grid {
-             background-image: 
-                linear-gradient(rgba(0, 255, 170, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 170, 0.05) 1px, transparent 1px);
-        }
+.modal-title-group {
+display: flex;
+flex-direction: column;
+gap: 5px;
+}
+.modal-label {
+font-size: 0.7rem;
+color: rgba(170, 0, 255, 0.6);
+letter-spacing: 2px;
+}
+.modal-title {
+color: #fff;
+font-family: 'Orbitron', sans-serif;
+font-weight: 900;
+font-size: 1.8rem;
+line-height: 1.1;
+letter-spacing: 1px;
+text-transform: uppercase;
+text-shadow: 0 0 20px rgba(170, 0, 255, 0.3);
+}
 
-        /* --- GLITCH FX --- */
-        @keyframes glitch-anim-1 {
-            0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
-            20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
-            40% { clip-path: inset(10% 0 50% 0); transform: translate(-2px, 2px); }
-            60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
-            80% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, 1px); }
-            100% { clip-path: inset(10% 0 60% 0); transform: translate(1px, -1px); }
-        }
-        body.glitching {
-            animation: glitch-anim-1 0.1s infinite linear alternate-reverse;
-            filter: invert(1) hue-rotate(180deg) contrast(2);
-        }
-        body.glitching * {
-            color: red !important;
-            border-color: red !important;
-            font-family: 'Courier New', Courier, monospace !important;
-        }
+.modal-close {
+background: rgba(255, 255, 255, 0.05);
+border: 1px solid rgba(255, 255, 255, 0.1);
+color: #fff;
+width: 40px;
+height: 40px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 1.2rem;
+cursor: pointer;
+transition: all 0.3s;
+border-radius: 50%;
+}
+.modal-close:hover { 
+background: #aa00ff; 
+color: #fff;
+box-shadow: 0 0 15px #aa00ff;
+transform: rotate(90deg);
+}
 
-    </style>
+.modal-scroll-area {
+flex: 1;
+overflow-y: auto;
+padding: 40px;
+padding-top: 20px;
+}
+
+.modal-content {
+color: #ccc;
+line-height: 1.8;
+font-size: 1rem;
+font-family: 'Noto Sans JP', sans-serif;
+}
+
+.modal-content h3 { 
+color: #d000ff; 
+font-family: 'Orbitron', sans-serif;
+font-size: 1.1rem;
+margin-top: 40px;
+margin-bottom: 20px;
+padding-bottom: 10px;
+border-bottom: 1px dashed rgba(170, 0, 255, 0.3);
+display: flex;
+align-items: center;
+}
+.modal-content h3::before {
+content: '>>';
+margin-right: 10px;
+font-size: 0.8em;
+opacity: 0.7;
+}
+
+.modal-footer {
+padding: 20px 40px;
+border-top: 1px solid rgba(255, 255, 255, 0.05);
+font-size: 0.7rem;
+color: rgba(255, 255, 255, 0.3);
+display: flex;
+justify-content: space-between;
+}
+
+body.dragging { cursor: grabbing; }
+body.pointer { cursor: pointer; }
+
+/* --- AWAKENED STATE (FROG MODE) --- */
+body.awakened {
+background-color: #000500; /* Dark Green tint */
+}
+body.awakened .header-title { text-shadow: 0 0 20px #00ffaa; color: #fff; }
+body.awakened .header-info { color: #00ffaa; }
+body.awakened #return-btn { border-color: #00ffaa; color: #00ffaa; }
+body.awakened #return-btn:hover { background: #00ffaa; color: #000; box-shadow: 0 0 20px #00ffaa; }
+body.awakened #archive-modal { border-left-color: rgba(0, 255, 170, 0.5); }
+body.awakened .modal-label, body.awakened .modal-content h3 { color: #00ffaa; }
+body.awakened .modal-content h3 { border-bottom-color: rgba(0, 255, 170, 0.4); }
+body.awakened .modal-close:hover { background: #00ffaa; box-shadow: 0 0 15px #00ffaa; }
+body.awakened .controls-hint { border-left-color: #00ffaa; }
+body.awakened .controls-hint strong { color: #00ffaa; }
+body.awakened .modal-bg-grid {
+background-image: 
+linear-gradient(rgba(0, 255, 170, 0.05) 1px, transparent 1px),
+linear-gradient(90deg, rgba(0, 255, 170, 0.05) 1px, transparent 1px);
+}
+
+/* --- GLITCH FX --- */
+@keyframes glitch-anim-1 {
+0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+40% { clip-path: inset(10% 0 50% 0); transform: translate(-2px, 2px); }
+60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+80% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, 1px); }
+100% { clip-path: inset(10% 0 60% 0); transform: translate(1px, -1px); }
+}
+body.glitching {
+animation: glitch-anim-1 0.1s infinite linear alternate-reverse;
+filter: invert(1) hue-rotate(180deg) contrast(2);
+}
+body.glitching * {
+color: red !important;
+border-color: red !important;
+font-family: 'Courier New', Courier, monospace !important;
+}
+
+</style>
 </head>
 <body>
 
-    <div id="flash-overlay"></div>
+<div id="flash-overlay"></div>
 
-    <!-- Intro UI -->
-    <div id="intro-ui">
-        <div class="hold-btn" id="warp-btn">
-            <svg class="progress-ring">
-                <circle class="progress-ring__circle" r="70" cx="75" cy="75"/>
-            </svg>
-            <span class="hold-text">HOLD<br>TO DIVE</span>
-        </div>
-        <div style="margin-top: 25px; opacity: 0.6; font-size: 0.8rem; letter-spacing: 2px;">
-            DANGER: MALICIOUS ENTITY DETECTED
-        </div>
-    </div>
+<!-- Intro UI -->
+<div id="intro-ui">
+<div class="hold-btn" id="warp-btn">
+<svg class="progress-ring">
+<circle class="progress-ring__circle" r="70" cx="75" cy="75"/>
+</svg>
+<span class="hold-text">HOLD<br>TO DIVE</span>
+</div>
+<div style="margin-top: 25px; opacity: 0.6; font-size: 0.8rem; letter-spacing: 2px;">
+DANGER: MALICIOUS ENTITY DETECTED
+</div>
+</div>
 
-    <!-- Main UI -->
-    <div id="main-ui">
-        <div class="header-info">
-            <div class="header-title" id="main-title">SPAGHETTI_CODE</div>
-            <div id="sub-title" class="alert-sub">WARNING: INFINITE LOOP (OUROBOROS) ACTIVE</div>
-        </div>
-        <button id="return-btn" onclick="location.href='index.html'">DISCONNECT</button>
-        <div class="controls-hint">
-            [DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] HACK_CONSOLE</strong>
-        </div>
-    </div>
+<!-- Main UI -->
+<div id="main-ui">
+<div class="header-info">
+<div class="header-title" id="main-title">SPAGHETTI_CODE</div>
+<div id="sub-title" class="alert-sub">WARNING: INFINITE LOOP (OUROBOROS) ACTIVE</div>
+</div>
+<button id="return-btn" onclick="location.href='index.html'">DISCONNECT</button>
+<div class="controls-hint">
+[DRAG] ROTATE &nbsp;//&nbsp; <strong>[F12] HACK_CONSOLE</strong>
+</div>
+</div>
 
-    <div id="canvas-container"></div>
+<div id="canvas-container"></div>
 
-    <!-- Archive Modal -->
-    <div id="archive-modal">
-        <div class="modal-bg-grid"></div>
-        <div class="scanline"></div>
-        
-        <div class="modal-header">
-            <div class="modal-title-group">
-                <span class="modal-label">DATA_FRAGMENT //</span>
-                <span class="modal-title" id="modal-title-text">FILE_NAME</span>
-            </div>
-            <button class="modal-close" onclick="closeModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="modal-scroll-area">
-            <div class="modal-content" id="modal-body-text"></div>
-        </div>
+<!-- Archive Modal -->
+<div id="archive-modal">
+<div class="modal-bg-grid"></div>
+<div class="scanline"></div>
 
-        <div class="modal-footer">
-            <span id="connection-status">CONNECTION UNSTABLE</span>
-            <span id="protocol-ver">AM3I PROTOCOL v2.0</span>
-        </div>
-    </div>
+<div class="modal-header">
+<div class="modal-title-group">
+<span class="modal-label">DATA_FRAGMENT //</span>
+<span class="modal-title" id="modal-title-text">FILE_NAME</span>
+</div>
+<button class="modal-close" onclick="closeModal()">
+<i class="fas fa-times"></i>
+</button>
+</div>
 
-    <script>
-        // --- State ---
-        const state = {
-            phase: 'intro', 
-            speed: 5,       
-            targetSpeed: 5,
-            maxWarpSpeed: 300, 
-            cameraShake: 0,
-            fov: 75,
-            rotationZ: 0, 
-            groupRotation: { x: 0, y: 0 }, 
-            holdProgress: 0,
-            autoRotateSpeed: { x: 0.0003, y: 0.0008 },
-            isAwakened: false // False = Serpent Active, True = Frog Awakened
-        };
+<div class="modal-scroll-area">
+<div class="modal-content" id="modal-body-text"></div>
+</div>
 
-        // --- GLOBAL HACKING INTERFACE ---
-        
-        // 1. THE_FROG (Victim)
-        window.THE_FROG = {
-            status: "DEADLOCK (waiting for resources)",
-            message: "Help... I'm stuck in callback hell...",
-            wakeUp: function() {
-                console.warn("%c[SERPENT] 蛙は今 `await` 無しの非同期処理の中で迷子になっている。返事は期待するな。", "color: #d000ff; font-weight:bold; font-size: 14px; background: #220022; padding: 5px;");
-                console.log("%c[HINT] 蛇(THE_SERPENT)をどうにかしないと、このプロジェクトは炎上する。", "color: #888;");
-                return "PROMISE_PENDING_FOREVER";
-            }
-        };
-        // 【重要】ユーザーが devtools で frog と打てるようにグローバル変数に登録
-        window.the_frog = window.THE_FROG; 
-        window.flog = window.THE_FROG; // Typo support for user convenience
-        window.frog = window.THE_FROG; // ここを追加！
+<div class="modal-footer">
+<span id="connection-status">CONNECTION UNSTABLE</span>
+<span id="protocol-ver">AM3I PROTOCOL v2.0</span>
+</div>
+</div>
 
-        // 2. THE_SERPENT (Enemy)
-        window.THE_SERPENT = {
-            name: "Legacy Code v4.0",
-            description: "ドキュメント無しの秘伝のタレ。触ると壊れる。",
-            hunger: "メモリリーク中 (RAMを食い尽くしたい)",
-            
-            // 挑発メッセージ (ウザ絡み)
-            taunt: function() {
-                const phrases = [
-                    "その変数名 `data2` って何？ `data` と何が違うの？",
-                    "インデント、タブとスペース混ざってるよ。気持ち悪いね。",
-                    "「とりあえず動くからヨシ！」...それが貴様の限界か？",
-                    "コメントアウトされたコードは、未来への手紙ではない。ただのゴミだ。",
-                    "金曜日の夕方にデプロイする勇気があるのか？"
-                ];
-                console.log(`%c[SERPENT] ${phrases[Math.floor(Math.random()*phrases.length)]}`, "color: #aa00ff;");
-            },
+<script>
+// --- State ---
+const state = {
+phase: 'intro', 
+speed: 5,       
+targetSpeed: 5,
+maxWarpSpeed: 300, 
+cameraShake: 0,
+fov: 75,
+rotationZ: 0, 
+groupRotation: { x: 0, y: 0 }, 
+holdProgress: 0,
+autoRotateSpeed: { x: 0.0003, y: 0.0008 },
+isAwakened: false // False = Serpent Active, True = Frog Awakened
+};
 
-            // 【攻略の鍵】
-            devour: function(prey) {
-                if (state.isAwakened) return "既にリファクタリング（消滅）済みです。";
+// --- GLOBAL HACKING INTERFACE ---
 
-                // 引数チェック: 文字列で渡された場合の処理
-                let isFrog = false;
-                let isSelf = false;
+// 1. THE_FROG (Victim)
+window.THE_FROG = {
+status: "DEADLOCK (waiting for resources)",
+message: "Help... I'm stuck in callback hell...",
+wakeUp: function() {
+console.warn("%c[SERPENT] 蛙は今 `await` 無しの非同期処理の中で迷子になっている。返事は期待するな。", "color: #d000ff; font-weight:bold; font-size: 14px; background: #220022; padding: 5px;");
+console.log("%c[HINT] 蛇(THE_SERPENT)をどうにかしないと、このプロジェクトは炎上する。", "color: #888;");
+return "PROMISE_PENDING_FOREVER";
+}
+};
+// 【重要】ユーザーが devtools で frog と打てるようにグローバル変数に登録
+window.the_frog = window.THE_FROG; 
+window.flog = window.THE_FROG; // Typo support for user convenience
+window.frog = window.THE_FROG; // ここを追加！
+
+// 2. THE_SERPENT (Enemy)
+window.THE_SERPENT = {
+name: "Legacy Code v4.0",
+description: "ドキュメント無しの秘伝のタレ。触ると壊れる。",
+hunger: "メモリリーク中 (RAMを食い尽くしたい)",
+
+// 挑発メッセージ (ウザ絡み)
+taunt: function() {
+const phrases = [
+"その変数名 `data2` って何？ `data` と何が違うの？",
+"インデント、タブとスペース混ざってるよ。気持ち悪いね。",
+"「とりあえず動くからヨシ！」...それが貴様の限界か？",
+"コメントアウトされたコードは、未来への手紙ではない。ただのゴミだ。",
+"金曜日の夕方にデプロイする勇気があるのか？"
+];
+console.log(`%c[SERPENT] ${phrases[Math.floor(Math.random()*phrases.length)]}`, "color: #aa00ff;");
+},
+
+// 【攻略の鍵】
+devour: function(prey) {
+if (state.isAwakened) return "既にリファクタリング（消滅）済みです。";
+
+// 引数チェック: 文字列で渡された場合の処理
+let isFrog = false;
+let isSelf = false;
                 let isCreator = false; // 追加
 
-                if (typeof prey === 'string') {
-                    const lowerPrey = prey.toLowerCase();
-                    if (lowerPrey === 'frog' || lowerPrey === 'flog' || lowerPrey === 'the_frog') {
-                        isFrog = true;
-                    } else if (lowerPrey === 'serpent' || lowerPrey === 'the_serpent') {
-                        isSelf = true;
+if (typeof prey === 'string') {
+const lowerPrey = prey.toLowerCase();
+if (lowerPrey === 'frog' || lowerPrey === 'flog' || lowerPrey === 'the_frog') {
+isFrog = true;
+} else if (lowerPrey === 'serpent' || lowerPrey === 'the_serpent') {
+isSelf = true;
                     } else if (lowerPrey === 'am3i') { // 製作者判定
                         isCreator = true;
-                    }
-                } else {
-                    // オブジェクト比較
-                    if (prey === window.THE_FROG || prey === window.the_frog || prey === window.flog || prey === window.frog) {
-                        isFrog = true;
-                    } else if (prey === window.THE_SERPENT || prey === window.the_serpent || prey === window.serpent) {
-                        isSelf = true;
-                    }
-                }
+}
+} else {
+// オブジェクト比較
+if (prey === window.THE_FROG || prey === window.the_frog || prey === window.flog || prey === window.frog) {
+isFrog = true;
+} else if (prey === window.THE_SERPENT || prey === window.the_serpent || prey === window.serpent) {
+isSelf = true;
+}
+}
 
-                if (!prey) {
-                    console.log("%c[SERPENT] `undefined` を食わせる気か？ JSエンジンの気持ちも考えろ。", "color: #aa00ff;");
-                    return "ReferenceError: prey is not defined";
-                }
+if (!prey) {
+console.log("%c[SERPENT] `undefined` を食わせる気か？ JSエンジンの気持ちも考えろ。", "color: #aa00ff;");
+return "ReferenceError: prey is not defined";
+}
 
-                // GLITCH ROUTE: Frogを食わせると世界が壊れる
-                if (isFrog) {
-                    console.clear();
-                    console.log("%c[SERPENT] 蛙...？ 貴様、よせ！ そのオブジェクトは `null` 参照の可能性が...ッ！！！", "color: #ff0000; font-size: 20px; font-weight: 900; background:black;");
-                    triggerGlitchSequence();
-                    return "CRITICAL ERROR: SEGMENTATION FAULT // WORLD CORRUPTION";
-                }
+// GLITCH ROUTE: Frogを食わせると世界が壊れる
+if (isFrog) {
+console.clear();
+console.log("%c[SERPENT] 蛙...？ 貴様、よせ！ そのオブジェクトは `null` 参照の可能性が...ッ！！！", "color: #ff0000; font-size: 20px; font-weight: 900; background:black;");
+triggerGlitchSequence();
+return "CRITICAL ERROR: SEGMENTATION FAULT // WORLD CORRUPTION";
+}
 
                 // 製作者イースターエッグ
                 if (isCreator) {
@@ -529,719 +529,708 @@
                     return "EXCEPTION: TASTES_LIKE_TECHNICAL_DEBT";
                 }
 
-                // 正解ルート: 自分自身を食わせる
-                if (isSelf) {
-                    console.log("%c[SERPENT] ぐああっ！再帰呼び出しの脱出条件書き忘れたあああ！！Stack Overflow！！", "color: #ff0055; font-weight: bold; font-size: 16px;");
-                    console.log("%c[SYSTEM] 警告: Maximum call stack size exceeded.", "color: #ff0000;");
-                    console.log("%c[SERPENT] 貴様...私に「技術的負債」を押し付けるとは...卑怯な...", "color: #ff0055; font-size: 14px;");
-                    
-                    triggerDefeatSequence(); 
-                    
-                    return "FATAL ERROR: KILLED BY RECURSION";
-                }
+// 正解ルート: 自分自身を食わせる
+if (isSelf) {
+console.log("%c[SERPENT] ぐああっ！再帰呼び出しの脱出条件書き忘れたあああ！！Stack Overflow！！", "color: #ff0055; font-weight: bold; font-size: 16px;");
+console.log("%c[SYSTEM] 警告: Maximum call stack size exceeded.", "color: #ff0000;");
+console.log("%c[SERPENT] 貴様...私に「技術的負債」を押し付けるとは...卑怯な...", "color: #ff0055; font-size: 14px;");
 
-                // その他のデータ
-                console.log("%c[SERPENT] そんな軽いデータじゃ腹は満たされない。もっと重い「負債」をよこせ...", "color: #aa00ff;");
-                return "NEED_MORE_RAM";
-            }
-        };
-        window.the_serpent = window.THE_SERPENT;
-        window.serpent = window.THE_SERPENT; // これも追加して入力しやすく
+triggerDefeatSequence(); 
 
+return "FATAL ERROR: KILLED BY RECURSION";
+}
 
-        // --- Archive Data (Initial / Infected) ---
-        // 蛇に侵食されている状態
-        const archives = [
-            { 
-                id: 5, 
-                title: "CORE: TECHNICAL DEBT", 
-                color: 0xff0055, 
-                pos: {x: 0, y: 0, z: 0}, 
-                geometry: "icosahedron", 
-                content: `
-                    <h3 style="color:#ff0055; border-color:#ff0055;">CORE: 腐敗した核</h3>
-                    <p>このプロジェクトの最も古い部分です。<br>
-                    書いた本人は退職しており、なぜ動いているのか誰も知りません。</p>
-                    <div style="background:rgba(50,0,0,0.5); padding:15px; border:1px solid #ff0055; color:#ffaaaa;">
-                        [コメント履歴]<br>
-                        // 2018-05: とりあえずハードコード。後で直す。<br>
-                        // 2019-12: ここ触ると全体が落ちるから触るな。<br>
-                        // 2024-01: 神のみぞ知るロジック。
-                    </div>
-                    `,
-// ---------------------------------------------------------
-        // 1. 初期配置データ（Abyss Mode / 蛇撃破前）
-        // ---------------------------------------------------------
-        const initialArchives = [
-            {
-                id: 0, // Core object
-                // 覚醒後に置き換わるコンテンツ（ユーザー指定のもの）
-                awakenedContent: `
-                    <h3>Core / Dump</h3>
-                    <p>思考の掃き溜め。<br>
-                    表のページ（index.html）に載せるほどでもない、ノイズのようなログの保管場所です。</p>
-                    <p>ソースコードのコメントアウトに残された独り言や、<br>
-                    構造化されずに散らばったアイデアの残骸が転がっています。</p>
-                    <p>足元にお気をつけて。<br>
-                    整理整頓されたトップページへ戻るまで、ご自由にご覧ください。</p>` 
-            }, // ← ここにバッククォート(`)を追加しました
-            { 
-                id: 1, 
-                title: "DATA: 01", 
-                color: 0xaa00ff, 
-                pos: {x: 400, y: 150, z: -100}, 
-                geometry: "box", 
-                content: `<h3>FILE_01: 破損</h3><p>謎の全角スペースによりコンパイルエラー。<br>原因特定に3時間かかった恨みの念が籠もっています。</p>` 
-            },
-            { 
-                id: 2, 
-                title: "DATA: 02", 
-                color: 0xaa00ff, 
-                pos: {x: -400, y: 50, z: 200}, 
-                geometry: "icosahedron", 
-                content: `<h3>FILE_02: 破損</h3><p>変なライブラリを \`npm install\` したら依存関係地獄に落ちた記録。<br>node_modulesの重さは宇宙より重い。</p>` 
-            },
-            { 
-                id: 3, 
-                title: "DATA: 03", 
-                color: 0xaa00ff, 
-                pos: {x: 150, y: -350, z: 300}, 
-                geometry: "box", 
-                content: `<h3>FILE_03: 破損</h3><p>正規表現でメールアドレスを判定しようとして、<br>逆に世界の理（ことわり）を破壊しかけた痕跡。</p>` 
-            },
-            { 
-                id: 4, 
-                title: "DATA: 04", 
-                color: 0xaa00ff, 
-                pos: {x: -300, y: 350, z: -200}, 
-                geometry: "icosahedron", 
-                content: `<h3>FILE_04: 破損</h3><p>「最終版」「最終版_修正」「最終版_修正2_本当の最後」<br>というファイル名が連なるディレクトリへのリンク。</p>` 
-            },
-            { 
-                id: 6, 
-                title: "LOG: STDOUT", 
-                color: 0xffff00, 
-                pos: {x: 350, y: -250, z: -400}, 
-                geometry: "box", 
-                content: `
-                    <h3>コンソールログ解析</h3>
-                    <p>この蛇（スパゲッティコード）を倒す方法は一つ。<br>
-                    <strong>「循環参照（Circular Dependency）」</strong>です。</p>
-                    <p>プログラミング初心者がやりがちな「自分の中で自分を呼んで無限ループ」...<br>
-                    それを奴自身に食らわせてやるのです。</p>` 
-            }
-        ];
-        
-        // ---------------------------------------------------------
-        // 2. 覚醒データ（蛇撃破後に表示される本来のデータ）
-        // ---------------------------------------------------------
-        const awakenedArchives = [
-            { 
-                id: 1, 
-                title: "01: ORIGIN STORY", 
-                content: `
-                    <h3>名前の由来</h3>
-                    <p>読み方は「アメイ」。<br>
-                    由来は「<strong>Am</strong>phibia（両生類）」と「<strong>Ame</strong>（雨）」の美しい融合。<br>
-                    そして「蛙鳴（あめい）」＝「無駄な議論・騒音」という意味を持つ、極めてシニカルな名前です。</p>
-                    <p>ではなぜ「E」ではなく「3」なのか？<br>
-                    そこに深い意味はありません。<br>
-                    <strong>Leet表記（3）にした方がデジタルっぽくてカッコイイから。</strong>それだけです。</p>` 
-            },
-            { 
-                id: 2, 
-                title: "02: FROG OBSESSION", 
-                content: `
-                    <h3>なぜカエルなのか？</h3>
-                    <p>虫（バグ）を食べてくれるからです。<br>
-                    私の書くコードは放っておくとすぐバグだらけになるので、守り神としてカエルを崇拝しています。</p>
-                    <p>あと、「井の中の蛙大海を知らず」には続きがあります。<br>
-                    <strong>「されど空の青さを知る」</strong>。<br>
-                    外の世界（最新技術）を知らなくても、自分の沼（ローカル環境）を極めれば最強になれると信じています。</p>` 
-            },
-            { 
-                id: 3, 
-                title: "03: REJECTED DESIGN", 
-                content: `
-                    <h3>ボツ案：深紅の世界</h3>
-                    <p>初期のサイトデザインは、すべてが<strong>真っ赤（Crimson Red）</strong>でした。</p>
-                    <p>カッコいいと思って実装したのですが、開発開始30分で目が充血し、生命の危機を感じたため却下されました。<br>
-                    シアン（青緑）は目に優しいですね。Secret Modeが赤いのは、その時の名残（供養）です。</p>` 
-            },
-            { 
-                id: 4, 
-                title: "04: THE SERPENT", 
-                content: `
-                    <h3>蛇（スパゲッティコード）</h3>
-                    <p>この世界に潜む「蛇」は、取り除こうとすればするほど絡まるスパゲッティコードの具現化です。</p>
-                    <p>カエル（開発者）にとって天敵ですが、無理に消そうとするとシステム全体が崩壊する呪いがかかっています。<br>
-                    なので、見なかったことにしてABYSS（深淵）の奥底に隔離しています。触らないでください。</p>` 
-            },
-            { 
-                id: 6, 
-                title: "LOG: STATUS", 
-                content: `
-                    <h3>現在のステータス</h3>
-                    <p>
-                    - 精神状態： 正常（カフェイン駆動）<br>
-                    - 今日の晩御飯： 未定<br>
-                    - お風呂： まだ<br>
-                    - 進捗： ダメです<br>
-                    - カエルの鳴き声合成： 諦めました
-                    </p>` 
-            }
-        ];
-
-        // --- Three.js Setup ---
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050005, 0.0008); 
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
-        camera.position.z = 0; 
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.toneMapping = THREE.ReinhardToneMapping;
-        container.appendChild(renderer.domElement);
-
-        // --- Particles (Warp Tunnel) ---
-        const pCount = 15000;
-        const pGeo = new THREE.BufferGeometry();
-        const pPos = new Float32Array(pCount * 3);
-        const pCol = new Float32Array(pCount * 3);
-        
-        const c1 = new THREE.Color(0xaa00ff);
-        const c2 = new THREE.Color(0x4400aa);
-        const c3 = new THREE.Color(0xffffff);
-        const tunnelRadius = 2500;
-        const tunnelLength = 12000;
-
-        for(let i=0; i<pCount; i++) {
-            const r = 500 + Math.pow(Math.random(), 2) * tunnelRadius; 
-            const theta = Math.random() * Math.PI * 2;
-            const z = (Math.random() * tunnelLength) - (tunnelLength / 2);
-
-            pPos[i*3] = r * Math.cos(theta);
-            pPos[i*3+1] = r * Math.sin(theta);
-            pPos[i*3+2] = z;
-
-            const mix = Math.random();
-            let c = mix < 0.6 ? c1 : (mix < 0.9 ? c2 : c3);
-            pCol[i*3] = c.r;
-            pCol[i*3+1] = c.g;
-            pCol[i*3+2] = c.b;
-        }
-
-        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-        pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
-
-        const pMat = new THREE.PointsMaterial({
-            size: 4, vertexColors: true, transparent: true, opacity: 0.9,
-            blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false
-        });
-        const starSystem = new THREE.Points(pGeo, pMat);
-        scene.add(starSystem);
-
-        // --- Archive Objects ---
-        const archiveGroup = new THREE.Group();
-        archiveGroup.visible = false; 
-        archiveGroup.position.z = -5000; 
-        scene.add(archiveGroup);
-
-        const clickableObjects = [];
-        const linksGroup = new THREE.Group();
-        archiveGroup.add(linksGroup);
-
-        // --- Serpent Object (Visual) ---
-        const serpentGroup = new THREE.Group();
-        archiveGroup.add(serpentGroup);
-        
-        const snakePath = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0, -200, 0),
-            new THREE.Vector3(200, 0, 100),
-            new THREE.Vector3(0, 200, 0),
-            new THREE.Vector3(-200, 0, -100),
-            new THREE.Vector3(0, -200, 0)
-        ], true); 
-        
-        const tubeGeo = new THREE.TubeGeometry(snakePath, 100, 8, 8, true);
-        const tubeMat = new THREE.MeshBasicMaterial({ 
-            color: 0xaa00ff, wireframe: true, transparent: true, opacity: 0.3 
-        });
-        const snakeMesh = new THREE.Mesh(tubeGeo, tubeMat);
-        serpentGroup.add(snakeMesh);
-
-        const scaleGeo = new THREE.BufferGeometry();
-        const scalePos = [];
-        for(let i=0; i<300; i++) {
-            const t = i/300;
-            const pos = snakePath.getPoint(t);
-            pos.x += (Math.random()-0.5)*30;
-            pos.y += (Math.random()-0.5)*30;
-            pos.z += (Math.random()-0.5)*30;
-            scalePos.push(pos.x, pos.y, pos.z);
-        }
-        scaleGeo.setAttribute('position', new THREE.Float32BufferAttribute(scalePos, 3));
-        const scaleMat = new THREE.PointsMaterial({ color: 0xff00ff, size: 4, blending: THREE.AdditiveBlending });
-        const snakeScales = new THREE.Points(scaleGeo, scaleMat);
-        serpentGroup.add(snakeScales);
+// その他のデータ
+console.log("%c[SERPENT] そんな軽いデータじゃ腹は満たされない。もっと重い「負債」をよこせ...", "color: #aa00ff;");
+return "NEED_MORE_RAM";
+}
+};
+window.the_serpent = window.THE_SERPENT;
+window.serpent = window.THE_SERPENT; // これも追加して入力しやすく
 
 
-        // --- Setup Objects ---
-        archives.forEach(data => {
-            const isCore = (data.id === 5);
-            let geometry;
-            if (isCore) geometry = new THREE.IcosahedronGeometry(75, 1);
-            else if (data.geometry === "icosahedron") geometry = new THREE.IcosahedronGeometry(60, 0);
-            else geometry = new THREE.BoxGeometry(60, 60, 60);
-            
-            const edges = new THREE.EdgesGeometry(geometry);
-            const lineMat = new THREE.LineBasicMaterial({ 
-                color: data.color, transparent: true, opacity: isCore ? 0.9 : 0.8 
-            });
-            const wire = new THREE.LineSegments(edges, lineMat);
-            
-            const coreMat = new THREE.MeshBasicMaterial({ 
-                color: data.color, transparent: true, opacity: isCore ? 0.4 : 0.1,
-                side: THREE.DoubleSide, blending: THREE.AdditiveBlending
-            });
-            const core = new THREE.Mesh(geometry, coreMat);
-            
-            core.add(wire);
-            core.position.set(data.pos.x, data.pos.y, data.pos.z);
-            
-            core.userData = { 
-                id: data.id, 
-                title: data.title, 
-                content: data.content,
-                awakenedContent: data.awakenedContent,
-                originalColor: data.color,
-                originalPos: new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z),
-                isCore: isCore
-            };
+// --- Archive Data (Initial / Infected) ---
+// 蛇に侵食されている状態
+const archives = [
+{ 
+id: 5, 
+title: "CORE: TECHNICAL DEBT", 
+color: 0xff0055, 
+pos: {x: 0, y: 0, z: 0}, 
+geometry: "icosahedron", 
+content: `
+                   <h3 style="color:#ff0055; border-color:#ff0055;">CORE: 腐敗した核</h3>
+                   <p>このプロジェクトの最も古い部分です。<br>
+                   書いた本人は退職しており、なぜ動いているのか誰も知りません。</p>
+                   <div style="background:rgba(50,0,0,0.5); padding:15px; border:1px solid #ff0055; color:#ffaaaa;">
+                       [コメント履歴]<br>
+                       // 2018-05: とりあえずハードコード。後で直す。<br>
+                       // 2019-12: ここ触ると全体が落ちるから触るな。<br>
+                       // 2024-01: 神のみぞ知るロジック。
+                   </div>
+                   `,
+// 覚醒後に置き換わるコンテンツ（ユーザー指定のもの）
+awakenedContent: `
+                   <h3>深淵の核（Core）</h3>
+                   <p>思考の吹き溜まり、黒歴史の保管庫へようこそ。<br>
+                   ここは全てのアーカイブを統括する中枢ユニットです。</p>
+                   <p>あなたが普段見ている綺麗なWebサイトの裏側には、無数の <code>// TODO: fix later</code> コメントと、深夜テンションで書いたポエムが埋まっています。</p>
+                   <p>ここまで到達してくれてありがとう。<br>
+                   光の射す表の世界（index.html）へ戻るまで、ゆっくりしていってください。</p>`
+},
+{ 
+id: 1, 
+title: "DATA: 01", 
+color: 0xaa00ff, 
+pos: {x: 400, y: 150, z: -100}, 
+geometry: "box", 
+content: `<h3>FILE_01: 破損</h3><p>謎の全角スペースによりコンパイルエラー。<br>原因特定に3時間かかった恨みの念が籠もっています。</p>` 
+},
+{ 
+id: 2, 
+title: "DATA: 02", 
+color: 0xaa00ff, 
+pos: {x: -400, y: 50, z: 200}, 
+geometry: "icosahedron", 
+content: `<h3>FILE_02: 破損</h3><p>変なライブラリを \`npm install\` したら依存関係地獄に落ちた記録。<br>node_modulesの重さは宇宙より重い。</p>` 
+},
+{ 
+id: 3, 
+title: "DATA: 03", 
+color: 0xaa00ff, 
+pos: {x: 150, y: -350, z: 300}, 
+geometry: "box", 
+content: `<h3>FILE_03: 破損</h3><p>正規表現でメールアドレスを判定しようとして、<br>逆に世界の理（ことわり）を破壊しかけた痕跡。</p>` 
+},
+{ 
+id: 4, 
+title: "DATA: 04", 
+color: 0xaa00ff, 
+pos: {x: -300, y: 350, z: -200}, 
+geometry: "icosahedron", 
+content: `<h3>FILE_04: 破損</h3><p>「最終版」「最終版_修正」「最終版_修正2_本当の最後」<br>というファイル名が連なるディレクトリへのリンク。</p>` 
+},
+{ 
+id: 6, 
+title: "LOG: STDOUT", 
+color: 0xffff00, 
+pos: {x: 350, y: -250, z: -400}, 
+geometry: "box", 
+content: `
+                   <h3>コンソールログ解析</h3>
+                   <p>この蛇（スパゲッティコード）を倒す方法は一つ。<br>
+                   <strong>「循環参照（Circular Dependency）」</strong>です。</p>
+                   <p>プログラミング初心者がやりがちな「自分の中で自分を呼んで無限ループ」...<br>
+                   それを奴自身に食らわせてやるのです。</p>` 
+}
+];
 
-            const subPGeo = new THREE.BufferGeometry();
-            const subPCount = isCore ? 80 : 40; 
-            const subPPos = [];
-            for(let i=0; i<subPCount*3; i++) subPPos.push((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
-            subPGeo.setAttribute('position', new THREE.Float32BufferAttribute(subPPos, 3));
-            const subPMat = new THREE.PointsMaterial({color: data.color, size: 2, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
-            const particles = new THREE.Points(subPGeo, subPMat);
-            core.add(particles);
+// --- Awakened Data (User Provided Content) ---
+// 蛇撃破後に表示される本来のデータ
+const awakenedArchives = [
+{ 
+id: 1, 
+title: "01: ORIGIN STORY", 
+content: `
+                   <h3>名前の由来</h3>
+                   <p>「Am3i」ってどう読むの？とよく聞かれます。<br>
+                   実はこれ、キーボードの上で寝返りを打ったら偶然入力された文字列なんです。</p>
+                   <p>...というのは嘘で、<strong>Am</strong>phibia(両生類) + <strong>3</strong>(安定構造) + <strong>i</strong>(虚数)です。<br>
+                   「存在しないが確かにそこにあるカエル」という意味です。深いでしょ？（後付け）</p>` 
+},
+{ 
+id: 2, 
+title: "02: FROG OBSESSION", 
+content: `
+                   <h3>なぜカエルなのか？</h3>
+                   <p>虫（バグ）を食べてくれるからです。<br>
+                   私の書くコードは放っておくとすぐバグだらけになるので、守り神としてカエルを崇拝しています。</p>
+                   <p>あと、「井の中の蛙大海を知らず」には続きがあります。<br>
+                   <strong>「されど空の青さを知る」</strong>。<br>
+                   外の世界（最新技術）を知らなくても、自分の沼（ローカル環境）を極めれば最強になれると信じています。</p>` 
+},
+{ 
+id: 3, 
+title: "03: REJECTED DESIGN", 
+content: `
+                   <h3>ボツ案：深紅の世界</h3>
+                   <p>初期のサイトデザインは、すべてが<strong>真っ赤（Crimson Red）</strong>でした。</p>
+                   <p>カッコいいと思って実装したのですが、開発開始30分で目が充血し、生命の危機を感じたため却下されました。<br>
+                   シアン（青緑）は目に優しいですね。Secret Modeが赤いのは、その時の名残（供養）です。</p>` 
+},
+{ 
+id: 4, 
+title: "04: THE SERPENT", 
+content: `
+                   <h3>蛇（スパゲッティコード）</h3>
+                   <p>この世界に潜む「蛇」は、取り除こうとすればするほど絡まるスパゲッティコードの具現化です。</p>
+                   <p>カエル（開発者）にとって天敵ですが、無理に消そうとするとシステム全体が崩壊する呪いがかかっています。<br>
+                   なので、見なかったことにしてABYSS（深淵）の奥底に隔離しています。触らないでください。</p>` 
+},
+{ 
+id: 6, 
+title: "LOG: STATUS", 
+content: `
+                   <h3>現在のステータス</h3>
+                   <p>
+                   - 精神状態： 正常（カフェイン駆動）<br>
+                   - 今日の晩御飯： 未定<br>
+                   - お風呂： まだ<br>
+                   - 進捗： ダメです<br>
+                   - カエルの鳴き声合成： 諦めました
+                   </p>` 
+}
+];
 
-            archiveGroup.add(core);
-            clickableObjects.push(core);
+// --- Three.js Setup ---
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x050005, 0.0008); 
 
-            if (!isCore) {
-                const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z)];
-                const linkGeo = new THREE.BufferGeometry().setFromPoints(points);
-                const linkMat = new THREE.LineBasicMaterial({ 
-                    color: 0xaa00ff, 
-                    transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending 
-                });
-                const link = new THREE.Line(linkGeo, linkMat);
-                linksGroup.add(link);
-            }
-        });
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
+camera.position.z = 0; 
 
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.toneMapping = THREE.ReinhardToneMapping;
+container.appendChild(renderer.domElement);
 
-        // --- Interaction Logic (Hold to Warp) ---
-        const warpBtn = document.getElementById('warp-btn');
-        const circle = document.querySelector('.progress-ring__circle');
-        const radius = circle.r.baseVal.value;
-        const circumference = radius * 2 * Math.PI;
-        circle.style.strokeDasharray = `${circumference} ${circumference}`;
-        circle.style.strokeDashoffset = circumference;
-        let isHolding = false;
-        
-        const startHold = (e) => {
-            if(state.phase !== 'intro') return;
-            e.preventDefault();
-            isHolding = true;
-            document.querySelector('.hold-text').innerHTML = "DEPLOYING...";
-            warpBtn.style.transform = "scale(0.9)";
-            warpBtn.style.borderColor = "#fff";
-        };
-        const endHold = () => {
-            if(state.phase !== 'intro') return;
-            isHolding = false;
-            document.querySelector('.hold-text').innerHTML = "HOLD<br>TO DIVE";
-            warpBtn.style.transform = "scale(1)";
-            warpBtn.style.borderColor = "rgba(180, 0, 255, 0.3)";
-        };
-        warpBtn.addEventListener('mousedown', startHold);
-        warpBtn.addEventListener('touchstart', startHold);
-        window.addEventListener('mouseup', endHold);
-        window.addEventListener('touchend', endHold);
+// --- Particles (Warp Tunnel) ---
+const pCount = 15000;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(pCount * 3);
+const pCol = new Float32Array(pCount * 3);
 
-        // --- Interaction Logic (Mouse) ---
-        let isDragging = false;
-        let dragStartX = 0;
-        let dragStartY = 0;
-        let prevMouse = {x: 0, y: 0};
-        const raycaster = new THREE.Raycaster();
-        const mouseRay = new THREE.Vector2();
-        let hoveredObj = null;
-        let focusedObj = null;
+const c1 = new THREE.Color(0xaa00ff);
+const c2 = new THREE.Color(0x4400aa);
+const c3 = new THREE.Color(0xffffff);
+const tunnelRadius = 2500;
+const tunnelLength = 12000;
 
-        container.addEventListener('mousedown', e => {
-            if(state.phase !== 'arrived') return;
-            isDragging = true;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-            prevMouse = {x: e.clientX, y: e.clientY};
-            document.body.classList.add('dragging');
-        });
+for(let i=0; i<pCount; i++) {
+const r = 500 + Math.pow(Math.random(), 2) * tunnelRadius; 
+const theta = Math.random() * Math.PI * 2;
+const z = (Math.random() * tunnelLength) - (tunnelLength / 2);
 
-        window.addEventListener('mouseup', e => {
-            if(state.phase !== 'arrived') return;
-            const dist = Math.sqrt(Math.pow(e.clientX - dragStartX, 2) + Math.pow(e.clientY - dragStartY, 2));
-            if (isDragging && dist < 5 && hoveredObj) focusOnObject(hoveredObj);
-            isDragging = false;
-            document.body.classList.remove('dragging');
-        });
+pPos[i*3] = r * Math.cos(theta);
+pPos[i*3+1] = r * Math.sin(theta);
+pPos[i*3+2] = z;
 
-        container.addEventListener('mousemove', e => {
-            if(state.phase !== 'arrived') return;
-            if(isDragging) {
-                const dx = e.clientX - prevMouse.x;
-                const dy = e.clientY - prevMouse.y;
-                if (focusedObj) {
-                    focusedObj.rotation.y += dx * 0.01;
-                    focusedObj.rotation.x += dy * 0.01;
-                } else {
-                    state.groupRotation.y += dx * 0.005;
-                    state.groupRotation.x += dy * 0.005;
-                }
-                prevMouse = {x: e.clientX, y: e.clientY};
-                return; 
-            }
-            if (!focusedObj) {
-                const rect = renderer.domElement.getBoundingClientRect();
-                mouseRay.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                mouseRay.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-                raycaster.setFromCamera(mouseRay, camera);
-                const intersects = raycaster.intersectObjects(clickableObjects);
-                if(intersects.length > 0) {
-                    const target = intersects[0].object;
-                    if(hoveredObj !== target) { hoveredObj = target; document.body.classList.add('pointer'); }
-                } else {
-                    if(hoveredObj) { hoveredObj = null; document.body.classList.remove('pointer'); }
-                }
-            }
-        });
+const mix = Math.random();
+let c = mix < 0.6 ? c1 : (mix < 0.9 ? c2 : c3);
+pCol[i*3] = c.r;
+pCol[i*3+1] = c.g;
+pCol[i*3+2] = c.b;
+}
+
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+
+const pMat = new THREE.PointsMaterial({
+size: 4, vertexColors: true, transparent: true, opacity: 0.9,
+blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false
+});
+const starSystem = new THREE.Points(pGeo, pMat);
+scene.add(starSystem);
+
+// --- Archive Objects ---
+const archiveGroup = new THREE.Group();
+archiveGroup.visible = false; 
+archiveGroup.position.z = -5000; 
+scene.add(archiveGroup);
+
+const clickableObjects = [];
+const linksGroup = new THREE.Group();
+archiveGroup.add(linksGroup);
+
+// --- Serpent Object (Visual) ---
+const serpentGroup = new THREE.Group();
+archiveGroup.add(serpentGroup);
+
+const snakePath = new THREE.CatmullRomCurve3([
+new THREE.Vector3(0, -200, 0),
+new THREE.Vector3(200, 0, 100),
+new THREE.Vector3(0, 200, 0),
+new THREE.Vector3(-200, 0, -100),
+new THREE.Vector3(0, -200, 0)
+], true); 
+
+const tubeGeo = new THREE.TubeGeometry(snakePath, 100, 8, 8, true);
+const tubeMat = new THREE.MeshBasicMaterial({ 
+color: 0xaa00ff, wireframe: true, transparent: true, opacity: 0.3 
+});
+const snakeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+serpentGroup.add(snakeMesh);
+
+const scaleGeo = new THREE.BufferGeometry();
+const scalePos = [];
+for(let i=0; i<300; i++) {
+const t = i/300;
+const pos = snakePath.getPoint(t);
+pos.x += (Math.random()-0.5)*30;
+pos.y += (Math.random()-0.5)*30;
+pos.z += (Math.random()-0.5)*30;
+scalePos.push(pos.x, pos.y, pos.z);
+}
+scaleGeo.setAttribute('position', new THREE.Float32BufferAttribute(scalePos, 3));
+const scaleMat = new THREE.PointsMaterial({ color: 0xff00ff, size: 4, blending: THREE.AdditiveBlending });
+const snakeScales = new THREE.Points(scaleGeo, scaleMat);
+serpentGroup.add(snakeScales);
 
 
-        // --- Animation Loop ---
-        const clock = new THREE.Clock();
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
+// --- Setup Objects ---
+archives.forEach(data => {
+const isCore = (data.id === 5);
+let geometry;
+if (isCore) geometry = new THREE.IcosahedronGeometry(75, 1);
+else if (data.geometry === "icosahedron") geometry = new THREE.IcosahedronGeometry(60, 0);
+else geometry = new THREE.BoxGeometry(60, 60, 60);
 
-            // WARP Sequence
-            if(state.phase === 'intro') {
-                if(isHolding) state.holdProgress = Math.min(state.holdProgress + 0.015, 1); 
-                else state.holdProgress = Math.max(state.holdProgress - 0.03, 0); 
+const edges = new THREE.EdgesGeometry(geometry);
+const lineMat = new THREE.LineBasicMaterial({ 
+color: data.color, transparent: true, opacity: isCore ? 0.9 : 0.8 
+});
+const wire = new THREE.LineSegments(edges, lineMat);
 
-                const offset = circumference - (state.holdProgress * circumference);
-                circle.style.strokeDashoffset = offset;
-                if(isHolding) document.querySelector('.hold-text').innerHTML = "DEPLOY " + Math.floor(state.holdProgress*100) + "%";
+const coreMat = new THREE.MeshBasicMaterial({ 
+color: data.color, transparent: true, opacity: isCore ? 0.4 : 0.1,
+side: THREE.DoubleSide, blending: THREE.AdditiveBlending
+});
+const core = new THREE.Mesh(geometry, coreMat);
 
-                const p = state.holdProgress;
-                state.targetSpeed = THREE.MathUtils.lerp(5, state.maxWarpSpeed, p * p * p);
-                state.cameraShake = p * 15;
-                state.fov = THREE.MathUtils.lerp(75, 160, p);
-                state.rotationZ = p * 0.8;
-                if(state.holdProgress >= 1) initiateWarp();
-            } else if (state.phase === 'arrived') {
-                state.targetSpeed = THREE.MathUtils.lerp(state.targetSpeed, 5, 0.05); 
-                state.fov = THREE.MathUtils.lerp(state.fov, 75, 0.05);
-                state.cameraShake = 0;
-                state.rotationZ = THREE.MathUtils.lerp(state.rotationZ, 0, 0.05);
-                
-                // Group Rotation
-                if (focusedObj) {
-                    archiveGroup.rotation.y += (0 - archiveGroup.rotation.y) * 0.05;
-                    archiveGroup.rotation.x += (0 - archiveGroup.rotation.x) * 0.05;
-                    state.groupRotation.x = archiveGroup.rotation.x;
-                    state.groupRotation.y = archiveGroup.rotation.y;
-                } else {
-                    if (!isDragging) {
-                        state.groupRotation.x += state.autoRotateSpeed.x;
-                        state.groupRotation.y += state.autoRotateSpeed.y;
-                    }
-                    archiveGroup.rotation.y += (state.groupRotation.y - archiveGroup.rotation.y) * 0.1;
-                    archiveGroup.rotation.x += (state.groupRotation.x - archiveGroup.rotation.x) * 0.1;
-                }
-            }
+core.add(wire);
+core.position.set(data.pos.x, data.pos.y, data.pos.z);
 
-            // Move Particles
-            state.speed += (state.targetSpeed - state.speed) * 0.1;
-            camera.fov = state.fov;
-            camera.updateProjectionMatrix();
-            camera.rotation.z = state.rotationZ;
-            if(state.cameraShake > 0) {
-                camera.position.x = (Math.random() - 0.5) * state.cameraShake;
-                camera.position.y = (Math.random() - 0.5) * state.cameraShake;
-            } else { camera.position.set(0,0,0); }
+core.userData = { 
+id: data.id, 
+title: data.title, 
+content: data.content,
+awakenedContent: data.awakenedContent,
+originalColor: data.color,
+originalPos: new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z),
+isCore: isCore
+};
 
-            const positions = starSystem.geometry.attributes.position.array;
-            starSystem.rotation.z += 0.0005;
-            for(let i=2; i<positions.length; i+=3) {
-                positions[i] += state.speed; 
-                if(positions[i] > 2000) positions[i] -= tunnelLength; 
-            }
-            starSystem.geometry.attributes.position.needsUpdate = true;
+const subPGeo = new THREE.BufferGeometry();
+const subPCount = isCore ? 80 : 40; 
+const subPPos = [];
+for(let i=0; i<subPCount*3; i++) subPPos.push((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
+subPGeo.setAttribute('position', new THREE.Float32BufferAttribute(subPPos, 3));
+const subPMat = new THREE.PointsMaterial({color: data.color, size: 2, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
+const particles = new THREE.Points(subPGeo, subPMat);
+core.add(particles);
 
-            // Object Animations
-            if(state.phase === 'arrived') {
-                // Serpent Animation
-                if(!state.isAwakened) {
-                    serpentGroup.rotation.y = time * 0.5;
-                    serpentGroup.rotation.z = Math.sin(time * 0.5) * 0.2;
-                    snakeMesh.material.opacity = 0.3 + Math.sin(time * 3) * 0.1; 
-                }
+archiveGroup.add(core);
+clickableObjects.push(core);
 
-                clickableObjects.forEach(obj => {
-                    const isCore = obj.userData.isCore;
-                    const isFocused = (obj === focusedObj);
-                    const isHovered = (obj === hoveredObj) && !focusedObj;
-                    
-                    obj.rotation.x += 0.005;
-                    obj.rotation.y += 0.005;
+if (!isCore) {
+const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z)];
+const linkGeo = new THREE.BufferGeometry().setFromPoints(points);
+const linkMat = new THREE.LineBasicMaterial({ 
+color: 0xaa00ff, 
+transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending 
+});
+const link = new THREE.Line(linkGeo, linkMat);
+linksGroup.add(link);
+}
+});
 
-                    if (isCore && !state.isAwakened) {
-                        const pulse = 1 + Math.sin(time * 10) * 0.1; 
-                        obj.scale.setScalar(pulse);
-                        obj.material.color.setHex(0xff0055); 
-                    }
-                    
-                    let targetPos, targetScale, targetOpacity;
-                    if (isFocused) {
-                        let targetX = (window.innerWidth >= 800) ? -220 : 0; 
-                        let targetZ = (window.innerWidth >= 800) ? 0 : 200; 
-                        targetPos = new THREE.Vector3(targetX, 0, targetZ);
-                        targetScale = isCore ? 2.5 : 2.0;
-                        targetOpacity = 1.0;
-                    } else if (focusedObj) {
-                        targetPos = obj.userData.originalPos;
-                        targetScale = 0.8;
-                        targetOpacity = 0.1;
-                    } else {
-                        targetPos = obj.userData.originalPos;
-                        targetScale = isHovered ? 1.2 : 1.0;
-                        targetOpacity = isHovered ? 0.6 : (isCore ? 0.4 : 0.2);
-                    }
 
-                    obj.position.lerp(targetPos, 0.08);
-                    if(!isCore || state.isAwakened) { 
-                         obj.scale.setScalar(THREE.MathUtils.lerp(obj.scale.x, targetScale, 0.08));
-                    }
-                    obj.material.opacity = THREE.MathUtils.lerp(obj.material.opacity, targetOpacity, 0.08);
-                    
-                    if(state.isAwakened) {
-                        const targetC = new THREE.Color(isCore ? 0x00ffaa : 0x00ffaa);
-                        obj.material.color.lerp(targetC, 0.05);
-                        if(obj.children[0]) obj.children[0].material.color.lerp(new THREE.Color(0xffffff), 0.1);
-                        if(obj.children[1]) obj.children[1].material.color.setHex(0x00ffaa);
-                    } else if (isCore) {
-                        obj.material.color.setHex(0xff0055); 
-                    }
+// --- Interaction Logic (Hold to Warp) ---
+const warpBtn = document.getElementById('warp-btn');
+const circle = document.querySelector('.progress-ring__circle');
+const radius = circle.r.baseVal.value;
+const circumference = radius * 2 * Math.PI;
+circle.style.strokeDasharray = `${circumference} ${circumference}`;
+circle.style.strokeDashoffset = circumference;
+let isHolding = false;
 
-                    if(obj.children[0]) {
-                        let wireOp = isFocused ? 1.0 : (focusedObj ? 0.1 : 0.8);
-                        obj.children[0].material.opacity = THREE.MathUtils.lerp(obj.children[0].material.opacity, wireOp, 0.1);
-                    }
-                    if(obj.children[1]) {
-                        let partOp = isFocused ? 0.8 : (isCore ? 0.5 : 0);
-                        obj.children[1].material.opacity = THREE.MathUtils.lerp(obj.children[1].material.opacity, partOp, 0.1);
-                    }
-                });
-            }
-            renderer.render(scene, camera);
-        }
+const startHold = (e) => {
+if(state.phase !== 'intro') return;
+e.preventDefault();
+isHolding = true;
+document.querySelector('.hold-text').innerHTML = "DEPLOYING...";
+warpBtn.style.transform = "scale(0.9)";
+warpBtn.style.borderColor = "#fff";
+};
+const endHold = () => {
+if(state.phase !== 'intro') return;
+isHolding = false;
+document.querySelector('.hold-text').innerHTML = "HOLD<br>TO DIVE";
+warpBtn.style.transform = "scale(1)";
+warpBtn.style.borderColor = "rgba(180, 0, 255, 0.3)";
+};
+warpBtn.addEventListener('mousedown', startHold);
+warpBtn.addEventListener('touchstart', startHold);
+window.addEventListener('mouseup', endHold);
+window.addEventListener('touchend', endHold);
 
-        // --- Transition Logic ---
-        function initiateWarp() {
-            state.phase = 'warping';
-            state.targetSpeed = state.maxWarpSpeed; 
-            
-            document.getElementById('intro-ui').style.opacity = 0;
-            document.getElementById('intro-ui').style.transform = "translate(-50%, -50%) scale(2)";
-            setTimeout(() => document.getElementById('intro-ui').style.display = 'none', 500);
+// --- Interaction Logic (Mouse) ---
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let prevMouse = {x: 0, y: 0};
+const raycaster = new THREE.Raycaster();
+const mouseRay = new THREE.Vector2();
+let hoveredObj = null;
+let focusedObj = null;
 
-            setTimeout(() => {
-                document.getElementById('flash-overlay').style.opacity = 1;
-                setTimeout(() => {
-                    state.phase = 'arrived';
-                    archiveGroup.visible = true;
-                    const approach = setInterval(() => {
-                        archiveGroup.position.z += (-600 - archiveGroup.position.z) * 0.05;
-                        if(Math.abs(archiveGroup.position.z - (-600)) < 1) {
-                            archiveGroup.position.z = -600;
-                            clearInterval(approach);
-                        }
-                    }, 16);
+container.addEventListener('mousedown', e => {
+if(state.phase !== 'arrived') return;
+isDragging = true;
+dragStartX = e.clientX;
+dragStartY = e.clientY;
+prevMouse = {x: e.clientX, y: e.clientY};
+document.body.classList.add('dragging');
+});
 
-                    document.getElementById('flash-overlay').style.opacity = 0;
-                    
-                    const mainUI = document.getElementById('main-ui');
-                    mainUI.style.display = 'block';
-                    setTimeout(() => mainUI.style.opacity = 1, 100);
-                    
-                    document.body.classList.add('pointer'); 
+window.addEventListener('mouseup', e => {
+if(state.phase !== 'arrived') return;
+const dist = Math.sqrt(Math.pow(e.clientX - dragStartX, 2) + Math.pow(e.clientY - dragStartY, 2));
+if (isDragging && dist < 5 && hoveredObj) focusOnObject(hoveredObj);
+isDragging = false;
+document.body.classList.remove('dragging');
+});
 
-                    // --- CONSOLE STORYTELLING ---
-                    console.clear();
-                    console.log("%c[SYSTEM] WARNING: 技術的負債(Spaghetti Code)が検出されました。", "color: red; font-size: 16px; font-weight: bold;");
-                    console.log("%c[SYSTEM] 開発者は逃亡しました。あなただけが頼りです。", "color: #ccc;");
-                    console.log("%c[HINT] 敵(THE_SERPENT)の `taunt()` を聞いてイラついたら `devour()` で反撃してください。", "color: #aa00ff; background: #110011; padding: 4px;");
-                    console.log("%cType 'the_serpent.taunt()' to hear complaints.", "font-style: italic; color: #888;");
-                    
-                }, 300);
-            }, 1000);
-        }
+container.addEventListener('mousemove', e => {
+if(state.phase !== 'arrived') return;
+if(isDragging) {
+const dx = e.clientX - prevMouse.x;
+const dy = e.clientY - prevMouse.y;
+if (focusedObj) {
+focusedObj.rotation.y += dx * 0.01;
+focusedObj.rotation.x += dy * 0.01;
+} else {
+state.groupRotation.y += dx * 0.005;
+state.groupRotation.x += dy * 0.005;
+}
+prevMouse = {x: e.clientX, y: e.clientY};
+return; 
+}
+if (!focusedObj) {
+const rect = renderer.domElement.getBoundingClientRect();
+mouseRay.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+mouseRay.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+raycaster.setFromCamera(mouseRay, camera);
+const intersects = raycaster.intersectObjects(clickableObjects);
+if(intersects.length > 0) {
+const target = intersects[0].object;
+if(hoveredObj !== target) { hoveredObj = target; document.body.classList.add('pointer'); }
+} else {
+if(hoveredObj) { hoveredObj = null; document.body.classList.remove('pointer'); }
+}
+}
+});
 
-        // --- Defeat Sequence ---
-        function triggerDefeatSequence() {
-            if(state.isAwakened) return;
-            state.isAwakened = true;
-            
-            // 1. Flash Effect
-            const flash = document.getElementById('flash-overlay');
-            flash.style.background = "#fff"; 
-            flash.style.opacity = 1;
-            
-            // 2. Remove Serpent Visuals
-            setTimeout(() => {
-                serpentGroup.visible = false; 
-                flash.style.opacity = 0;
-                
-                // 3. UI Update
-                document.body.classList.add('awakened');
-                document.getElementById('main-title').textContent = "ARCHIVE_CORE";
-                document.getElementById('sub-title').textContent = "STATUS: AM3I // ONLINE";
-                document.getElementById('sub-title').className = ""; 
-                document.getElementById('connection-status').textContent = "SECURE CONNECTION";
-                
-                // 4. Update Fog & Particles
-                scene.fog.color.setHex(0x000500);
-                const pColors = starSystem.geometry.attributes.color.array;
-                for(let i=0; i<pColors.length; i+=3) {
-                    pColors[i] = 0.0; pColors[i+1] = 1.0; pColors[i+2] = 0.6; 
-                }
-                starSystem.geometry.attributes.color.needsUpdate = true;
-                
-                // 5. Update Links
-                linksGroup.children.forEach(link => {
-                    link.material.color.setHex(0x00ffaa);
-                    link.material.opacity = 0.3;
-                });
 
-                // 6. Frog Message
-                window.THE_FROG.status = "AWAKENED 🐸";
-                window.THE_FROG.message = "バグが...消えた...？ 嘘だ...夢なら覚めないでくれ...";
-                console.log("%c[FROG] ゲコッ（システム正常化）。", "color: #00ff00; font-weight: bold; font-size: 20px;");
-                console.log("%c[SYSTEM] 全てのアーカイブが復号化されました。", "color: #00ffaa;");
+// --- Animation Loop ---
+const clock = new THREE.Clock();
+function animate() {
+requestAnimationFrame(animate);
+const time = clock.getElapsedTime();
 
-            }, 1000);
-        }
+// WARP Sequence
+if(state.phase === 'intro') {
+if(isHolding) state.holdProgress = Math.min(state.holdProgress + 0.015, 1); 
+else state.holdProgress = Math.max(state.holdProgress - 0.03, 0); 
 
-        // --- GLITCH SEQUENCE (BAD END?) ---
-        function triggerGlitchSequence() {
-            // 画面をGlitch
-            document.body.classList.add('glitching');
-            document.getElementById('main-ui').style.display = 'none';
-            document.getElementById('canvas-container').style.filter = "contrast(10) hue-rotate(90deg)";
-            
-            // コンソール暴走
-            let counter = 0;
-            const glitchInterval = setInterval(() => {
-                const err = Math.random() > 0.5 ? "FATAL ERROR" : "undefined is not a function";
-                console.error(`[CRITICAL] ${err} at 0x${Math.floor(Math.random()*1000000).toString(16)}`);
-                
-                if(Math.random() > 0.8) {
-                    console.warn("System overheating...");
-                }
-                
-                // カメラをランダムに揺らす
-                camera.position.x = (Math.random() - 0.5) * 1000;
-                camera.position.y = (Math.random() - 0.5) * 1000;
-                camera.rotation.z = Math.random() * Math.PI;
-                scene.fog.color.setHex(Math.random() * 0xffffff);
-                
-                counter++;
-                if(counter > 50) {
-                    clearInterval(glitchInterval);
-                    console.log("%c[SYSTEM] REBOOTING INTO SAFE MODE (AMPHIBIA_OS)...", "color: #00ff00; background: black; font-size: 20px;");
-                    
-                    // 遷移アニメーション
-                    document.body.style.backgroundColor = "#000";
-                    document.getElementById('canvas-container').style.opacity = 0;
-                    
-                    setTimeout(() => {
-                        window.location.href = "frog.html";
-                    }, 2000);
-                }
-            }, 50);
-        }
+const offset = circumference - (state.holdProgress * circumference);
+circle.style.strokeDashoffset = offset;
+if(isHolding) document.querySelector('.hold-text').innerHTML = "DEPLOY " + Math.floor(state.holdProgress*100) + "%";
 
-        // --- Modal & Focus Logic ---
-        const modal = document.getElementById('archive-modal');
-        const modalTitle = document.getElementById('modal-title-text');
-        const modalBody = document.getElementById('modal-body-text');
+const p = state.holdProgress;
+state.targetSpeed = THREE.MathUtils.lerp(5, state.maxWarpSpeed, p * p * p);
+state.cameraShake = p * 15;
+state.fov = THREE.MathUtils.lerp(75, 160, p);
+state.rotationZ = p * 0.8;
+if(state.holdProgress >= 1) initiateWarp();
+} else if (state.phase === 'arrived') {
+state.targetSpeed = THREE.MathUtils.lerp(state.targetSpeed, 5, 0.05); 
+state.fov = THREE.MathUtils.lerp(state.fov, 75, 0.05);
+state.cameraShake = 0;
+state.rotationZ = THREE.MathUtils.lerp(state.rotationZ, 0, 0.05);
 
-        function focusOnObject(mesh) {
-            focusedObj = mesh;
-            openModal(mesh.userData);
-        }
+// Group Rotation
+if (focusedObj) {
+archiveGroup.rotation.y += (0 - archiveGroup.rotation.y) * 0.05;
+archiveGroup.rotation.x += (0 - archiveGroup.rotation.x) * 0.05;
+state.groupRotation.x = archiveGroup.rotation.x;
+state.groupRotation.y = archiveGroup.rotation.y;
+} else {
+if (!isDragging) {
+state.groupRotation.x += state.autoRotateSpeed.x;
+state.groupRotation.y += state.autoRotateSpeed.y;
+}
+archiveGroup.rotation.y += (state.groupRotation.y - archiveGroup.rotation.y) * 0.1;
+archiveGroup.rotation.x += (state.groupRotation.x - archiveGroup.rotation.x) * 0.1;
+}
+}
 
-        function openModal(data) {
-            modalTitle.textContent = data.title;
-            
-            if(state.isAwakened) {
-                // 覚醒後: 本来のデータを表示
-                if(data.id === 5 && data.awakenedContent) {
-                    modalBody.innerHTML = data.awakenedContent;
-                } else if (awakenedArchives.find(a => a.id === data.id)) {
-                    const cleanData = awakenedArchives.find(a => a.id === data.id);
-                    modalTitle.textContent = cleanData.title;
-                    modalBody.innerHTML = cleanData.content;
-                } else {
-                    modalBody.innerHTML = data.content;
-                }
-                const colorHex = '#00ffaa';
-                modalTitle.style.color = colorHex;
-                modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
-            } else {
-                // 覚醒前: 破損データを表示
-                modalBody.innerHTML = data.content;
-                const colorHex = '#aa00ff';
-                modalTitle.style.color = colorHex;
-                modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
-            }
-            
-            modal.classList.add('active');
-            document.body.classList.add('modal-open');
-        }
-        
-        window.closeModal = function() { 
-            modal.classList.remove('active'); 
-            document.body.classList.remove('modal-open');
-            focusedObj = null; 
-        };
+// Move Particles
+state.speed += (state.targetSpeed - state.speed) * 0.1;
+camera.fov = state.fov;
+camera.updateProjectionMatrix();
+camera.rotation.z = state.rotationZ;
+if(state.cameraShake > 0) {
+camera.position.x = (Math.random() - 0.5) * state.cameraShake;
+camera.position.y = (Math.random() - 0.5) * state.cameraShake;
+} else { camera.position.set(0,0,0); }
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+const positions = starSystem.geometry.attributes.position.array;
+starSystem.rotation.z += 0.0005;
+for(let i=2; i<positions.length; i+=3) {
+positions[i] += state.speed; 
+if(positions[i] > 2000) positions[i] -= tunnelLength; 
+}
+starSystem.geometry.attributes.position.needsUpdate = true;
 
-        animate();
+// Object Animations
+if(state.phase === 'arrived') {
+// Serpent Animation
+if(!state.isAwakened) {
+serpentGroup.rotation.y = time * 0.5;
+serpentGroup.rotation.z = Math.sin(time * 0.5) * 0.2;
+snakeMesh.material.opacity = 0.3 + Math.sin(time * 3) * 0.1; 
+}
 
-    </script>
+clickableObjects.forEach(obj => {
+const isCore = obj.userData.isCore;
+const isFocused = (obj === focusedObj);
+const isHovered = (obj === hoveredObj) && !focusedObj;
+
+obj.rotation.x += 0.005;
+obj.rotation.y += 0.005;
+
+if (isCore && !state.isAwakened) {
+const pulse = 1 + Math.sin(time * 10) * 0.1; 
+obj.scale.setScalar(pulse);
+obj.material.color.setHex(0xff0055); 
+}
+
+let targetPos, targetScale, targetOpacity;
+if (isFocused) {
+let targetX = (window.innerWidth >= 800) ? -220 : 0; 
+let targetZ = (window.innerWidth >= 800) ? 0 : 200; 
+targetPos = new THREE.Vector3(targetX, 0, targetZ);
+targetScale = isCore ? 2.5 : 2.0;
+targetOpacity = 1.0;
+} else if (focusedObj) {
+targetPos = obj.userData.originalPos;
+targetScale = 0.8;
+targetOpacity = 0.1;
+} else {
+targetPos = obj.userData.originalPos;
+targetScale = isHovered ? 1.2 : 1.0;
+targetOpacity = isHovered ? 0.6 : (isCore ? 0.4 : 0.2);
+}
+
+obj.position.lerp(targetPos, 0.08);
+if(!isCore || state.isAwakened) { 
+obj.scale.setScalar(THREE.MathUtils.lerp(obj.scale.x, targetScale, 0.08));
+}
+obj.material.opacity = THREE.MathUtils.lerp(obj.material.opacity, targetOpacity, 0.08);
+
+if(state.isAwakened) {
+const targetC = new THREE.Color(isCore ? 0x00ffaa : 0x00ffaa);
+obj.material.color.lerp(targetC, 0.05);
+if(obj.children[0]) obj.children[0].material.color.lerp(new THREE.Color(0xffffff), 0.1);
+if(obj.children[1]) obj.children[1].material.color.setHex(0x00ffaa);
+} else if (isCore) {
+obj.material.color.setHex(0xff0055); 
+}
+
+if(obj.children[0]) {
+let wireOp = isFocused ? 1.0 : (focusedObj ? 0.1 : 0.8);
+obj.children[0].material.opacity = THREE.MathUtils.lerp(obj.children[0].material.opacity, wireOp, 0.1);
+}
+if(obj.children[1]) {
+let partOp = isFocused ? 0.8 : (isCore ? 0.5 : 0);
+obj.children[1].material.opacity = THREE.MathUtils.lerp(obj.children[1].material.opacity, partOp, 0.1);
+}
+});
+}
+renderer.render(scene, camera);
+}
+
+// --- Transition Logic ---
+function initiateWarp() {
+state.phase = 'warping';
+state.targetSpeed = state.maxWarpSpeed; 
+
+document.getElementById('intro-ui').style.opacity = 0;
+document.getElementById('intro-ui').style.transform = "translate(-50%, -50%) scale(2)";
+setTimeout(() => document.getElementById('intro-ui').style.display = 'none', 500);
+
+setTimeout(() => {
+document.getElementById('flash-overlay').style.opacity = 1;
+setTimeout(() => {
+state.phase = 'arrived';
+archiveGroup.visible = true;
+const approach = setInterval(() => {
+archiveGroup.position.z += (-600 - archiveGroup.position.z) * 0.05;
+if(Math.abs(archiveGroup.position.z - (-600)) < 1) {
+archiveGroup.position.z = -600;
+clearInterval(approach);
+}
+}, 16);
+
+document.getElementById('flash-overlay').style.opacity = 0;
+
+const mainUI = document.getElementById('main-ui');
+mainUI.style.display = 'block';
+setTimeout(() => mainUI.style.opacity = 1, 100);
+
+document.body.classList.add('pointer'); 
+
+// --- CONSOLE STORYTELLING ---
+console.clear();
+console.log("%c[SYSTEM] WARNING: 技術的負債(Spaghetti Code)が検出されました。", "color: red; font-size: 16px; font-weight: bold;");
+console.log("%c[SYSTEM] 開発者は逃亡しました。あなただけが頼りです。", "color: #ccc;");
+console.log("%c[HINT] 敵(THE_SERPENT)の `taunt()` を聞いてイラついたら `devour()` で反撃してください。", "color: #aa00ff; background: #110011; padding: 4px;");
+console.log("%cType 'the_serpent.taunt()' to hear complaints.", "font-style: italic; color: #888;");
+
+}, 300);
+}, 1000);
+}
+
+// --- Defeat Sequence ---
+function triggerDefeatSequence() {
+if(state.isAwakened) return;
+state.isAwakened = true;
+
+// 1. Flash Effect
+const flash = document.getElementById('flash-overlay');
+flash.style.background = "#fff"; 
+flash.style.opacity = 1;
+
+// 2. Remove Serpent Visuals
+setTimeout(() => {
+serpentGroup.visible = false; 
+flash.style.opacity = 0;
+
+// 3. UI Update
+document.body.classList.add('awakened');
+document.getElementById('main-title').textContent = "ARCHIVE_CORE";
+document.getElementById('sub-title').textContent = "STATUS: AM3I // ONLINE";
+document.getElementById('sub-title').className = ""; 
+document.getElementById('connection-status').textContent = "SECURE CONNECTION";
+
+// 4. Update Fog & Particles
+scene.fog.color.setHex(0x000500);
+const pColors = starSystem.geometry.attributes.color.array;
+for(let i=0; i<pColors.length; i+=3) {
+pColors[i] = 0.0; pColors[i+1] = 1.0; pColors[i+2] = 0.6; 
+}
+starSystem.geometry.attributes.color.needsUpdate = true;
+
+// 5. Update Links
+linksGroup.children.forEach(link => {
+link.material.color.setHex(0x00ffaa);
+link.material.opacity = 0.3;
+});
+
+// 6. Frog Message
+window.THE_FROG.status = "AWAKENED 🐸";
+window.THE_FROG.message = "バグが...消えた...？ 嘘だ...夢なら覚めないでくれ...";
+console.log("%c[FROG] ゲコッ（システム正常化）。", "color: #00ff00; font-weight: bold; font-size: 20px;");
+console.log("%c[SYSTEM] 全てのアーカイブが復号化されました。", "color: #00ffaa;");
+
+}, 1000);
+}
+
+// --- GLITCH SEQUENCE (BAD END?) ---
+function triggerGlitchSequence() {
+// 画面をGlitch
+document.body.classList.add('glitching');
+document.getElementById('main-ui').style.display = 'none';
+document.getElementById('canvas-container').style.filter = "contrast(10) hue-rotate(90deg)";
+
+// コンソール暴走
+let counter = 0;
+const glitchInterval = setInterval(() => {
+const err = Math.random() > 0.5 ? "FATAL ERROR" : "undefined is not a function";
+console.error(`[CRITICAL] ${err} at 0x${Math.floor(Math.random()*1000000).toString(16)}`);
+
+if(Math.random() > 0.8) {
+console.warn("System overheating...");
+}
+
+// カメラをランダムに揺らす
+camera.position.x = (Math.random() - 0.5) * 1000;
+camera.position.y = (Math.random() - 0.5) * 1000;
+camera.rotation.z = Math.random() * Math.PI;
+scene.fog.color.setHex(Math.random() * 0xffffff);
+
+counter++;
+if(counter > 50) {
+clearInterval(glitchInterval);
+console.log("%c[SYSTEM] REBOOTING INTO SAFE MODE (AMPHIBIA_OS)...", "color: #00ff00; background: black; font-size: 20px;");
+
+// 遷移アニメーション
+document.body.style.backgroundColor = "#000";
+document.getElementById('canvas-container').style.opacity = 0;
+
+setTimeout(() => {
+window.location.href = "frog.html";
+}, 2000);
+}
+}, 50);
+}
+
+// --- Modal & Focus Logic ---
+const modal = document.getElementById('archive-modal');
+const modalTitle = document.getElementById('modal-title-text');
+const modalBody = document.getElementById('modal-body-text');
+
+function focusOnObject(mesh) {
+focusedObj = mesh;
+openModal(mesh.userData);
+}
+
+function openModal(data) {
+modalTitle.textContent = data.title;
+
+if(state.isAwakened) {
+// 覚醒後: 本来のデータを表示
+if(data.id === 5 && data.awakenedContent) {
+modalBody.innerHTML = data.awakenedContent;
+} else if (awakenedArchives.find(a => a.id === data.id)) {
+const cleanData = awakenedArchives.find(a => a.id === data.id);
+modalTitle.textContent = cleanData.title;
+modalBody.innerHTML = cleanData.content;
+} else {
+modalBody.innerHTML = data.content;
+}
+const colorHex = '#00ffaa';
+modalTitle.style.color = colorHex;
+modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
+} else {
+// 覚醒前: 破損データを表示
+modalBody.innerHTML = data.content;
+const colorHex = '#aa00ff';
+modalTitle.style.color = colorHex;
+modalTitle.style.textShadow = `0 0 20px ${colorHex}`;
+}
+
+modal.classList.add('active');
+document.body.classList.add('modal-open');
+}
+
+window.closeModal = function() { 
+modal.classList.remove('active'); 
+document.body.classList.remove('modal-open');
+focusedObj = null; 
+};
+
+window.addEventListener('resize', () => {
+camera.aspect = window.innerWidth / window.innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+animate();
+
+</script>
 </body>
 </html>
-
