@@ -397,7 +397,7 @@
             opacity: 0;
             pointer-events: none;
             z-index: 1000;
-            transition: opacity 1s ease-in;
+            transition: opacity 2s ease-in;
         }
         #warp-whiteout.active {
             opacity: 1;
@@ -483,7 +483,8 @@
             organsSolved: 0,
             isRestored: false,
             introMode: true,
-            warping: false // ワープ演出用フラグ
+            warping: false, // ワープ演出用フラグ
+            warpStartTime: 0
         };
 
         // --- ORGAN DATA ---
@@ -708,21 +709,26 @@
                 
                 // 隠しコマンドの追加
                 window.sys.dive = function() {
-                    console.log("%c WARP DRIVE ENGAGED...", "color: #ff0055; font-size: 1.5em; font-weight:bold;");
+                    console.log("%c RIFT GENERATOR INITIATED...", "color: #d400ff; font-size: 1.5em; font-weight:bold; text-shadow: 0 0 10px #d400ff;");
                     
                     // Warp Trigger
+                    closeEnding();
                     state.warping = true;
+                    state.warpStartTime = time;
 
-                    // Fade to white after a delay
+                    // Rift生成
+                    createRift();
+
+                    // Fade to white
                     setTimeout(() => {
                         document.getElementById('warp-whiteout').classList.add('active');
-                    }, 2000);
+                    }, 5000); // 演出時間を確保
 
                     // Redirect
                     setTimeout(() => {
                         window.location.href = './cosmic_frog.html';
-                    }, 3500);
-                    return "ENTERING HYPERSPACE...";
+                    }, 7000);
+                    return "OPENING DIMENSIONAL GATEWAY...";
                 };
                 
                 console.log("%c[SYSTEM] Hidden route unlocked.", "color: #00ff00");
@@ -894,6 +900,119 @@
             });
         }
 
+        // --- Rift Logic (Warp Effect) ---
+        let riftMesh;
+        let riftUniforms;
+
+        function createRift() {
+            // 時空の裂け目Shader
+            const vertexShader = `
+                varying vec2 vUv;
+                varying vec3 vPos;
+                void main() {
+                    vUv = uv;
+                    vPos = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `;
+            const fragmentShader = `
+                uniform float time;
+                uniform float opening; // 0.0 to 1.0 (閉 -> 開)
+                varying vec2 vUv;
+                
+                // Simplex Noise (simplified)
+                vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+                float snoise(vec2 v) {
+                    const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                    vec2 i  = floor(v + dot(v, C.yy) );
+                    vec2 x0 = v -   i + dot(i, C.xx);
+                    vec2 i1;
+                    i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                    vec4 x12 = x0.xyxy + C.xxzz;
+                    x12.xy -= i1;
+                    i = mod289(i);
+                    vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                    m = m*m ;
+                    m = m*m ;
+                    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                    vec3 h = abs(x) - 0.5;
+                    vec3 ox = floor(x + 0.5);
+                    vec3 a0 = x - ox;
+                    m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                    vec3 g;
+                    g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                    return 130.0 * dot(m, g);
+                }
+
+                void main() {
+                    vec2 p = vUv * 2.0 - 1.0;
+                    float r = length(p);
+                    float a = atan(p.y, p.x);
+                    
+                    // ノイズによる歪み
+                    float noise = snoise(vec2(p.x * 2.0, p.y * 2.0 - time * 2.0));
+                    
+                    // 裂け目の形状: 縦に長い楕円から真円へ
+                    float holeShape = abs(p.x) * (2.0 - opening) + abs(p.y) * 0.5;
+                    
+                    // 縁のエフェクト
+                    float edge = smoothstep(0.4 * opening, 0.5 * opening + 0.1, r + noise * 0.1);
+                    float core = smoothstep(0.0, 0.4 * opening, r + noise * 0.05);
+                    
+                    // 色
+                    vec3 outerColor = vec3(0.5, 0.0, 1.0); // 紫
+                    vec3 innerColor = vec3(0.0, 0.8, 1.0); // 青
+                    vec3 centerColor = vec3(1.0, 1.0, 1.0); // 白
+                    
+                    // ミックス
+                    vec3 col = mix(centerColor, innerColor, core);
+                    col = mix(col, outerColor, edge);
+                    
+                    // 穴の外側は透明に、内側は発光
+                    float alpha = (1.0 - edge) * opening + (1.0 - smoothstep(0.0, 0.05 + opening * 0.1, abs(p.x * (10.0 - opening * 9.0) + noise * 0.5))) * (1.0 - opening); 
+                    
+                    // 最終調整: 開くときは穴の中が見える
+                    float intensity = 1.0 / (abs(r - opening * 0.5) + 0.1);
+                    col *= intensity;
+
+                    gl_FragColor = vec4(col, alpha);
+                }
+            `;
+
+            riftUniforms = {
+                time: { value: 0 },
+                opening: { value: 0.0 }
+            };
+
+            const riftGeo = new THREE.PlaneGeometry(800, 800, 64, 64);
+            const riftMat = new THREE.ShaderMaterial({
+                uniforms: riftUniforms,
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                transparent: true,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            riftMesh = new THREE.Mesh(riftGeo, riftMat);
+            
+            // カメラの前方に配置
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const spawnPos = camera.position.clone().add(forward.multiplyScalar(500));
+            riftMesh.position.copy(spawnPos);
+            riftMesh.lookAt(camera.position);
+            
+            // 初期状態
+            riftMesh.scale.set(0, 1, 1); // 閉じた状態（縦線）
+
+            scene.add(riftMesh);
+        }
+
         // --- Interaction Logic ---
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -1002,22 +1121,45 @@
             if (state.introMode) {
                 updateIntro();
             } else if (state.warping) {
-                // ワープ演出: カメラの前進 + FOV拡大
-                const speed = 20;
-                camera.position.z -= speed;
+                // ワープ・裂け目演出
+                const elapsed = time - state.warpStartTime;
                 
-                if (camera.fov < 120) {
-                    camera.fov += 0.5;
-                    camera.updateProjectionMatrix();
+                if (riftMesh && riftUniforms) {
+                    riftUniforms.time.value = time;
+                    
+                    // Step 1: 裂け目が横に広がる (0 ~ 2秒)
+                    if (elapsed < 2.0) {
+                        const progress = elapsed / 2.0;
+                        riftMesh.scale.x = THREE.MathUtils.lerp(0.01, 1.5, progress); // 横に広げる
+                        riftMesh.scale.y = THREE.MathUtils.lerp(1.0, 1.5, progress); // 縦にも少し
+                        riftUniforms.opening.value = progress;
+                        
+                        // カメラの振動
+                        camera.position.x += (Math.random() - 0.5) * 5;
+                        camera.position.y += (Math.random() - 0.5) * 5;
+                    } 
+                    // Step 2: 突入加速 (2秒 ~)
+                    else {
+                        riftUniforms.opening.value = 1.0;
+                        riftMesh.rotation.z += 0.1; // 渦を巻く
+                        
+                        // カメラを裂け目の中心へ加速させる
+                        const targetPos = riftMesh.position.clone();
+                        camera.position.lerp(targetPos, 0.05);
+                        
+                        // FOV拡大でスピード感
+                        if (camera.fov < 140) {
+                            camera.fov += 1;
+                            camera.updateProjectionMatrix();
+                        }
+                    }
                 }
 
-                // パーティクルを後ろに流す
-                particleSystem.rotation.z += 0.05;
-                particleSystem.scale.z += 0.1; // 伸びる演出
-                
-                // 揺れ
-                camera.position.x += (Math.random() - 0.5) * 5;
-                camera.position.y += (Math.random() - 0.5) * 5;
+                // パーティクル演出強化
+                particleSystem.rotation.z += 0.1; // 高速回転
+                particleSystem.scale.z += 0.2; // 引き延ばし
+
+                time += 0.05; // 時間加速
 
             } else {
                 // Main Loop
