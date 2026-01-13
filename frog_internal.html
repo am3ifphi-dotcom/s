@@ -397,7 +397,7 @@
             opacity: 0;
             pointer-events: none;
             z-index: 1000;
-            transition: opacity 2s ease-in;
+            transition: opacity 1.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
         #warp-whiteout.active {
             opacity: 1;
@@ -484,6 +484,7 @@
             isRestored: false,
             introMode: true,
             warping: false, // ワープ演出用フラグ
+            warpPhase: 0,   // 0:None, 1:Charge, 2:Explode/Portal, 3:Suck/Dive
             warpStartTime: 0
         };
 
@@ -709,26 +710,20 @@
                 
                 // 隠しコマンドの追加
                 window.sys.dive = function() {
-                    console.log("%c RIFT GENERATOR INITIATED...", "color: #d400ff; font-size: 1.5em; font-weight:bold; text-shadow: 0 0 10px #d400ff;");
+                    console.log("%c CORE INSTABILITY DETECTED...", "color: #d400ff; font-size: 1.5em; font-weight:bold; text-shadow: 0 0 10px #d400ff;");
+                    console.log("%c INITIATING EVENT HORIZON...", "color: #fff;");
                     
                     // Warp Trigger
                     closeEnding();
                     state.warping = true;
+                    state.warpPhase = 1; // Start Charge
                     state.warpStartTime = time;
 
-                    // Rift生成
-                    createRift();
+                    // UI Hide
+                    document.getElementById('main-ui').style.opacity = 0;
 
-                    // Fade to white
-                    setTimeout(() => {
-                        document.getElementById('warp-whiteout').classList.add('active');
-                    }, 5000); // 演出時間を確保
-
-                    // Redirect
-                    setTimeout(() => {
-                        window.location.href = './cosmic_frog.html';
-                    }, 7000);
-                    return "OPENING DIMENSIONAL GATEWAY...";
+                    // Kickstart the sequence in the loop
+                    return "COLLAPSING SPACETIME...";
                 };
                 
                 console.log("%c[SYSTEM] Hidden route unlocked.", "color: #00ff00");
@@ -808,22 +803,24 @@
         controls.enabled = false;
 
         // --- Main Scene Particles ---
-        const pCount = 6000;
+        const pCount = 8000;
         const pGeo = new THREE.BufferGeometry();
         const pPos = new Float32Array(pCount * 3);
+        const pVel = new Float32Array(pCount * 3); // For Physics
         const pCol = new Float32Array(pCount * 3);
         const c1 = new THREE.Color(0xff0055);
         
         for(let i=0; i<pCount; i++) {
-            pPos[i*3] = (Math.random() - 0.5) * 2500;
-            pPos[i*3+1] = (Math.random() - 0.5) * 2500;
-            pPos[i*3+2] = (Math.random() - 0.5) * 2500;
+            pPos[i*3] = (Math.random() - 0.5) * 3000;
+            pPos[i*3+1] = (Math.random() - 0.5) * 3000;
+            pPos[i*3+2] = (Math.random() - 0.5) * 3000;
+            pVel[i*3] = 0; pVel[i*3+1] = 0; pVel[i*3+2] = 0;
             pCol[i*3] = c1.r; pCol[i*3+1] = c1.g; pCol[i*3+2] = c1.b;
         }
         pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
         pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
         const pMat = new THREE.PointsMaterial({
-            size: 3, vertexColors: true, transparent: true, opacity: 0.7, // 明るく
+            size: 2, vertexColors: true, transparent: true, opacity: 0.7,
             blending: THREE.AdditiveBlending, sizeAttenuation: true
         });
         const particleSystem = new THREE.Points(pGeo, pMat);
@@ -900,117 +897,126 @@
             });
         }
 
-        // --- Rift Logic (Warp Effect) ---
-        let riftMesh;
-        let riftUniforms;
-
-        function createRift() {
-            // 時空の裂け目Shader
-            const vertexShader = `
+        // --- PORTAL SHADER & SETUP ---
+        let portalMesh;
+        let portalUniforms;
+        
+        function createPortal() {
+            // ブラックホール/ワームホール風シェーダー
+            const vShader = `
                 varying vec2 vUv;
-                varying vec3 vPos;
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
                 void main() {
                     vUv = uv;
-                    vPos = position;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    vNormal = normalize(normalMatrix * normal);
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
                 }
             `;
-            const fragmentShader = `
+            const fShader = `
                 uniform float time;
-                uniform float opening; // 0.0 to 1.0 (閉 -> 開)
+                uniform float intensity;
                 varying vec2 vUv;
-                
-                // Simplex Noise (simplified)
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+
+                // Simplex noise function
                 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-                vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-                vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
-                float snoise(vec2 v) {
-                    const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-                    vec2 i  = floor(v + dot(v, C.yy) );
-                    vec2 x0 = v -   i + dot(i, C.xx);
-                    vec2 i1;
-                    i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-                    vec4 x12 = x0.xyxy + C.xxzz;
-                    x12.xy -= i1;
-                    i = mod289(i);
-                    vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
-                    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-                    m = m*m ;
-                    m = m*m ;
-                    vec3 x = 2.0 * fract(p * C.www) - 1.0;
-                    vec3 h = abs(x) - 0.5;
-                    vec3 ox = floor(x + 0.5);
-                    vec3 a0 = x - ox;
-                    m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-                    vec3 g;
-                    g.x  = a0.x  * x0.x  + h.x  * x0.y;
-                    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-                    return 130.0 * dot(m, g);
+                vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+                float snoise(vec3 v) { 
+                    const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+                    const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+                    vec3 i  = floor(v + dot(v, C.yyy) );
+                    vec3 x0 = v - i + dot(i, C.xxx) ;
+                    vec3 g = step(x0.yzx, x0.xyz);
+                    vec3 l = 1.0 - g;
+                    vec3 i1 = min( g.xyz, l.zxy );
+                    vec3 i2 = max( g.xyz, l.zxy );
+                    vec3 x1 = x0 - i1 + C.xxx;
+                    vec3 x2 = x0 - i2 + C.yyy;
+                    vec3 x3 = x0 - D.yyy;
+                    i = mod289(i); 
+                    vec4 p = permute( permute( permute( 
+                                i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                            + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+                            + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+                    float n_ = 0.142857142857; 
+                    vec3  ns = n_ * D.wyz - D.xzx;
+                    vec4 j = p - 49.0 * floor(p * ns.z * ns.z); 
+                    vec4 x_ = floor(j * ns.z);
+                    vec4 y_ = floor(j - 7.0 * x_ ); 
+                    vec4 x = x_ *ns.x + ns.yyyy;
+                    vec4 y = y_ *ns.x + ns.yyyy;
+                    vec4 h = 1.0 - abs(x) - abs(y);
+                    vec4 b0 = vec4( x.xy, y.xy );
+                    vec4 b1 = vec4( x.zw, y.zw );
+                    vec4 s0 = floor(b0)*2.0 + 1.0;
+                    vec4 s1 = floor(b1)*2.0 + 1.0;
+                    vec4 sh = -step(h, vec4(0.0));
+                    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+                    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+                    vec3 p0 = vec3(a0.xy,h.x);
+                    vec3 p1 = vec3(a0.zw,h.y);
+                    vec3 p2 = vec3(a1.xy,h.z);
+                    vec3 p3 = vec3(a1.zw,h.w);
+                    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+                    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                    m = m * m;
+                    return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
+                                                dot(p2,x2), dot(p3,x3) ) );
                 }
 
                 void main() {
-                    vec2 p = vUv * 2.0 - 1.0;
-                    float r = length(p);
-                    float a = atan(p.y, p.x);
+                    // Fresnel Effect
+                    vec3 viewDir = normalize(vViewPosition);
+                    vec3 normal = normalize(vNormal);
+                    float fresnel = pow(1.0 - dot(viewDir, normal), 3.0);
                     
-                    // ノイズによる歪み
-                    float noise = snoise(vec2(p.x * 2.0, p.y * 2.0 - time * 2.0));
+                    // Dynamic Noise for surface
+                    float noise = snoise(vec3(vNormal * 4.0 + time * 0.5));
                     
-                    // 裂け目の形状: 縦に長い楕円から真円へ
-                    float holeShape = abs(p.x) * (2.0 - opening) + abs(p.y) * 0.5;
+                    // Colors
+                    vec3 coreColor = vec3(0.0, 0.0, 0.0); // Black hole center
+                    vec3 rimColor = vec3(0.2, 0.6, 1.0); // Blueish rim
+                    vec3 energyColor = vec3(0.8, 0.0, 1.0); // Purple energy
                     
-                    // 縁のエフェクト
-                    float edge = smoothstep(0.4 * opening, 0.5 * opening + 0.1, r + noise * 0.1);
-                    float core = smoothstep(0.0, 0.4 * opening, r + noise * 0.05);
+                    // Mix
+                    vec3 color = mix(coreColor, energyColor, fresnel * intensity);
+                    color += rimColor * (noise * 0.5 + 0.5) * fresnel * 2.0;
                     
-                    // 色
-                    vec3 outerColor = vec3(0.5, 0.0, 1.0); // 紫
-                    vec3 innerColor = vec3(0.0, 0.8, 1.0); // 青
-                    vec3 centerColor = vec3(1.0, 1.0, 1.0); // 白
+                    // Transparency edge
+                    float alpha = smoothstep(0.0, 1.0, fresnel + 0.2);
                     
-                    // ミックス
-                    vec3 col = mix(centerColor, innerColor, core);
-                    col = mix(col, outerColor, edge);
-                    
-                    // 穴の外側は透明に、内側は発光
-                    float alpha = (1.0 - edge) * opening + (1.0 - smoothstep(0.0, 0.05 + opening * 0.1, abs(p.x * (10.0 - opening * 9.0) + noise * 0.5))) * (1.0 - opening); 
-                    
-                    // 最終調整: 開くときは穴の中が見える
-                    float intensity = 1.0 / (abs(r - opening * 0.5) + 0.1);
-                    col *= intensity;
-
-                    gl_FragColor = vec4(col, alpha);
+                    gl_FragColor = vec4(color, alpha);
                 }
             `;
 
-            riftUniforms = {
+            portalUniforms = {
                 time: { value: 0 },
-                opening: { value: 0.0 }
+                intensity: { value: 0 }
             };
 
-            const riftGeo = new THREE.PlaneGeometry(800, 800, 64, 64);
-            const riftMat = new THREE.ShaderMaterial({
-                uniforms: riftUniforms,
-                vertexShader: vertexShader,
-                fragmentShader: fragmentShader,
+            const geo = new THREE.SphereGeometry(1, 64, 64);
+            const mat = new THREE.ShaderMaterial({
+                uniforms: portalUniforms,
+                vertexShader: vShader,
+                fragmentShader: fShader,
                 transparent: true,
-                side: THREE.DoubleSide,
                 blending: THREE.AdditiveBlending,
-                depthWrite: false
+                side: THREE.DoubleSide
             });
-
-            riftMesh = new THREE.Mesh(riftGeo, riftMat);
             
-            // カメラの前方に配置
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            const spawnPos = camera.position.clone().add(forward.multiplyScalar(500));
-            riftMesh.position.copy(spawnPos);
-            riftMesh.lookAt(camera.position);
+            portalMesh = new THREE.Mesh(geo, mat);
+            // 初期位置はHeartの位置
+            const heart = organMeshes.find(m => m.userData.id === 'heart');
+            if(heart) portalMesh.position.copy(heart.position);
             
-            // 初期状態
-            riftMesh.scale.set(0, 1, 1); // 閉じた状態（縦線）
-
-            scene.add(riftMesh);
+            scene.add(portalMesh);
         }
 
         // --- Interaction Logic ---
@@ -1117,60 +1123,147 @@
         let time = 0;
         function animate() {
             requestAnimationFrame(animate);
+            time += 0.01;
 
             if (state.introMode) {
                 updateIntro();
             } else if (state.warping) {
-                // ワープ・裂け目演出
+                // WARP SEQUENCE
                 const elapsed = time - state.warpStartTime;
                 
-                if (riftMesh && riftUniforms) {
-                    riftUniforms.time.value = time;
-                    
-                    // Step 1: 裂け目が横に広がる (0 ~ 2秒)
-                    if (elapsed < 2.0) {
-                        const progress = elapsed / 2.0;
-                        riftMesh.scale.x = THREE.MathUtils.lerp(0.01, 1.5, progress); // 横に広げる
-                        riftMesh.scale.y = THREE.MathUtils.lerp(1.0, 1.5, progress); // 縦にも少し
-                        riftUniforms.opening.value = progress;
-                        
-                        // カメラの振動
-                        camera.position.x += (Math.random() - 0.5) * 5;
-                        camera.position.y += (Math.random() - 0.5) * 5;
-                    } 
-                    // Step 2: 突入加速 (2秒 ~)
-                    else {
-                        riftUniforms.opening.value = 1.0;
-                        riftMesh.rotation.z += 0.1; // 渦を巻く
-                        
-                        // カメラを裂け目の中心へ加速させる
-                        const targetPos = riftMesh.position.clone();
-                        camera.position.lerp(targetPos, 0.05);
-                        
-                        // FOV拡大でスピード感
-                        if (camera.fov < 140) {
-                            camera.fov += 1;
-                            camera.updateProjectionMatrix();
+                // === Phase 1: Charge (0.0s - 2.0s) ===
+                // 心臓が異常振動、他の臓器は吹き飛ぶ
+                if (state.warpPhase === 1) {
+                    // 他の臓器を吹き飛ばす
+                    organMeshes.forEach(mesh => {
+                        if (mesh.userData.id !== 'heart') {
+                            const dir = mesh.position.clone().normalize();
+                            mesh.position.add(dir.multiplyScalar(15)); // Blow away
+                            mesh.rotation.x += 0.2;
+                            mesh.rotation.y += 0.2;
+                        } else {
+                            // 心臓: 激しく振動 & 収縮
+                            mesh.rotation.z += 0.5;
+                            mesh.scale.setScalar(1.0 - (elapsed / 2.0) * 0.9); // 1.0 -> 0.1
+                            mesh.position.x = (Math.random()-0.5) * 10;
+                            mesh.position.y = 50 + (Math.random()-0.5) * 10;
                         }
+                    });
+
+                    // カメラの振動（徐々に強く）
+                    camera.position.x += (Math.random()-0.5) * (elapsed * 2);
+                    camera.position.y += (Math.random()-0.5) * (elapsed * 2);
+
+                    if (elapsed > 2.0) {
+                        state.warpPhase = 2;
+                        // 心臓消滅、ポータル出現
+                        const heart = organMeshes.find(m => m.userData.id === 'heart');
+                        if(heart) heart.visible = false;
+                        createPortal(); // Create Portal at heart pos
+                    }
+                }
+                
+                // === Phase 2: Explode / Portal Growth (2.0s - 4.0s) ===
+                // ポータルが爆発的に広がる
+                else if (state.warpPhase === 2) {
+                    if (portalMesh) {
+                        portalUniforms.time.value = time * 5;
+                        portalUniforms.intensity.value = 1.0;
+                        
+                        // 急速拡大 (0 -> 500)
+                        const pTime = elapsed - 2.0;
+                        const scale = THREE.MathUtils.lerp(1, 500, pTime / 2.0);
+                        portalMesh.scale.setScalar(scale);
+                        
+                        // カメラは一旦少し引く (予備動作)
+                        camera.position.z += 2; 
+                    }
+
+                    if (elapsed > 4.0) {
+                        state.warpPhase = 3;
                     }
                 }
 
-                // パーティクル演出強化
-                particleSystem.rotation.z += 0.1; // 高速回転
-                particleSystem.scale.z += 0.2; // 引き延ばし
+                // === Phase 3: Suck / Dive (4.0s - 7.0s) ===
+                // 重力吸引、カメラ突入
+                else if (state.warpPhase === 3) {
+                    if (portalMesh) {
+                        portalUniforms.time.value = time * 10; // Shader高速化
+                        portalMesh.rotation.z -= 0.05;
 
-                time += 0.05; // 時間加速
+                        // パーティクル吸引
+                        const positions = particleSystem.geometry.attributes.position.array;
+                        const target = portalMesh.position;
+                        
+                        for(let i=0; i<pCount; i++) {
+                            const ix = i*3;
+                            const px = positions[ix];
+                            const py = positions[ix+1];
+                            const pz = positions[ix+2];
+                            
+                            // 簡易物理: 中心へ向かうベクトル
+                            const dx = target.x - px;
+                            const dy = target.y - py;
+                            const dz = target.z - pz;
+                            
+                            // 距離に応じた吸引力
+                            const distSq = dx*dx + dy*dy + dz*dz;
+                            const force = 500000 / (distSq + 100);
+                            
+                            positions[ix] += dx * 0.001 * force;
+                            positions[ix+1] += dy * 0.001 * force;
+                            positions[ix+2] += dz * 0.001 * force;
+
+                            // スワール（回転）
+                            const angle = 0.05 * force;
+                            const cosA = Math.cos(angle);
+                            const sinA = Math.sin(angle);
+                            // Z軸回転風
+                            const nx = (px - target.x) * cosA - (py - target.y) * sinA + target.x;
+                            const ny = (px - target.x) * sinA + (py - target.y) * cosA + target.y;
+                            positions[ix] = nx;
+                            positions[ix+1] = ny;
+                        }
+                        particleSystem.geometry.attributes.position.needsUpdate = true;
+
+                        // カメラ突入
+                        const diveProgress = (elapsed - 4.0) / 3.0; // 0.0 to 1.0
+                        const diveSpeed = Math.pow(diveProgress, 3) * 100; // 指数関数的加速
+                        
+                        const dir = new THREE.Vector3().subVectors(portalMesh.position, camera.position).normalize();
+                        camera.position.add(dir.multiplyScalar(diveSpeed));
+
+                        // FOV拡大 (Warp effect)
+                        if (camera.fov < 150) {
+                            camera.fov += 0.5;
+                            camera.updateProjectionMatrix();
+                        }
+                        
+                        // 回転しながら突っ込む
+                        camera.rotation.z -= 0.02 * diveProgress;
+                    }
+
+                    // Whiteout Trigger
+                    if (elapsed > 6.0) {
+                        document.getElementById('warp-whiteout').classList.add('active');
+                    }
+                    
+                    // Redirect
+                    if (elapsed > 7.5) {
+                        window.location.href = './cosmic_frog.html';
+                    }
+                }
 
             } else {
-                // Main Loop
-                time += 0.01;
+                // --- Normal State Loop ---
                 controls.update();
 
-                // 出現時の拡大アニメーション（フェードイン代替）
+                // 出現時の拡大アニメーション
                 if (mainGroup.visible && mainGroup.scale.x < 1) {
                     mainGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.05);
                 }
 
+                // Organ Animations
                 organMeshes.forEach(group => {
                     const data = organs.find(o => o.id === group.userData.id);
                     if (data.solved) {
@@ -1189,14 +1282,13 @@
                     }
                 });
 
+                // Particle Rotation
                 if (state.isRestored) {
                     const c = particleSystem.geometry.attributes.color;
-                    for(let i=0; i<pCount; i++) c.setXYZ(i, 0, 0.6, 1);
+                    for(let i=0; i<pCount; i++) c.setXYZ(i, 0, 0.6, 1); // Blue
                     c.needsUpdate = true;
-                    // 平和な回転
                     mainGroup.rotation.y += 0.002;
                 } else {
-                    // 通常時のゆっくり回転
                     mainGroup.rotation.y += 0.0005;
                 }
             }
