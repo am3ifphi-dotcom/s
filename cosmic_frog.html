@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COSMIC PARADISE // PARADISE</title>
+    <title>COSMIC PARADISE // SYSTEM_HALTED</title>
     <!-- Three.js (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- OrbitControls (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;800&family=Orbitron:wght@500;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Share+Tech+Mono&family=Orbitron:wght@500;900&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -17,9 +17,9 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #020005; /* より深い漆黒 */
+            background-color: #050010;
             overflow: hidden;
-            font-family: 'Zen Maru Gothic', sans-serif;
+            font-family: 'Share Tech Mono', 'Zen Maru Gothic', monospace; /* ハッカーっぽいフォント */
             color: white;
             user-select: none;
         }
@@ -30,13 +30,13 @@
             z-index: 1;
         }
 
-        /* --- White Start Layer (No Text) --- */
+        /* --- Intro Layer --- */
         #white-layer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: #ffffff;
             z-index: 300;
-            transition: opacity 2s ease-in-out;
+            transition: opacity 1.5s ease-out;
             pointer-events: none;
         }
 
@@ -54,36 +54,34 @@
 
         h1 {
             font-size: 2.5rem; margin: 0;
-            background: linear-gradient(to right, #00ffff, #ff00ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            font-family: 'M PLUS Rounded 1c', sans-serif;
+            color: #ff3333; /* エラー状態の赤 */
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            font-family: 'Orbitron', sans-serif;
             font-weight: 800;
+            letter-spacing: 2px;
         }
 
         .subtitle {
-            font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);
-            margin-top: 5px; background: rgba(0,0,0,0.3);
-            padding: 5px 15px; border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.9rem; color: rgba(255, 100, 100, 0.8);
+            margin-top: 5px; background: rgba(50,0,0,0.5);
+            padding: 5px 15px; border-radius: 2px;
+            border: 1px solid rgba(255,50,50,0.3);
             display: inline-block;
         }
 
-        /* 詳細パネル */
+        /* 詳細パネル（デバッグモニタ風） */
         #info-panel {
             position: absolute;
             top: 50%; right: 40px;
             transform: translateY(-50%) translateX(150%);
-            width: 340px;
-            background: rgba(10, 15, 30, 0.9);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-left: 4px solid #00ffaa;
-            backdrop-filter: blur(20px);
+            width: 400px; /* 少し広く */
+            background: rgba(10, 5, 5, 0.95);
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            border-left: 4px solid #ff3333;
+            backdrop-filter: blur(10px);
             padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
             opacity: 0;
             pointer-events: auto;
             z-index: 20;
@@ -93,52 +91,93 @@
         .panel-header {
             display: flex; align-items: center; gap: 15px;
             margin-bottom: 20px; padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px dashed rgba(255,50,50,0.3);
         }
         .panel-icon {
-            width: 50px; height: 50px; border-radius: 12px;
+            width: 40px; height: 40px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; color: #000;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-            background: linear-gradient(135deg, #00ffff, #ffffff);
+            font-size: 1.2rem; color: #ff3333;
+            border: 1px solid #ff3333;
+            background: rgba(255,0,0,0.1);
         }
-        #info-panel h2 { margin: 0; color: #fff; font-size: 1.4rem; font-weight: 700; }
-        #info-panel p { font-size: 0.95rem; line-height: 1.8; color: #d0d0d0; margin-bottom: 25px; }
+        #panel-title { 
+            margin: 0; color: #ff3333; font-size: 1.2rem; 
+            font-family: 'Share Tech Mono', monospace; 
+        }
+        
+        /* コード表示エリア */
+        #panel-content {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #ccc;
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+            white-space: pre-wrap; /* 改行維持 */
+        }
+        
+        .code-fragment {
+            color: #00ffaa;
+            font-weight: bold;
+        }
 
         .close-btn {
             position: absolute; top: 15px; right: 15px;
-            background: rgba(255,255,255,0.1); border: none;
-            width: 30px; height: 30px; border-radius: 50%;
-            color: #fff; cursor: pointer; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
+            background: transparent; border: none;
+            color: #666; cursor: pointer; transition: 0.2s;
+            font-size: 1.2rem;
         }
-        .close-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+        .close-btn:hover { color: #fff; }
 
-        .action-btn {
-            display: block; width: 100%; padding: 15px;
-            background: linear-gradient(90deg, #00ffaa, #00aaff);
-            border: none; border-radius: 12px;
-            color: #000; font-weight: 800; cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            font-family: 'M PLUS Rounded 1c', sans-serif;
+        .status-bar {
+            font-size: 0.7rem;
+            color: #666;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
         }
-        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 170, 0.4); }
+
+        /* 覚醒後のアクションボタン */
+        #action-btn-container {
+            display: none; /* デフォルト非表示 */
+            margin-top: 15px;
+        }
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #00ffaa, #00aaff);
+            border: none;
+            border-radius: 4px;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.6);
+        }
+        .action-btn:active { transform: translateY(0); }
 
         /* カーソルラベル */
         #cursor-label {
             position: absolute;
-            background: rgba(5, 10, 20, 0.85);
-            color: #fff;
-            padding: 8px 16px; border-radius: 30px;
-            font-weight: 700; font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.8);
+            color: #ff3333;
+            padding: 5px 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
             pointer-events: none; opacity: 0;
-            transform: scale(0.8); transition: 0.2s;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            z-index: 30; display: flex; align-items: center; gap: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
+            transform: scale(0.9); transition: 0.1s;
+            border: 1px solid #ff3333;
+            z-index: 30;
         }
         #cursor-label.visible { opacity: 1; transform: scale(1); }
-        .label-dot { width: 8px; height: 8px; border-radius: 50%; background: #00ffff; box-shadow: 0 0 5px currentColor; }
 
         .nav-hint {
             position: absolute; bottom: 30px; left: 50%;
@@ -146,105 +185,240 @@
             display: flex; gap: 20px;
             pointer-events: none; opacity: 0;
             transition: opacity 2s ease;
+            font-family: 'Share Tech Mono', monospace;
+            color: #666;
+            font-size: 0.8rem;
         }
-        .nav-hint.visible { opacity: 0.7; }
-        .hint-item {
-            background: rgba(0,0,0,0.5); padding: 8px 15px;
-            border-radius: 20px; font-size: 0.8rem;
-            display: flex; align-items: center; gap: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
+        .nav-hint.visible { opacity: 1; }
+
+        /* AWAKENED STATE (System Repaired) */
+        body.awakened h1 { 
+            color: #00ffaa; 
+            text-shadow: 0 0 20px #00ffaa; 
         }
-        .hint-item i { color: #00ffaa; }
+        body.awakened .subtitle { 
+            color: #00ffaa; border-color: #00ffaa; background: rgba(0,50,20,0.5); 
+        }
+        body.awakened #info-panel {
+            border-left-color: #00ffaa;
+            border-color: rgba(0,255,170,0.3);
+            background: rgba(0, 10, 20, 0.9);
+        }
+        body.awakened .panel-icon { color: #00ffaa; border-color: #00ffaa; background: rgba(0,255,170,0.1); }
+        body.awakened #panel-title { color: #00ffaa; }
+        body.awakened #cursor-label { color: #00ffaa; border-color: #00ffaa; }
+        body.awakened .panel-header { border-bottom-color: rgba(0,255,170,0.3); }
+        body.awakened #panel-content { color: #aaffdd; border-color: rgba(0,255,170,0.2); background: rgba(0,20,10,0.3); }
 
     </style>
 </head>
 <body>
 
-    <!-- White Start Screen -->
     <div id="white-layer"></div>
-
-    <!-- 3D Canvas -->
     <div id="canvas-container"></div>
 
-    <!-- Main UI -->
     <div id="ui-layer">
-        <h1>NIRVANA-09</h1>
-        <div class="subtitle"><i class="fas fa-check-circle" style="color:#00ffaa"></i> 楽園システム稼働中</div>
+        <h1 id="main-title">SYSTEM_HALTED</h1>
+        <div class="subtitle" id="main-subtitle"><i class="fas fa-exclamation-triangle"></i> CRITICAL DRIVER MISSING</div>
     </div>
 
-    <div id="cursor-label"><span class="label-dot"></span><span id="label-text">Facility</span></div>
+    <div id="cursor-label">FRAGMENT_DETECTED</div>
 
     <div id="info-panel">
         <button class="close-btn" onclick="resetView(event)"><i class="fas fa-times"></i></button>
         <div class="panel-header">
-            <div class="panel-icon" id="panel-icon"><i class="fas fa-star"></i></div>
-            <h2 id="panel-title">施設名</h2>
+            <div class="panel-icon"><i class="fas fa-bug"></i></div>
+            <h2 id="panel-title">DEBUG_LOG</h2>
         </div>
         <div id="panel-content">
-            <p>説明</p>
+            <!-- Code snippet goes here -->
         </div>
-        <button class="action-btn" onclick="alert('Have a nice trip!')">VISIT AREA</button>
+        
+        <!-- 覚醒後に出現するボタン -->
+        <div id="action-btn-container">
+            <button class="action-btn" id="action-btn">EXECUTE</button>
+        </div>
+
+        <div class="status-bar">
+            <span id="status-code">ERR_CODE: 0xDEADBEEF</span>
+            <span id="status-level">LEVEL: KERNEL</span>
+        </div>
     </div>
 
     <div class="nav-hint" id="nav-hint">
-        <div class="hint-item"><i class="fas fa-mouse-pointer"></i> クリックで探索</div>
-        <div class="hint-item"><i class="fas fa-arrows-alt"></i> ドラッグで回転</div>
-        <div class="hint-item"><i class="fas fa-search-plus"></i> ホイールでズーム</div>
+        [CLICK] INSPECT MEMORY // [DRAG] PAN CAMERA // [F12] TERMINAL
     </div>
 
     <script>
         // --- Configuration ---
         const config = {
-            bgColor: 0x020005,
+            bgColor: 0x050010,
             planetSize: 4.5,
-            frogColor: 0x99ff99,
+            frogColor: 0x555555, // 停止中はグレー
             warpColor: 0x00ffff,
             starColor: 0xffffff
         };
 
         const state = {
-            phase: 'white_out', // white_out -> warping -> arriving -> arrived
+            phase: 'white_out',
             warpSpeed: 0,
             targetWarpSpeed: 0,
-            cameraShake: 0,
-            fov: 150
+            isAwakened: false // 謎解き完了フラグ
         };
 
-        // --- Facilities Data ---
+        // --- Puzzle Data & Awakened Functions ---
         const facilities = [
-            { id: 'library', name: '記憶の図書館', icon: 'fa-book-open', description: 'かつての叡智が結晶となって保存されています。', color: 0x00ffff, phi: 1.2, theta: 0, type: 'library' },
-            { id: 'garden', name: 'ヒーリング・ガーデン', icon: 'fa-leaf', description: 'デジタル植物による究極の癒やし空間。', color: 0x66ff66, phi: 1.8, theta: 1.5, type: 'garden' },
-            { id: 'observatory', name: '星読みの天文台', icon: 'fa-moon', description: '未来を観測する巨大望遠鏡。', color: 0xaaaaff, phi: 1.0, theta: 3.5, type: 'observatory' },
-            { id: 'market', name: '流星マーケット', icon: 'fa-store', description: '銀河の特産品が集まる市場。', color: 0xffaa00, phi: 2.2, theta: 2.5, type: 'market' },
-            { id: 'fountain', name: '始りの泉', icon: 'fa-water', description: '生命エネルギーが湧き出る泉。', color: 0x0088ff, phi: 2.5, theta: 5.0, type: 'fountain' },
-            { id: 'shrine', name: 'カエルの神殿', icon: 'fa-torii-gate', description: 'コズミック・フロッグを祀る聖地。', color: 0xff5555, phi: 1.5, theta: 4.5, type: 'torii' },
-            { id: 'server', name: 'モノリス・サーバー', icon: 'fa-server', description: '世界の法則を記述する石板。', color: 0x888888, phi: 2.0, theta: 0.8, type: 'monolith' },
-            { id: 'cafe', name: '銀河カフェ', icon: 'fa-mug-hot', description: '一息つける休憩所。', color: 0xff99cc, phi: 1.4, theta: 5.8, type: 'cafe' }
+            { 
+                id: 'server', name: 'CORE_SERVER', icon: 'fa-server', color: 0xff3333, phi: 2.0, theta: 0.8, type: 'monolith',
+                log: `[CRITICAL ERROR]\nDriver 'CosmicDriver' is undefined.\nSystem cannot initialize planetary rotation.`,
+                // Awakened
+                awakenedTitle: 'SYSTEM_CORE',
+                awakenedLog: 'System is stable.\nCore performance: 100%\nUptime: Just started.',
+                actionLabel: 'REBOOT WORLD',
+                actionType: 'reload'
+            },
+            { 
+                id: 'library', name: 'LIB_ARCHIVE', icon: 'fa-book', color: 0xff3333, phi: 1.2, theta: 0, type: 'library',
+                log: `[MANUAL_PAGE_01]\nTo repair the system, you must define a class named <span class="code-fragment">CosmicDriver</span> in the global scope.`,
+                // Awakened
+                awakenedTitle: 'GATEWAY_LINK',
+                awakenedLog: 'External knowledge base connection established.\nReady to jump.',
+                actionLabel: 'VISIT THREE.JS DOCS',
+                actionType: 'link',
+                url: 'https://threejs.org/'
+            },
+            { 
+                id: 'observatory', name: 'OBS_TELESCOPE', icon: 'fa-eye', color: 0xff3333, phi: 1.0, theta: 3.5, type: 'observatory',
+                log: `[MANUAL_PAGE_02]\nThe <span class="code-fragment">CosmicDriver</span> constructor must accept one argument:\n<span class="code-fragment">starCount</span> (Integer).`,
+                // Awakened
+                awakenedTitle: 'WARP_CONTROL',
+                awakenedLog: 'Starfield propulsion engine.\nCurrent status: Idle',
+                actionLabel: 'TOGGLE HYPERDRIVE',
+                actionType: 'warp_speed'
+            },
+            { 
+                id: 'garden', name: 'MEM_GARDEN', icon: 'fa-tree', color: 0xff3333, phi: 1.8, theta: 1.5, type: 'garden',
+                log: `[MEMORY_DUMP]\nScanning local sector...\nCurrent star count detected: <span class="code-fragment">88</span>`,
+                // Awakened
+                awakenedTitle: 'FLORA_GENERATOR',
+                awakenedLog: 'Digital cultivation module active.\nSeed bank: Unlimited.',
+                actionLabel: 'PLANT FLOWERS',
+                actionType: 'spawn_flowers'
+            },
+            { 
+                id: 'shrine', name: 'GATE_KEEPER', icon: 'fa-torii-gate', color: 0xff3333, phi: 1.5, theta: 4.5, type: 'torii',
+                log: `[MANUAL_PAGE_03]\nThe class must implement a method named <span class="code-fragment">ignite(fuel)</span>.\nThis method triggers the core fusion.`,
+                // Awakened
+                awakenedTitle: 'COSMIC_ORACLE',
+                awakenedLog: 'Connection to divine matrix active.\nQuerying future...',
+                actionLabel: 'DRAW FORTUNE',
+                actionType: 'omikuji'
+            },
+            { 
+                id: 'cafe', name: 'CACHE_BUFFER', icon: 'fa-coffee', color: 0xff3333, phi: 1.4, theta: 5.8, type: 'cafe',
+                log: `[MANUAL_PAGE_04]\nInside 'ignite(fuel)':\nIf the argument <span class="code-fragment">fuel</span> equals the string <span class="code-fragment">'LOVE'</span>,\nreturn <span class="code-fragment">true</span>.\nOtherwise, return false.`,
+                // Awakened
+                awakenedTitle: 'LOUNGE_AREA',
+                awakenedLog: 'Refreshment module.\nFrog happiness level: 100%',
+                actionLabel: 'CHEER UP FROG',
+                actionType: 'frog_dance'
+            },
+            { 
+                id: 'market', name: 'DATA_EXCHANGE', icon: 'fa-exchange-alt', color: 0xff3333, phi: 2.2, theta: 2.5, type: 'market',
+                log: `[NETWORK_LOG]\nConnection Refused.\nAuthentication Protocol: Custom Class Injection required.`,
+                // Awakened
+                awakenedTitle: 'SKIN_SHOP',
+                awakenedLog: 'Customization protocol available.\nModify entity parameters.',
+                actionLabel: 'CHANGE FROG COLOR',
+                actionType: 'change_color'
+            },
+            { 
+                id: 'fountain', name: 'ROOT_ACCESS', icon: 'fa-terminal', color: 0xff3333, phi: 2.5, theta: 5.0, type: 'fountain',
+                log: `[ADMIN_CONSOLE]\nTo restart the system, instantiate your driver and mount it:\n\n<span class="code-fragment">window.PARADISE_SYSTEM.mount(new CosmicDriver(88));</span>`,
+                // Awakened
+                awakenedTitle: 'CELEBRATION_UNIT',
+                awakenedLog: 'Victory state confirmed.\nDeploying visual rewards.',
+                actionLabel: 'LAUNCH FIREWORKS',
+                actionType: 'fireworks'
+            }
         ];
 
         // --- Globals ---
         let scene, camera, renderer, controls;
-        let planetGroup, frogGroup, poiGroup;
-        let warpStars, midStars, farStars;
+        let planetGroup, frogGroup, poiGroup, particleGroup;
+        let warpStars, farStars;
         let raycaster, mouse;
         let hoveredObj = null;
         let targetCameraPos = null;
         let targetControlsTarget = null;
         let isFocusing = false;
         let clock = new THREE.Clock();
+        
+        // For Effects
+        let tempParticles = [];
+
+        // --- SYSTEM CORE (The Puzzle Validator) ---
+        window.PARADISE_SYSTEM = {
+            mounted: false,
+            mount: function(driverInstance) {
+                console.log("%c[SYSTEM] Mounting driver...", "color:yellow");
+
+                if (!driverInstance) {
+                    console.error("[SYSTEM] Error: No instance provided.");
+                    return;
+                }
+                
+                if (driverInstance.constructor.name !== 'CosmicDriver') {
+                    console.error("[SYSTEM] Error: Invalid Driver Class. Expected 'CosmicDriver'.");
+                    return;
+                }
+
+                if (driverInstance.starCount !== 88) {
+                    console.error(`[SYSTEM] Error: Star count mismatch. Expected 88, got ${driverInstance.starCount}.`);
+                    return;
+                }
+
+                if (typeof driverInstance.ignite !== 'function') {
+                    console.error("[SYSTEM] Error: Method 'ignite' not implemented.");
+                    return;
+                }
+
+                if (driverInstance.ignite('HATE') === true || driverInstance.ignite('LOVE') !== true) {
+                    console.error("[SYSTEM] Error: 'ignite' method logic verification failed.");
+                    return;
+                }
+
+                this.awaken();
+            },
+            awaken: function() {
+                if(this.mounted) return;
+                this.mounted = true;
+                state.isAwakened = true;
+                
+                console.clear();
+                console.log("%c[SYSTEM] DRIVER ACCEPTED. REBOOTING UNIVERSE...", "color: #00ffaa; font-size: 20px; font-weight: bold;");
+                
+                // Visual Updates
+                document.body.classList.add('awakened');
+                document.getElementById('main-title').innerText = "NIRVANA-09";
+                document.getElementById('main-title').style.color = "#00ffaa";
+                document.getElementById('main-subtitle').innerHTML = '<i class="fas fa-check-circle"></i> SYSTEM ONLINE';
+                
+                resetView();
+                triggerAwakeningEffect();
+            }
+        };
 
         // --- Init ---
         function init() {
-            scene = new THREE.Scene();
-            
-            // 霧（Fog）設定: 遠くを暗闇に溶け込ませる
-            // ワープ中は濃く、到着後は薄く変化させる
-            scene.fog = new THREE.Fog(config.bgColor, 50, 6000); 
+            console.log("%c[SYSTEM] BOOT FAILURE. MANUAL OVERRIDE REQUIRED.", "color: red; font-size: 16px; font-weight: bold;");
+            console.log("Check the facilities in the 3D view to reconstruct the `CosmicDriver` class.");
 
-            // カメラ設定
-            camera = new THREE.PerspectiveCamera(150, window.innerWidth / window.innerHeight, 0.1, 30000); 
-            // 初期位置：ワープトンネルの奥
-            camera.position.z = 10000; 
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(config.bgColor, 50, 8000); 
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000); 
+            camera.position.z = 20000; 
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -265,12 +439,15 @@
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
 
-            // Setup Scene Elements
             setupLights();
-            createStarField(); // 強化された星空
+            createStarField(); 
             createPlanet();
             createCuteFrog();
             createFacilities();
+            
+            // Particle system for effects
+            particleGroup = new THREE.Group();
+            scene.add(particleGroup);
             
             planetGroup.visible = true; 
 
@@ -278,81 +455,64 @@
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('click', onClick);
 
-            // Sequence
             startSequence();
             animate();
         }
 
-        // --- Seamless Transition Sequence ---
+        // --- Transition Sequence ---
         function startSequence() {
-            // 1. 白画面からフェードアウト (1s delay)
             setTimeout(() => {
                 const whiteLayer = document.getElementById('white-layer');
                 whiteLayer.style.opacity = 0;
                 
-                // 裏ではワープ開始
                 state.phase = 'warping';
-                state.warpSpeed = 200; // 高速移動
+                state.warpSpeed = 200;
                 state.targetWarpSpeed = 200;
 
-                setTimeout(() => whiteLayer.style.display = 'none', 2000);
+                setTimeout(() => whiteLayer.style.display = 'none', 1500);
 
-                // 2. ワープ空間を航行 (カメラはZ=10000からスタート)
-                // 3秒かけて惑星に急接近する
                 setTimeout(() => {
                     startApproach();
-                }, 1500); 
+                }, 2000); 
 
             }, 1000); 
         }
 
         function startApproach() {
             state.phase = 'arriving';
-            
-            // 星の速度を落とす
-            state.targetWarpSpeed = 0.2;
+            state.targetWarpSpeed = 0.5; 
             
             const startZ = 10000;
             const endZ = 16;
             const startFOV = 150;
             const endFOV = 50;
-            
-            // Fogの調整用
             const startFogNear = 50;
             const endFogNear = 100;
-            const startFogFar = 6000;
-            const endFogFar = 15000; // 視界をクリアに
+            const startFogFar = 8000;
+            const endFogFar = 15000;
 
             let progress = 0;
             
             const approachLoop = () => {
-                // スムーズな加速と減速 (Cubic Ease Out)
-                // 後半ゆっくりになることで着陸感を出す
-                progress += 0.005; 
+                progress += 0.008; 
                 const t = Math.min(progress, 1);
-                
-                // 独自のイージング: 前半速く、最後はふわっと
                 const ease = 1 - Math.pow(1 - t, 4);
 
-                // カメラ位置更新
                 camera.position.z = startZ + (endZ - startZ) * ease;
                 camera.fov = startFOV + (endFOV - startFOV) * ease;
                 camera.updateProjectionMatrix();
 
-                // 霧を晴らす
                 scene.fog.near = startFogNear + (endFogNear - startFogNear) * ease;
                 scene.fog.far = startFogFar + (endFogFar - startFogFar) * ease;
 
-                // 惑星を回転させてお出迎え
                 planetGroup.rotation.y = (1 - ease) * Math.PI; 
 
                 if (t < 1) {
                     requestAnimationFrame(approachLoop);
                 } else {
-                    // 到着完了
                     state.phase = 'arrived';
                     controls.enabled = true;
-                    state.warpSpeed = 0.2; // 完全に静止させずゆっくり流す
+                    state.warpSpeed = 0.2; 
                     
                     document.getElementById('ui-layer').classList.add('visible');
                     document.getElementById('ui-layer').style.display = 'block';
@@ -379,42 +539,16 @@
             scene.add(rim);
         }
 
-        // --- 強化された星空 (Enhanced Starfield) ---
         function createStarField() {
-            // 1. Far Stars (Dense Background)
             const farGeo = new THREE.BufferGeometry();
-            const farCount = 8000;
+            const farCount = 5000;
             const farPos = new Float32Array(farCount * 3);
-            const farCol = new Float32Array(farCount * 3);
-            for(let i=0; i<farCount; i++) {
-                const x = (Math.random() - 0.5) * 30000;
-                const y = (Math.random() - 0.5) * 30000;
-                const z = (Math.random() - 0.5) * 30000;
-                farPos[i*3] = x; farPos[i*3+1] = y; farPos[i*3+2] = z;
-                
-                // 色に変化をつける
-                const color = new THREE.Color().setHSL(Math.random(), 0.5, 0.8);
-                farCol[i*3] = color.r; farCol[i*3+1] = color.g; farCol[i*3+2] = color.b;
-            }
+            for(let i=0; i<farCount*3; i++) farPos[i] = (Math.random() - 0.5) * 30000;
             farGeo.setAttribute('position', new THREE.BufferAttribute(farPos, 3));
-            farGeo.setAttribute('color', new THREE.BufferAttribute(farCol, 3));
-            const farMat = new THREE.PointsMaterial({
-                size: 3, vertexColors: true, transparent: true, opacity: 0.8, sizeAttenuation: false
-            });
+            const farMat = new THREE.PointsMaterial({color: 0x8888aa, size: 2, transparent: true, opacity: 0.8, sizeAttenuation: false});
             farStars = new THREE.Points(farGeo, farMat);
             scene.add(farStars);
 
-            // 2. Mid Stars (Floating Particles)
-            const midGeo = new THREE.BufferGeometry();
-            const midCount = 3000;
-            const midPos = new Float32Array(midCount * 3);
-            for(let i=0; i<midCount*3; i++) midPos[i] = (Math.random() - 0.5) * 10000;
-            midGeo.setAttribute('position', new THREE.BufferAttribute(midPos, 3));
-            const midMat = new THREE.PointsMaterial({color: 0xaaccff, size: 4, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
-            midStars = new THREE.Points(midGeo, midMat);
-            scene.add(midStars);
-
-            // 3. Warp Stars (Tunnel Effect)
             const warpGeo = new THREE.BufferGeometry();
             const warpCount = 4000;
             const warpPos = new Float32Array(warpCount * 3);
@@ -423,22 +557,19 @@
             const c2 = new THREE.Color(0xff00ff);
             
             for(let i=0; i<warpCount; i++) {
-                // トンネル状配置
-                const r = 800 + Math.random() * 4000;
+                const r = 500 + Math.random() * 4000;
                 const theta = Math.random() * Math.PI * 2;
                 const z = (Math.random() - 0.5) * 40000;
-                
                 warpPos[i*3] = r * Math.cos(theta);
                 warpPos[i*3+1] = r * Math.sin(theta);
                 warpPos[i*3+2] = z;
-
                 const c = Math.random() > 0.5 ? c1 : c2;
                 warpCol[i*3] = c.r; warpCol[i*3+1] = c.g; warpCol[i*3+2] = c.b;
             }
             warpGeo.setAttribute('position', new THREE.BufferAttribute(warpPos, 3));
             warpGeo.setAttribute('color', new THREE.BufferAttribute(warpCol, 3));
             const warpMat = new THREE.PointsMaterial({
-                size: 5, vertexColors: true, transparent: true, opacity: 0.8,
+                size: 3, vertexColors: true, transparent: true, opacity: 0.9,
                 blending: THREE.AdditiveBlending
             });
             warpStars = new THREE.Points(warpGeo, warpMat);
@@ -453,45 +584,35 @@
             planetGroup.add(new THREE.Mesh(new THREE.IcosahedronGeometry(config.planetSize * 0.5, 2), new THREE.MeshBasicMaterial({ color: 0x00ffff })));
             planetGroup.add(new THREE.Mesh(new THREE.IcosahedronGeometry(config.planetSize * 1.25, 3), new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.15, side: THREE.BackSide, blending: THREE.AdditiveBlending })));
 
-            // ★岩の生成 (増量 & 衝突回避)
+            // 岩の生成 (30個)
             const landMat = new THREE.MeshStandardMaterial({ color: 0x44cc88, flatShading: true, roughness: 0.8 });
-            
-            // パラメータ調整
-            const maxRocks = 50; // 岩の数を大幅増量
-            const maxAttempts = 500; // 試行回数
-            const frogSafeDist = 1.0; // 北極からの安全距離(ラジアン)
-            const facilitySafeDist = 0.6; // 施設からの安全距離(ラジアン)
+            const maxRocks = 30; 
+            const maxAttempts = 500; 
+            const frogSafeDist = 1.0; 
+            const facilitySafeDist = 0.5;
+            const rockSafeDist = 0.3;
 
             let rockCount = 0;
-            const existingPositions = []; // 衝突判定用に保存
+            const existingPositions = []; 
 
-            // 施設の位置を保存
             facilities.forEach(fac => {
-                existingPositions.push({ phi: fac.phi, theta: fac.theta, type: 'facility' });
+                existingPositions.push({ vec: new THREE.Vector3().setFromSphericalCoords(1, fac.phi, fac.theta), type: 'facility' });
             });
 
             for(let i=0; i<maxAttempts && rockCount < maxRocks; i++) {
                 const theta = Math.random() * Math.PI * 2;
-                // 全球に分布させるが、極端な南極・北極は避ける
                 const phi = Math.acos(2 * Math.random() - 1); 
 
-                // 1. カエル（北極）との距離チェック
-                // 北極(phi=0)からの距離はphiそのもの
-                if (phi < frogSafeDist) continue;
-
-                // 2. 南極付近も少し空ける（見栄えのため）
+                if (phi < frogSafeDist) continue; 
                 if (phi > Math.PI - 0.3) continue;
 
-                // 3. 既存の施設・岩との距離チェック
-                let collision = false;
                 const p1 = new THREE.Vector3().setFromSphericalCoords(1, phi, theta);
+                let collision = false;
 
                 for(let item of existingPositions) {
-                    const p2 = new THREE.Vector3().setFromSphericalCoords(1, item.phi, item.theta);
-                    // 距離閾値 (施設とは大きく離す、岩同士はある程度近くてもいい)
-                    const threshold = (item.type === 'facility') ? facilitySafeDist : 0.25;
-                    
-                    if (p1.distanceTo(p2) < threshold) {
+                    const dist = p1.distanceTo(item.vec);
+                    const threshold = (item.type === 'facility') ? facilitySafeDist : rockSafeDist;
+                    if (dist < threshold) {
                         collision = true;
                         break;
                     }
@@ -499,20 +620,14 @@
 
                 if (!collision) {
                     const r = config.planetSize;
-                    const size = Math.random() * 0.6 + 0.4;
+                    const size = Math.random() * 0.5 + 0.4;
                     const land = new THREE.Mesh(new THREE.DodecahedronGeometry(size, 0), landMat);
-                    
                     land.position.setFromSphericalCoords(r, phi, theta);
                     land.lookAt(0,0,0);
                     land.castShadow = true; land.receiveShadow = true;
-                    
-                    // ランダム回転
-                    land.rotation.z = Math.random() * Math.PI;
-                    land.rotation.y = Math.random() * Math.PI;
-
+                    land.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
                     planetGroup.add(land);
-                    
-                    existingPositions.push({ phi: phi, theta: theta, type: 'rock' });
+                    existingPositions.push({ vec: p1, type: 'rock' });
                     rockCount++;
                 }
             }
@@ -521,8 +636,8 @@
 
         function createCuteFrog() {
             frogGroup = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: config.frogColor, roughness: 0.4 });
-            const bellyMat = new THREE.MeshStandardMaterial({ color: 0xffffdd });
+            const mat = new THREE.MeshStandardMaterial({ color: config.frogColor, roughness: 0.6, metalness: 0.1 });
+            const bellyMat = new THREE.MeshStandardMaterial({ color: 0x888888 }); // 最初は暗く
             
             const head = new THREE.Mesh(new THREE.SphereGeometry(1.3, 32, 24), mat);
             head.scale.set(1.1, 0.8, 1); head.position.y = 0.5; head.castShadow = true;
@@ -534,38 +649,25 @@
             
             const belly = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 24), bellyMat);
             belly.position.set(0, -0.5, 0.55); belly.scale.set(1.1, 0.9, 0.4);
+            belly.name = "belly";
             frogGroup.add(belly);
 
-            // Eyes
-            const eyeW = new THREE.MeshBasicMaterial({color:0xffffff});
-            const eyeB = new THREE.MeshBasicMaterial({color:0x111111});
+            // Eyes (Closed initially)
+            const eyeW = new THREE.MeshBasicMaterial({color:0x333333}); // 暗い目
             function makeEye(x) {
                 const g = new THREE.Group();
                 const base = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 24), mat);
-                const white = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 24), eyeW); white.position.set(0, 0.15, 0.25);
-                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 24), eyeB); pupil.position.set(0, 0.18, 0.52);
-                const shine = new THREE.Mesh(new THREE.SphereGeometry(0.06), eyeW); shine.position.set(0.08, 0.25, 0.65);
-                g.add(base, white, pupil, shine); g.position.set(x, 1.2, 0.3); g.rotation.x = -0.3; g.rotation.y = x * 0.2; return g;
+                const white = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 24), eyeW); 
+                white.position.set(0, 0.15, 0.25); white.name = "eyeWhite";
+                g.add(base, white); g.position.set(x, 1.2, 0.3); g.rotation.x = -0.3; g.rotation.y = x * 0.2; return g;
             }
             frogGroup.add(makeEye(0.7), makeEye(-0.7));
 
-            // Mouth
-            const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.04, 8, 16, Math.PI), new THREE.MeshBasicMaterial({color:0x336633}));
-            mouth.rotation.z = Math.PI; mouth.position.set(0, 0.5, 0.95); mouth.rotation.x = 0.3;
-            frogGroup.add(mouth);
-
-            // Cheeks
-            const cheekGeo = new THREE.CircleGeometry(0.2, 16);
-            const cheekMat = new THREE.MeshBasicMaterial({color:0xffaaaa, transparent:true, opacity:0.6});
-            const cL = new THREE.Mesh(cheekGeo, cheekMat); cL.position.set(0.9, 0.6, 0.75); cL.rotation.y = 0.8;
-            const cR = new THREE.Mesh(cheekGeo, cheekMat); cR.position.set(-0.9, 0.6, 0.75); cR.rotation.y = -0.8;
-            frogGroup.add(cL, cR);
-
             // Crown
             const crown = new THREE.Group();
-            const cBase = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 0.4, 8), new THREE.MeshStandardMaterial({color:0xffcc00, metalness:0.6, roughness:0.2}));
-            const cGem = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshBasicMaterial({color:0xff0066}));
-            cGem.position.z = 0.4; cGem.position.y = 0.1; crown.add(cBase, cGem);
+            const cBase = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 0.4, 8), new THREE.MeshStandardMaterial({color:0x554400, metalness:0.6, roughness:0.5}));
+            cBase.name = "crownBase";
+            crown.add(cBase);
             crown.position.set(0.5, 1.8, 0); crown.rotation.z = -0.4; crown.userData = {isCrown:true};
             frogGroup.add(crown);
 
@@ -593,79 +695,167 @@
                 group.position.set(x, y, z);
                 group.lookAt(0, 0, 0);
 
-                const mat = new THREE.MeshStandardMaterial({ color: data.color, emissive: data.color, emissiveIntensity: 0.3, roughness: 0.2 });
+                const mat = new THREE.MeshStandardMaterial({ color: 0x550000, emissive: 0x550000, emissiveIntensity: 0.8, roughness: 0.2 }); // エラー色
                 const mainMesh = new THREE.Group();
 
-                if (data.type === 'torii') {
-                    const bar1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.12, 0.12), mat); bar1.position.y = 0.4;
-                    const bar2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.15, 0.15), mat); bar2.position.y = 0.7;
-                    const col1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), mat); col1.position.set(-0.5, 0.2, 0);
-                    const col2 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), mat); col2.position.set(0.5, 0.2, 0);
-                    mainMesh.add(bar1, bar2, col1, col2);
-                } else if (data.type === 'library') {
-                    const cover = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.8), mat);
-                    const pageL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.7), new THREE.MeshStandardMaterial({color:0xffffff}));
-                    pageL.position.set(-0.3, 0.05, 0); pageL.rotation.z = 0.1;
-                    const pageR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.7), new THREE.MeshStandardMaterial({color:0xffffff}));
-                    pageR.position.set(0.3, 0.05, 0); pageR.rotation.z = -0.1;
-                    mainMesh.add(cover, pageL, pageR); mainMesh.rotation.x = Math.PI/2; mainMesh.position.y = 0.3;
-                } else if (data.type === 'garden') {
-                    const trunkMat = new THREE.MeshStandardMaterial({color:0x8B4513});
-                    for(let i=0; i<3; i++) {
-                        const t = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.4), trunkMat);
-                        const l = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 5), mat);
-                        const subG = new THREE.Group(); subG.add(t, l); l.position.y = 0.3; t.position.y = 0;
-                        subG.position.set(Math.sin(i*2.1)*0.4, 0, Math.cos(i*2.1)*0.4); mainMesh.add(subG);
-                    }
-                } else if (data.type === 'observatory') {
-                    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16, 0, Math.PI*2, 0, Math.PI/2), mat);
-                    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3), mat); cyl.position.y = -0.15;
-                    const tele = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.6), mat);
-                    tele.rotation.z = Math.PI/4; tele.position.set(0.3, 0.3, 0); mainMesh.add(dome, cyl, tele);
-                } else if (data.type === 'market') {
-                    const base = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.4, 0.5), new THREE.MeshStandardMaterial({color:0x8B4513}));
-                    const roof = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.4, 4), mat); roof.rotation.y = Math.PI/4; roof.position.y = 0.5;
-                    const pole1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), mat); pole1.position.set(0.35, 0.2, 0.2);
-                    const pole2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), mat); pole2.position.set(-0.35, 0.2, 0.2);
-                    mainMesh.add(base, roof, pole1, pole2);
-                } else if (data.type === 'fountain') {
-                    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.2, 16), mat);
-                    const midCol = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 0.5, 8), mat); midCol.position.y = 0.35;
-                    const midBasin = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.1, 0.15, 16), mat); midBasin.position.y = 0.6;
-                    const topCol = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8), mat); topCol.position.y = 0.8;
-                    const topBasin = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.05, 0.1, 16), mat); topBasin.position.y = 1.0;
-                    const water = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshBasicMaterial({color:0xaaddff, transparent:true, opacity:0.8})); water.position.y = 1.1;
-                    mainMesh.add(base, midCol, midBasin, topCol, topBasin, water);
-                } else if (data.type === 'cafe') {
-                    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.4), mat);
-                    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.05, 8, 16, Math.PI), mat);
-                    handle.position.set(0.25, 0, 0); handle.rotation.z = -Math.PI/2;
-                    const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.08), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.6})); s1.position.set(0, 0.4, 0);
-                    const s2 = s1.clone(); s2.position.set(0.1, 0.55, 0); mainMesh.add(cup, handle, s1, s2);
-                } else if (data.type === 'monolith') {
-                    const m1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), mat);
-                    const m2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.6, 0.2), mat); m2.position.set(0.3, -0.3, 0.2); m2.rotation.y = 0.5;
-                    const m3 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.2), mat); m3.position.set(-0.3, -0.2, -0.1); m3.rotation.y = -0.5;
-                    mainMesh.add(m1, m2, m3);
+                // 簡易形状（詳細形状は前回同様だが、色はエラー状態）
+                let geo;
+                if (data.type === 'monolith') geo = new THREE.BoxGeometry(0.6, 1.5, 0.6);
+                else geo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+                
+                // タイプ別の形状（簡略化して実装）
+                if(data.type==='torii'){
+                    const m = new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,0.2), mat); mainMesh.add(m); mainMesh.position.z = -0.5;
+                } else if(data.type==='library'){
+                    const m = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.2,0.8), mat); mainMesh.add(m); mainMesh.rotation.x=Math.PI/2;
+                } else {
+                    const m = new THREE.Mesh(geo, mat); mainMesh.add(m); mainMesh.rotation.x = -Math.PI/2;
                 }
 
-                if(data.type !== 'library' && data.type !== 'market' && data.type !== 'fountain' && data.type !== 'cafe' && data.type !== 'torii') {
-                    mainMesh.rotation.x = -Math.PI/2;
-                } else if (data.type === 'torii' || data.type === 'market' || data.type === 'cafe' || data.type === 'fountain') {
-                    mainMesh.rotation.x = -Math.PI/2; mainMesh.position.z = -0.3;
-                }
                 group.add(mainMesh);
 
-                const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.15, 4, 8), new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending }));
-                beam.rotation.x = -Math.PI/2; beam.position.z = -2; group.add(beam);
+                // Beam (Red Error Beam)
+                const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.15, 6, 8), new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending }));
+                beam.rotation.x = -Math.PI/2; beam.position.z = -3; group.add(beam);
 
                 const hitBox = new THREE.Mesh(new THREE.SphereGeometry(1.5), new THREE.MeshBasicMaterial({ visible: false }));
                 hitBox.userData = { isPOI: true, info: data }; group.add(hitBox);
                 
-                group.userData = { isPOIGroup: true, info: data };
+                group.userData = { isPOIGroup: true, info: data, mesh: mainMesh, beam: beam };
                 poiGroup.add(group);
             });
             planetGroup.add(poiGroup);
+        }
+
+        // --- WIN EFFECT ---
+        function triggerAwakeningEffect() {
+            // 1. Change Frog Colors
+            frogGroup.children.forEach(child => {
+                if(child.material) child.material.color.setHex(0x99ff99); // Green
+                if(child.name === "belly") child.material.color.setHex(0xffffdd);
+                if(child.name === "eyeWhite") child.material.color.setHex(0xffffff);
+            });
+            
+            // 2. Change Facilities Colors
+            poiGroup.children.forEach(g => {
+                const info = g.userData.info;
+                // Beam to Green
+                g.userData.beam.material.color.setHex(0x00ffaa);
+                g.userData.beam.scale.set(1, 2, 1);
+                // Mesh to Blue/Green
+                g.userData.mesh.children.forEach(m => {
+                    m.material.color.setHex(0x00aaff);
+                    m.material.emissive.setHex(0x00ffaa);
+                });
+            });
+
+            // 3. Atmosphere Brighten
+            planetGroup.children[2].material.opacity = 0.4;
+            planetGroup.children[2].material.color.setHex(0x00ffaa);
+
+            // 4. Background Stars Shift
+            warpStars.material.vertexColors = false;
+            warpStars.material.color.setHex(0xaaffaa);
+        }
+
+        // --- AWAKENED ACTIONS ---
+        function executeFacilityAction(facility) {
+            if (!state.isAwakened) return;
+
+            console.log("Action Triggered:", facility.actionType);
+
+            switch(facility.actionType) {
+                case 'link':
+                    if(confirm("外部データベースに接続しますか？\n" + facility.url)) {
+                        window.open(facility.url, '_blank');
+                    }
+                    break;
+                case 'reload':
+                    if(confirm("システムを再起動しますか？")) {
+                        location.reload();
+                    }
+                    break;
+                case 'spawn_flowers':
+                    spawnEffect('flowers');
+                    alert("庭園にデータフラワーが咲きました！");
+                    break;
+                case 'fireworks':
+                    spawnEffect('fireworks');
+                    break;
+                case 'change_color':
+                    const r = Math.random();
+                    const g = Math.random();
+                    const b = Math.random();
+                    frogGroup.children.forEach(child => {
+                        if(child.material && child.name !== 'belly' && child.name !== 'eyeWhite') {
+                            child.material.color.setRGB(r, g, b);
+                        }
+                    });
+                    break;
+                case 'warp_speed':
+                    state.targetWarpSpeed = (state.targetWarpSpeed > 10) ? 0.2 : 50;
+                    break;
+                case 'frog_dance':
+                    // Simple jump
+                    let jumpY = 0;
+                    const jumpInterval = setInterval(() => {
+                        jumpY += 0.2;
+                        frogGroup.position.y += Math.sin(jumpY);
+                        if(jumpY > Math.PI*2) {
+                            clearInterval(jumpInterval);
+                        }
+                    }, 16);
+                    break;
+                case 'omikuji':
+                    const fortunes = ["大吉 (Excellent)", "中吉 (Good)", "小吉 (Okay)", "凶 (Bug Found)"];
+                    const res = fortunes[Math.floor(Math.random() * fortunes.length)];
+                    alert("COSMIC FORTUNE: " + res);
+                    break;
+            }
+        }
+
+        function spawnEffect(type) {
+            // Simple Particle Effect
+            const count = 50;
+            const geo = new THREE.BufferGeometry();
+            const pos = [];
+            const col = [];
+            const vel = [];
+            
+            for(let i=0; i<count; i++) {
+                // Random position above planet
+                const r = config.planetSize + 2 + Math.random();
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.cos(phi);
+                const z = r * Math.sin(phi) * Math.sin(theta);
+                pos.push(x, y, z);
+                
+                if (type === 'flowers') {
+                    col.push(Math.random(), Math.random(), Math.random());
+                    vel.push(0, 0, 0); // Static
+                } else {
+                    // Fireworks explode out
+                    col.push(1, 0.5 + Math.random()*0.5, 0);
+                    vel.push(x*0.02, y*0.02, z*0.02);
+                }
+            }
+            
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+            
+            const mat = new THREE.PointsMaterial({size: (type==='flowers'?0.3:0.5), vertexColors:true});
+            const mesh = new THREE.Points(geo, mat);
+            
+            if(type === 'fireworks') {
+                mesh.userData = { vel: vel, age: 0 };
+                tempParticles.push(mesh);
+                scene.add(mesh);
+            } else {
+                // Flowers stay
+                particleGroup.add(mesh);
+            }
         }
 
         // --- Animation Loop ---
@@ -673,8 +863,6 @@
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
 
-            // Starfield Animation
-            // 1. Warp Stars (Tunnel Effect)
             if (warpStars) {
                 const pos = warpStars.geometry.attributes.position.array;
                 state.warpSpeed += (state.targetWarpSpeed - state.warpSpeed) * 0.05;
@@ -685,24 +873,35 @@
                 warpStars.geometry.attributes.position.needsUpdate = true;
                 warpStars.rotation.z += 0.002 * (state.warpSpeed / 100);
             }
-            // 2. Mid Stars
-            if (midStars) {
-                midStars.rotation.y += 0.0002;
-                midStars.rotation.x += 0.0001;
+
+            // Temp Particles (Fireworks)
+            for(let i=tempParticles.length-1; i>=0; i--) {
+                const p = tempParticles[i];
+                const pos = p.geometry.attributes.position.array;
+                const vel = p.userData.vel;
+                p.userData.age++;
+                
+                for(let j=0; j<pos.length/3; j++) {
+                    pos[j*3] += vel[j*3];
+                    pos[j*3+1] += vel[j*3+1];
+                    pos[j*3+2] += vel[j*3+2];
+                }
+                p.geometry.attributes.position.needsUpdate = true;
+                p.material.opacity = 1 - (p.userData.age / 60);
+                
+                if(p.userData.age > 60) {
+                    scene.remove(p);
+                    tempParticles.splice(i, 1);
+                }
             }
 
-            // Arrived Logic
             if (state.phase === 'arrived') {
                 if (!isFocusing && !document.getElementById('info-panel').classList.contains('active')) {
                     raycaster.setFromCamera(mouse, camera);
                     let targets = [];
-                    poiGroup.children.forEach(g => {
-                        g.children.forEach(c => { if (c.userData.isPOI) targets.push(c); });
-                    });
+                    poiGroup.children.forEach(g => { g.children.forEach(c => { if (c.userData.isPOI) targets.push(c); }); });
                     const intersects = raycaster.intersectObjects(targets);
                     const label = document.getElementById('cursor-label');
-                    const labelText = document.getElementById('label-text');
-                    const labelDot = document.querySelector('.label-dot');
 
                     if (intersects.length > 0) {
                         const hit = intersects[0].object;
@@ -710,10 +909,7 @@
                             hoveredObj = hit;
                             document.body.style.cursor = 'pointer';
                             hit.parent.scale.setScalar(1.2);
-                            labelText.textContent = hit.userData.info.name;
-                            const hex = '#' + hit.userData.info.color.toString(16).padStart(6, '0');
-                            labelDot.style.background = hex;
-                            labelDot.style.boxShadow = `0 0 10px ${hex}`;
+                            label.textContent = state.isAwakened ? hit.userData.info.awakenedTitle : "FRAGMENT: " + hit.userData.info.name;
                             label.classList.add('visible');
                         }
                     } else {
@@ -729,22 +925,24 @@
                 if (targetCameraPos) {
                     camera.position.lerp(targetCameraPos, 0.05);
                     if (camera.position.distanceTo(targetCameraPos) < 0.5 && !isFocusing && camera.position.z > 15) {
-                        controls.autoRotate = true;
-                        targetCameraPos = null;
+                        controls.autoRotate = true; targetCameraPos = null;
                     }
                 }
-                if (targetControlsTarget) {
-                    controls.target.lerp(targetControlsTarget, 0.05);
-                }
+                if (targetControlsTarget) controls.target.lerp(targetControlsTarget, 0.05);
 
                 if(frogGroup) {
-                    frogGroup.position.y = (config.planetSize + 0.8) + Math.sin(time * 2) * 0.1;
-                    frogGroup.children.forEach(c => {
-                        if(c.userData.isCrown) {
-                            c.position.y = 1.8 + Math.sin(time*3)*0.05;
-                            c.rotation.z = -0.4 + Math.sin(time)*0.1;
-                        }
-                    });
+                    // 覚醒前は動かない、覚醒後は動く
+                    const intensity = state.isAwakened ? 1 : 0.1;
+                    frogGroup.position.y = (config.planetSize + 0.8) + Math.sin(time * 2) * 0.1 * intensity;
+                    
+                    if(state.isAwakened) {
+                        frogGroup.children.forEach(c => {
+                            if(c.userData.isCrown) {
+                                c.position.y = 1.8 + Math.sin(time*3)*0.05;
+                                c.rotation.z = -0.4 + Math.sin(time)*0.1;
+                            }
+                        });
+                    }
                 }
             }
 
@@ -775,13 +973,38 @@
             controls.autoRotate = false;
             
             const panel = document.getElementById('info-panel');
-            document.getElementById('panel-title').textContent = data.name;
-            document.getElementById('panel-content').innerHTML = `<p>${data.description}</p>`;
+            const titleEl = document.getElementById('panel-title');
+            const contentEl = document.getElementById('panel-content');
+            const iconBox = document.querySelector('.panel-icon');
+            const actionBtnCont = document.getElementById('action-btn-container');
+            const actionBtn = document.getElementById('action-btn');
             
-            const iconBox = document.getElementById('panel-icon');
-            iconBox.innerHTML = `<i class="fas ${data.icon}"></i>`;
-            const hex = '#' + data.color.toString(16).padStart(6, '0');
-            iconBox.style.background = `linear-gradient(135deg, ${hex}, #ffffff)`;
+            if (state.isAwakened) {
+                // 覚醒後：機能パネル表示
+                titleEl.innerText = data.awakenedTitle;
+                contentEl.innerHTML = data.awakenedLog;
+                titleEl.style.color = "#00ffaa";
+                iconBox.style.color = "#00ffaa";
+                iconBox.style.borderColor = "#00ffaa";
+                
+                // アクションボタン設定
+                actionBtnCont.style.display = 'block';
+                actionBtn.innerText = data.actionLabel;
+                
+                // ボタンクリックイベントを上書き
+                actionBtn.onclick = () => {
+                    executeFacilityAction(data);
+                };
+
+            } else {
+                // 覚醒前：ログ表示
+                titleEl.innerText = data.name + " // LOG";
+                contentEl.innerHTML = data.log;
+                titleEl.style.color = "#ff3333";
+                iconBox.style.color = "#ff3333";
+                iconBox.style.borderColor = "#ff3333";
+                actionBtnCont.style.display = 'none';
+            }
             
             panel.classList.add('active');
 
