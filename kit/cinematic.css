@@ -1,0 +1,160 @@
+/* ============================================================
+   PORTAL KIT v4.5 — PX cinematic layer
+   Mounts on <html> (siblings of <body>) so page filters never
+   eat the effect layers. All sizes driven by CSS custom props.
+============================================================ */
+:root{
+  --px-acc:#00ffe0;
+  --px-acc-rgb:0,255,224;
+  --px-font-d:'Orbitron','Noto Sans JP',sans-serif;
+  --px-font-m:'Share Tech Mono','Noto Sans JP',monospace;
+}
+#px-defs{ position:absolute; width:0; height:0; overflow:hidden; }
+
+/* ---------- stage hooks ---------- */
+html.px-fx  body{ filter:var(--px-filter,none); }
+html.px-cam body{ transform:var(--px-cam,none); transform-origin:var(--px-cam-o,50% 50%); }
+/* perf hints are only ever live while a move is actually running */
+html.px-active body{ will-change: transform, filter; backface-visibility:hidden; }
+html.px-active{ overflow:hidden; }
+html.px-active body *{ animation-play-state:paused!important; }
+html.px-active{ cursor:progress; }
+
+/* ---------- rig ---------- */
+#px-rig{ position:fixed; inset:0; z-index:2147483000; pointer-events:none; }
+#px-rig>*{ position:absolute; inset:0; }
+/* deliberate stack: veil < shards < iris < fx < atmosphere < light < type */
+#px-veil{ z-index:1; } #px-shards{ z-index:3; } #px-iris{ z-index:4; }
+#px-fx{ z-index:5; width:100%; height:100%; opacity:1; mix-blend-mode:screen; }
+#px-scan{ z-index:6; } #px-trails{ z-index:6; } #px-noise{ z-index:6; }
+#px-bloom{ z-index:7; } #px-flash{ z-index:8; }
+#px-cap{ z-index:9; } #px-rail{ z-index:9; }
+
+/* scan sweep used during transitions */
+#px-scan{ opacity:0; transition:opacity .3s; pointer-events:none; overflow:hidden; }
+#px-scan::after{
+  content:""; position:absolute; left:0; right:0; height:22vh;
+  background:linear-gradient(to bottom, transparent, rgba(var(--px-acc-rgb),.10) 45%, rgba(255,255,255,.22) 50%, rgba(var(--px-acc-rgb),.10) 55%, transparent);
+  transform:translateY(-140%);
+}
+html.px-active #px-scan{ opacity:1; }
+html.px-active #px-scan::after{ animation:px-sweep 1.05s cubic-bezier(.55,0,.45,1) infinite; }
+@keyframes px-sweep{ to{ transform:translateY(560%); } }
+
+#px-trails{ opacity:0; pointer-events:none; transition:opacity .25s; }
+html.px-active #px-trails{
+  opacity:1;
+  background:repeating-linear-gradient(to bottom, rgba(var(--px-acc-rgb),.035) 0 2px, transparent 2px 5px);
+  mix-blend-mode:overlay;
+}
+
+#px-noise{
+  opacity:0; mix-blend-mode:screen; pointer-events:none; transition:opacity .25s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+html.px-active #px-noise{ opacity:.085; animation:px-grain .42s steps(3) infinite; }
+@keyframes px-grain{
+  0%{ transform:translate3d(0,0,0) } 25%{ transform:translate3d(-3%,2%,0) }
+  50%{ transform:translate3d(2%,-3%,0) } 75%{ transform:translate3d(-2%,-2%,0) } 100%{ transform:translate3d(3%,1%,0) }
+}
+
+/* ---------- shards ---------- */
+#px-shards{ opacity:0; pointer-events:none; }
+#px-shards.on{ opacity:1; }
+#px-shards .px-clone, #px-shards .px-clone *{ animation:none!important; transition:none!important; }
+#px-shards .px-ghost{ opacity:0; pointer-events:none; }
+
+/* ---------- iris ---------- */
+#px-iris{
+  --x:50%; --y:50%; --r:1; --e:.07; --glow:1; --tint:#000;
+  opacity:0; transition:opacity .12s linear; pointer-events:none;
+}
+#px-iris.on{ opacity:1; }
+#px-iris::before{
+  content:""; position:absolute; inset:0;
+  background:radial-gradient(circle at var(--x) var(--y),
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) calc(var(--r) * 78vmin - var(--e) * 78vmin),
+    var(--tint) calc(var(--r) * 78vmin),
+    var(--tint) 140vmax);
+}
+#px-iris .core{
+  position:absolute; left:var(--x); top:var(--y);
+  width:calc(var(--r) * 156vmin); height:calc(var(--r) * 156vmin);
+  margin-left:calc(var(--r) * -78vmin); margin-top:calc(var(--r) * -78vmin);
+  border-radius:50%;
+  box-shadow:0 0 calc(var(--glow) * 60px) calc(var(--glow) * 8px) rgba(var(--px-acc-rgb),.45),
+             inset 0 0 calc(var(--glow) * 70px) rgba(var(--px-acc-rgb),.3);
+}
+#px-iris .ring{
+  position:absolute; left:var(--x); top:var(--y);
+  width:calc(var(--r) * 156vmin); height:calc(var(--r) * 156vmin);
+  margin-left:calc(var(--r) * -78vmin); margin-top:calc(var(--r) * -78vmin);
+  border-radius:50%; border:1.5px solid rgba(var(--px-acc-rgb),.85);
+  box-shadow:0 0 26px rgba(var(--px-acc-rgb),.6), inset 0 0 40px rgba(var(--px-acc-rgb),.28);
+}
+
+/* ---------- flashes ---------- */
+#px-flash{ background:var(--c,#fff); opacity:0; mix-blend-mode:screen; pointer-events:none; }
+#px-flash.go{ animation:px-flash var(--dur,420ms) cubic-bezier(.16,1,.3,1) forwards; }
+@keyframes px-flash{ 0%{opacity:0} 7%{opacity:var(--peak,.92)} 22%{opacity:calc(var(--peak,.92) * .25)} 34%{opacity:var(--peak,.92)} 100%{opacity:0} }
+
+#px-bloom{ opacity:0; mix-blend-mode:screen; }
+#px-bloom.go{ animation:px-bloom var(--dur,700ms) cubic-bezier(.16,1,.3,1) forwards; }
+#px-bloom{ background:radial-gradient(circle at var(--x,50%) var(--y,50%), var(--c,#fff) 0%, transparent 46%); }
+@keyframes px-bloom{ 0%{opacity:0; transform:scale(.2)} 16%{opacity:var(--peak,.7)} 100%{opacity:0; transform:scale(2.3)} }
+
+#px-veil{ background:#000; opacity:0; }
+html.px-entering #px-veil{ pointer-events:auto; }
+html.px-entering body{ will-change:transform,filter; }
+#px-veil.on{ opacity:1; }
+#px-veil.in{ opacity:1; transition:opacity var(--dur,380ms) cubic-bezier(.7,0,.84,0); }
+#px-veil.fade{ opacity:0; transition:opacity var(--dur,420ms) cubic-bezier(.16,1,.3,1); }
+
+/* ---------- caption (diegetic titles) ---------- */
+#px-cap{
+  inset:auto 0 8vh 0; display:flex; flex-direction:column; align-items:center; gap:.5rem;
+  opacity:0; transition:opacity .28s ease-out; text-align:center; padding:0 6vw;
+}
+#px-cap.on{ opacity:1; }
+#px-cap[data-align="left"]{ align-items:flex-start; text-align:left; padding-left:max(5vw,26px); }
+#px-cap .m{
+  font-family:var(--px-font-d); font-weight:900; font-size:clamp(1.15rem,4.4vw,2.5rem);
+  letter-spacing:.4em; color:var(--c,var(--px-acc)); text-shadow:0 0 26px currentColor, 0 0 70px rgba(var(--px-acc-rgb),.4);
+  white-space:pre-wrap;
+}
+#px-cap .m.go{ animation:px-cap-in .6s cubic-bezier(.16,1,.3,1) both; }
+#px-cap .s{
+  font-family:var(--px-font-m); font-weight:400; font-size:clamp(.6rem,1.5vw,.82rem);
+  letter-spacing:.42em; color:#8fb8b2; text-shadow:0 0 14px rgba(0,0,0,.8);
+}
+#px-cap .s.go{ animation:px-cap-in .75s cubic-bezier(.16,1,.3,1) .08s both; }
+@keyframes px-cap-in{
+  0%{ opacity:0; letter-spacing:1.1em; filter:blur(9px); transform:translateY(10px) }
+  45%{ opacity:1; filter:blur(0) }
+  60%{ opacity:.35 } 68%{ opacity:1 }
+  100%{ opacity:1; letter-spacing:.4em; transform:translateY(0) }
+}
+
+/* ---------- progress rail ---------- */
+#px-rail{
+  inset:auto 0 0 0; height:30px; display:flex; align-items:center; gap:12px;
+  padding:0 max(3vw,18px) 8px; font-family:var(--px-font-m); font-size:10px; letter-spacing:.28em;
+  color:#7ba79f; opacity:0; transition:opacity .3s;
+}
+#px-rail.on{ opacity:1; }
+#px-rail .a{
+  flex:1; height:3px; position:relative; background:rgba(var(--px-acc-rgb),.14); overflow:hidden;
+}
+#px-rail .a::after{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:var(--w,0%);
+  background:linear-gradient(90deg, rgba(var(--px-acc-rgb),.2), var(--px-acc));
+  box-shadow:0 0 16px var(--px-acc); transition:width .1s linear;
+}
+#px-rail .lbl{ color:var(--px-acc); }
+#px-rail .pct{ min-width:74px; text-align:right; }
+
+@media (prefers-reduced-motion:reduce){
+  #px-rig{ display:none!important; }
+  html.px-fx body, html.px-cam body{ filter:none!important; transform:none!important; }
+}

@@ -105,11 +105,13 @@
         }
 
     </style>
-<!-- PORTAL_KIT v4 -->
+<!-- PORTAL_KIT v4.5 -->
 <script>window.PORTAL_KIT={title:'PAGE NOT FOUND',code:'ERR_404',accent:'#7cff9e',accentRgb:'124,255,158',mode:'narrative',bg:'stars',skipIntro:true};</script>
 <link rel="stylesheet" href="./kit/portal.css">
 <style>/* ERR_404 polish */
 .pk-vignette{ background:radial-gradient(ellipse at 50% 44%, transparent 44%, rgba(0,6,4,.5) 100%)!important; }</style>
+<link rel="stylesheet" href="./kit/cinematic.css">
+<script src="./kit/cinematic.js"></script>
 <script src="./kit/portal.js"></script>
 </head>
 <body>
@@ -137,6 +139,8 @@
         const titleEl = document.getElementById('error-title');
         const noiseEl = document.getElementById('static-noise');
         const abyssOverlay = document.getElementById('abyss-overlay');
+        const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+        const frogState = {};
 
         const STATE = {
             IDLE: 0,      // 本物のエラー画面
@@ -491,18 +495,44 @@
 
             } else if (currentState === STATE.LUNGE) {
                 const progress = Math.min(elapsed / TIMING.LUNGE, 1);
-                
+
                 // 画面外からの飛びかかり（ズーム）
                 const scale = 1 + (Math.pow(progress, 4) * 80);
                 canvas.style.transform = `scale(${scale})`;
-                
+
                 abyssOverlay.style.opacity = progress * 1.5;
+                noiseEl.style.opacity = Math.min(.5, .2 + progress * .5);
+
+                /* --- the swallow: the frame itself is pulled into the throat --- */
+                const PxF = window.PX, cine = PxF && !REDUCED;
+                if (cine) {
+                    if (!frogState._lunge) {
+                        frogState._lunge = 1;
+                        PxF.sfx.resume(); PxF.sfx.heartbeat(3, .3);
+                        PxF.sfx.riser(TIMING.LUNGE / 1000 + .2);
+                        PxF.caption('SWALLOWED', 'FROG_INTERNAL // DESCENDING', { rgb: [124, 255, 158] });
+                        PxF.camera.tween({ scale: 1.12, rot: -1.5 }, TIMING.LUNGE, 'iQu');
+                        PxF.fx.debris({ rgb: [124, 255, 158], count: 200, pull: 2600, swirl: 800, dur: TIMING.LUNGE / 1000 + .3 });
+                    }
+                    PxF.filter.set({
+                        chroma: progress * 34, warp: progress * 22, tear: progress * 14,
+                        bright: progress * .5, sat: progress * 1.6, blur: Math.pow(progress, 3) * 5
+                    });
+                }
 
                 if (progress >= 1) {
                     currentState = STATE.DONE;
-                    setTimeout(() => {
-                         try { window.location.href = './frog_internal.html'; } catch(e){}
-                    }, 50);
+                    if (cine) {
+                        PxF.sfx.impact(1.4); PxF.sfx.sub_drop();
+                        PxF.veil.on();
+                        PxF.filter.tween({ bright: [.5, 0], invert: [0, 1] }, 160, 'iC');
+                        if (PxF.handoff) { try { PxF.handoff.write('dive', { rgb: [124, 255, 158] }); } catch(e){} }
+                        setTimeout(() => { try { window.location.href = './frog_internal.html'; } catch(e){} }, 200);
+                    } else {
+                        setTimeout(() => {
+                             try { window.location.href = './frog_internal.html'; } catch(e){}
+                        }, 50);
+                    }
                 }
             }
 

@@ -1,5 +1,6 @@
 /* ============================================================
-   PORTAL KIT v4 — engine (AM3I_OS shared layer)
+   PORTAL KIT v4.5 — engine (AM3I_OS shared layer)
+   Requires kit/cinematic.js for transitions (degrades gracefully without it)
    Config:  window.PORTAL_KIT = { title, code, accent, mode, bg, skipIntro, cursor }
    mode: 'tool' | 'arcade' | 'narrative'   bg: 'full' | 'stars' | 'off'
 ============================================================ */
@@ -16,6 +17,9 @@ var CFG = Object.assign({
   cursor: true,
 }, window.PORTAL_KIT || {});
 var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+var PX = window.PX || null;                       /* cinematic transition engine (optional) */
+var PX_ON = !!PX && CFG.transition !== 'off' && !REDUCED;
+var rootEl = document.documentElement;
 var TOUCH = window.matchMedia && matchMedia('(hover:none),(pointer:coarse)').matches;
 var IS_NAV = /^https?:$/.test(location.protocol) || location.protocol === 'file:';
 
@@ -23,7 +27,8 @@ var IS_NAV = /^https?:$/.test(location.protocol) || location.protocol === 'file:
 var root = document.documentElement;
 root.style.setProperty('--pk-accent', CFG.accent);
 root.style.setProperty('--pk-accent-rgb', CFG.accentRgb);
-document.body.classList.add('pk-' + CFG.mode);
+/* body does not exist yet when the kit runs from <head> */
+whenBody(function(){ document.body.classList.add('pk-' + CFG.mode); });
 
 /* ---------- storage ---------- */
 function sget(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
@@ -99,8 +104,22 @@ window.PK = window.PK || {};
 window.PK.sfx = AudioFX;
 
 /* ============================================================
-   CHROME INJECTION
+   The kit is included from <head>, so document.body may not
+   exist yet. Everything that touches the document is deferred
+   to the first moment it does — no more silent half-boot.
 ============================================================ */
+function whenBody(fn){
+  if(document.body) fn();
+  else document.addEventListener('DOMContentLoaded', fn, {once:true});
+}
+/* toasts may be requested before the DOM exists — queue them */
+var _toastReady = null, _toastQ = [];
+window.PK.toast = function(){
+  if(_toastReady) return _toastReady.apply(null, arguments);
+  _toastQ.push([].slice.call(arguments));
+};
+function pkDom(){
+/* ---------- CHROME INJECTION ---------- */
 var frag = document.createElement('div');
 frag.innerHTML =
   (CFG.bg!=='off' && !REDUCED ? '<canvas id="pk-bg"></canvas>' : '') +
@@ -139,10 +158,12 @@ setInterval(function(){
   var el = document.getElementById('pkFps');
   if(el) el.textContent = fpsN*2; fpsN = 0;
 },500);
-document.getElementById('pkSfxBtn').addEventListener('click', function(){
+var _sfxBtn = document.getElementById('pkSfxBtn');
+if(_sfxBtn) _sfxBtn.addEventListener('click', function(){
   var on = AudioFX.toggle();
   this.textContent = 'SFX: ' + (on?'ON':'OFF');
   this.classList.toggle('on', on);
+  if(PX) PX.sfx.set(on);
 });
 
 if(CFG.mode === 'narrative'){
@@ -171,7 +192,9 @@ function toast(title, msg, gold){
   if(gold) AudioFX.chime(true); else AudioFX.blip(660);
   setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ el.remove(); },600); }, 3200);
 }
-window.PK.toast = toast;
+_toastReady = toast;
+_toastQ.forEach(function(a){ toast.apply(null, a); });
+_toastQ = [];
 
 /* ============================================================
    BACKGROUND ENGINE — stars + matrix + pulses (blend: screen)
@@ -284,13 +307,20 @@ document.addEventListener('pointerover', function(e){
 var seen = false;
 try{ seen = sessionStorage.getItem('pk_seen') === '1'; sessionStorage.setItem('pk_seen','1'); }catch(e){}
 document.body.classList.add('pk-on');
+if(PX_ON) rootEl.classList.add('px-kit');
 function enterDone(){
   document.body.classList.add('pk-entered');
   document.body.dispatchEvent(new CustomEvent('pk:entered'));
 }
 window.PK.enterDone = enterDone;
 if(REDUCED){ enterDone(); }
+else if(PX_ON && rootEl.classList.contains('px-entering')){
+  /* we arrived mid-transition — let the engine finish the arrival, then reveal */
+  PX.onEnter(function(){ setTimeout(enterDone, 80); });
+  setTimeout(enterDone, 1700);
+}
 else if(CFG.skipIntro || seen){
+  if(PX_ON){ try{ PX.play('flash', {release:true, hardTimeout:700}); }catch(e){} }
   var b0 = document.getElementById('pk-boot');
   if(b0) b0.remove();
   document.body.style.animation = 'pk-flash-out .01s';
@@ -320,19 +350,43 @@ document.addEventListener('click', function(e){
   if(!a) return;
   var href = a.getAttribute('href');
   if(!href || a.target === '_blank' || e.metaKey || e.ctrlKey) return;
+  if(a.hasAttribute && a.hasAttribute('data-px-skip')) return;   /* page owns this transition */
   if(!/\.html?$/.test(href.split('#')[0].split('?')[0])) return;
   if(/:\/\//.test(href) && href.indexOf(location.host) === -1) return;
   e.preventDefault();
+  if(PX_ON){
+    var move = a.getAttribute('data-px') || CFG.transition || 'iris';
+    var r = a.getBoundingClientRect();
+    var tSel = a.getAttribute('data-px-target');
+    var opts = {
+      x: r.width ? (r.left + r.width/2)/window.innerWidth : .5,
+      y: r.height ? (r.top + r.height/2)/window.innerHeight : .5,
+      label: (a.getAttribute('data-px-label') || (a.textContent||'').trim().slice(0,26) || 'HANDSHAKE').toUpperCase(),
+      caption: (a.getAttribute('data-px-cap') || '').toUpperCase() || null,
+      target: tSel ? document.querySelector(tSel) : null,
+      hardTimeout: 2600
+    };
+    try{ PX.go(href, move, opts); return; }catch(err){}
+  }
   var sh = document.getElementById('pk-shutter');
   sh.classList.add('active');
   AudioFX.whoosh();
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ sh.classList.add('close'); }); });
   setTimeout(function(){ location.href = href; }, 400);
 });
+
+/* programmatic navigation with the same choreography */
+window.PK.go = function(href, move, opts){
+  if(!PX_ON){ location.href = href; return; }
+  PX.go(href, move || CFG.transition || 'iris', opts || {});
+};
 window.addEventListener('pageshow', function(e){
   if(e.persisted){
     var sh = document.getElementById('pk-shutter');
     sh.classList.remove('close','active');
+    if(PX){ try{ PX.reset(); }catch(err){} }
+    document.documentElement.classList.remove('px-entering');
+    enterDone();
   }
 });
 
@@ -353,5 +407,8 @@ window.addEventListener('keydown', function(e){
 });
 
 /* expose tiny helpers for page glue */
+}
+whenBody(pkDom);
+
 window.PK.on = function(sel, ev, fn){ document.addEventListener(ev, function(e){ var t = e.target.closest && e.target.closest(sel); if(t) fn.call(t, e); }); };
 })();

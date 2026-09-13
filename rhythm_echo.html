@@ -257,7 +257,7 @@
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
-<!-- PORTAL_KIT v4 -->
+<!-- PORTAL_KIT v4.5 -->
 <script>window.PORTAL_KIT={title:'RHYTHM ECHO',code:'GAME_02',accent:'#00e6e6',accentRgb:'0,230,230',mode:'arcade',bg:'off',skipIntro:false};</script>
 <link rel="stylesheet" href="./kit/portal.css">
 <style>/* GAME_02 polish — arcade frame + combo reactive glow */
@@ -276,6 +276,8 @@ body.pk-beat #gameCanvas{ box-shadow:0 0 46px -4px rgba(var(--pk-accent-rgb),.55
 body.pk-beat .pk-corner::before{ border-color:#fff; filter:drop-shadow(0 0 10px var(--pk-accent)); }
 #comboDisplay{ transition:text-shadow .12s, transform .12s; }
 #comboDisplay.pk-hot{ text-shadow:0 0 26px #fff, 0 0 44px var(--pk-accent); transform:scale(1.06); }</style>
+<link rel="stylesheet" href="./kit/cinematic.css">
+<script src="./kit/cinematic.js"></script>
 <script src="./kit/portal.js"></script>
 <script>window.addEventListener("pk:entered",function(){/* combo-reactive frame */
 (function(){
