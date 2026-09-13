@@ -404,11 +404,13 @@
         }
 
     </style>
-<!-- PORTAL_KIT v4 -->
+<!-- PORTAL_KIT v4.5 -->
 <script>window.PORTAL_KIT={title:'INTERNAL BIOLOGY',code:'BIO_LAB',accent:'#00aaff',accentRgb:'0,170,255',mode:'narrative',bg:'off',skipIntro:true};</script>
 <link rel="stylesheet" href="./kit/portal.css">
 <style>/* BIO_LAB polish */
 .pk-vignette{ background:radial-gradient(ellipse at 50% 46%, transparent 40%, rgba(0,8,14,.55) 100%)!important; }</style>
+<link rel="stylesheet" href="./kit/cinematic.css">
+<script src="./kit/cinematic.js"></script>
 <script src="./kit/portal.js"></script>
 </head>
 <body>
@@ -745,6 +747,8 @@
             if (!state.isRestored) return;
             document.getElementById('ending-overlay').classList.add('active');
         };
+
+        let diveFxStarted = 0;
 
         // --- Three.js Setup ---
         const container = document.getElementById('canvas-container');
@@ -1252,10 +1256,23 @@
                     // Whiteout Trigger
                     if (elapsed > 6.0) {
                         document.getElementById('warp-whiteout').classList.add('active');
+                        const PXd = window.PX;
+                        if (PXd && !diveFxStarted) {
+                            diveFxStarted = 1;
+                            PXd.sfx.resume(); PXd.sfx.impact(1.2); PXd.sfx.sub_drop();
+                            PXd.caption('COSMONAUT', 'LEAVING THE BODY', { rgb: [0, 170, 255] });
+                            PXd.filter.tween({ chroma: [0, 40], warp: [0, 22], blur: [0, 6], bright: [0, 1.3] }, 900, 'iQu');
+                            PXd.camera.tween({ scale: 1.3 }, 1400, 'iQu');
+                            PXd.camera.shake({ amp: 16, dur: 1400, decay: 1 });
+                            PXd.fx.starfield({ rgb: [0, 170, 255], power: function (t) { return 40 + t * 900; } });
+                            PXd.fx.debris({ rgb: [0, 170, 255], count: 220, pull: 3200, swirl: 1400, dur: 2 });
+                        }
                     }
-                    
-                    // Redirect
+
+                    // Redirect — hand the transition to the next page
                     if (elapsed > 7.5) {
+                        const PXr = window.PX;
+                        if (PXr && PXr.handoff) { try { PXr.handoff.write('dive', { rgb: [0, 170, 255] }); } catch (e) { } }
                         window.location.href = './cosmic_frog.html';
                     }
                 }

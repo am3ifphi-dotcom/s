@@ -482,9 +482,11 @@ body.pkx-flash-ng::after{ background:radial-gradient(ellipse at center, rgba(255
   <div class="end-animation-text">MISSION COMPLETE</div>
 </div>
 
-<!-- PORTAL_KIT v4 -->
+<!-- PORTAL_KIT v4.5 -->
 <script>window.PORTAL_KIT={title:'数速バトル',code:'GAME_01',accent:'#00ffe0',accentRgb:'0,255,224',mode:'arcade',bg:'off',skipIntro:false};</script>
 <link rel="stylesheet" href="./kit/portal.css">
+<link rel="stylesheet" href="./kit/cinematic.css">
+<script src="./kit/cinematic.js"></script>
 <script src="./kit/portal.js"></script>
 <script>
 "use strict";
@@ -699,15 +701,54 @@ function checkAnswer(input, prob){
 }
 
 /* ---------------- screens ---------------- */
+/* --- scene swap: the frame tears, the new screen lands --- */
+const REDUCED_MB = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+function pxmb(){ return window.PX && !REDUCED_MB ? window.PX : null; }
+function screenEntrance(el){
+  if(!el || !el.animate || REDUCED_MB) return;
+  el.animate([
+    { opacity:0, transform:'translateY(16px) skewX(-3deg)', filter:'blur(7px) brightness(1.8)' },
+    { opacity:1, transform:'none', filter:'none' }
+  ], { duration:480, easing:'cubic-bezier(.16,1,.3,1)' });
+  [...el.children].slice(0,8).forEach((c,i)=>{
+    if(!c.animate) return;
+    c.animate([{ opacity:0, transform:'translateY(10px)' },{ opacity:1, transform:'none' }],
+      { duration:420, delay:70 + i*44, easing:'cubic-bezier(.16,1,.3,1)', fill:'backwards' });
+  });
+}
 function show(id){
+  const P = pxmb();
+  const prev = document.querySelector('.screen.on');
   ['setting-screen','play-screen','result-screen'].forEach(x=>$('#'+x).classList.toggle('on', x===id));
+  const cur = $('#'+id);
+  if(P && prev !== cur){
+    P.sfx.resume(); P.sfx.blip(760);
+    P.filter.tween({ chroma:[0,10], bright:[0,.16] }, 120, 'iC').then(()=>P.filter.tween({ chroma:[10,0], bright:[.16,0] }, 300, 'oQu5'));
+    if(cur && cur.animate) cur.animate([{ clipPath:'inset(0 0 100% 0)' },{ clipPath:'inset(0 0 0 0)' }], { duration:340, easing:'cubic-bezier(.77,0,.18,1)' });
+  }
+  screenEntrance(cur);
   const st = $('#game-status');
   if(id==='play-screen'){
     st.innerHTML = `${MODE_NAMES[S.mode]} <b>//</b> ${DIFF_NAMES[S.difficulty]} <b>//</b> ${FIELD_NAMES[S.field]}`;
+    if(P){ P.caption('ROUND START', 'SOLVE. DO NOT BLINK.', { rgb:[0,255,224], autoKill:1200 }); P.fx.rings({ rgb:[0,255,224], r0:20, r1:Math.max(innerWidth,innerHeight)*.8, dur:1, count:3, chroma:true }); }
   }
 }
 function startGameTransition(){
   GameSFX.glitch();
+  const P = pxmb();
+  if(P){
+    P.sfx.resume(); P.sfx.zap(); P.sfx.stutter(9, 240);
+    P.filter.tween({ chroma:[0,20], tear:[0,14], bright:[0,.4] }, 130, 'iC')
+      .then(()=>P.filter.tween({ chroma:[20,0], tear:[14,0], bright:[.4,0] }, 340, 'oQu5'));
+    P.camera.shake({ amp:10, dur:260, decay:6, roll:1 });
+    P.fx.bars({ rgb:[0,255,224], until:300, dur:300, max:7, thick:24 });
+    P.fx.debris({ rgb:[0,255,224], count:120, pull:-900, dur:.7, from:'center' });
+  }
+  const ts = $('#title-screen');
+  if(ts && ts.animate && !REDUCED_MB){
+    ts.animate([{ opacity:1, transform:'none' }, { opacity:0, transform:'translateY(-18px) scale(.98)', filter:'blur(6px)' }],
+      { duration:300, easing:'cubic-bezier(.7,0,.84,0)', fill:'forwards' });
+  }
   $('#title-screen').style.display='none';
   $('#game-screen').style.display='block';
   show('setting-screen');
@@ -892,6 +933,14 @@ function endGame(){
   const ov = $('#end-animation-overlay');
   ov.classList.add('on');
   GameSFX.finish();
+  const P = pxmb();
+  if(P){
+    P.sfx.resume(); P.sfx.impact(.9); P.sfx.chime(true);
+    P.filter.tween({ bright:[0,.9], chroma:[0,18], blur:[0,3] }, 200, 'iC')
+      .then(()=>P.filter.tween({ bright:[.9,0], chroma:[18,0], blur:[3,0] }, 700, 'oQu5'));
+    P.fx.rings({ rgb:[0,255,224], r0:16, r1:Math.max(innerWidth,innerHeight)*1.1, dur:1.2, count:4, chroma:true, width:3 });
+    P.caption('TIME UP', 'RESULT COMPUTING', { rgb:[0,255,224], autoKill:1500 });
+  }
   setTimeout(()=>{
     ov.classList.remove('on');
     const total = S.correct + S.wrong;
