@@ -119,6 +119,16 @@
             animation-delay: 75ms;
         }
     </style>
+<!-- PORTAL_KIT v4 -->
+<script>window.PORTAL_KIT={title:'THE LAST DIARY',code:'LOG_02',accent:'#ff4d3d',accentRgb:'255,77,61',mode:'narrative',bg:'stars',skipIntro:false};</script>
+<link rel="stylesheet" href="./kit/portal.css">
+<style>/* LOG_02 polish — embers in the dark */
+body{ animation:pkx-ink 2.8s ease-out; }
+@keyframes pkx-ink{ 0%{ filter:brightness(0) blur(8px);} 55%{ filter:brightness(.6) blur(3px);} 100%{ filter:none;} }
+#text-display{ text-shadow:0 0 18px rgba(255,77,61,.25); }
+.pk-vignette{ background:radial-gradient(ellipse at 50% 44%, transparent 38%, rgba(20,0,0,.6) 100%)!important; }
+.pk-grain{ opacity:.08!important; }</style>
+<script src="./kit/portal.js"></script>
 </head>
 <body onclick="handleScreenClick()">
 

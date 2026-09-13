@@ -1,60 +1,373 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数速バトル</title>
-<!-- 修正.htmlの<head>タグ内に追加 --><audio id="result-sound" src="データ表示3.mp3" preload="auto"></audio>
-<!-- 他のaudioタグの下に追加 -->
-<!-- 他のaudioタグの下に追加 -->
-<audio id="warning-sound" src="メニューを開く2.mp3" preload="auto"></audio>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数速バトル — CYBER v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#020308; --bg1:#04080f;
+  --c1:#00ffe0; --c1-rgb:0,255,224;
+  --c2:#ff2d6f; --c2-rgb:255,45,111;
+  --warn:#ffb020; --bad:#ff2626; --ok:#3dff7a;
+  --txt:#dff7f3; --dim:#5f7d80;
+  --fd:'Orbitron','Noto Sans JP',sans-serif;
+  --fm:'Share Tech Mono','Noto Sans JP',monospace;
+}
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+body{
+  background:var(--bg0); color:var(--txt);
+  font-family:'Rajdhani','Noto Sans JP',sans-serif; font-size:16px;
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+}
+::selection{ background:var(--c1); color:#001311; }
+#game-container{ position:relative; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
 
-<audio id="keypress-sound" src="選択3.mp3" preload="auto"></audio>
-<audio id="glitch-sound" src="glitch-177348.mp3" preload="auto"></audio>
-<audio id="countdown-sound" src="robotic-countdown-43935.mp3" preload="auto"></audio>
-<audio id="hover-sound" src="Cyber14-2.mp3" preload="auto"></audio>
-<audio id="click-sound" src="gun-trigger-click-without-bullet-fascinatedsound-2-2-00-00.mp3" preload="auto"></audio>
-<audio id="cancel-sound" src="キャンセル2.mp3" preload="auto"></audio>
-<audio id="sci-fi-click-sound" src="sci-fi-weapon-single-shot-warped-06-316417.mp3" preload="auto"></audio>
-<!-- 新しく追加する音声ファイル -->
-<audio id="error-sound" src="ビープ音1.mp3" preload="auto"></audio>
-<audio id="correct-sound" src="決定ボタンを押す7.mp3" preload="auto"></audio>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="修正.css">
-    <link rel="icon" href="suusoku.png">
+/* ---------- animated background ---------- */
+.math-background{ position:absolute; inset:0; overflow:hidden; }
+.math-background i{
+  position:absolute; font-family:var(--fm); color:rgba(var(--c1-rgb),.07);
+  font-size:22px; animation:pkfloat linear infinite; will-change:transform;
+  text-shadow:0 0 12px rgba(var(--c1-rgb),.25); white-space:nowrap;
+}
+@keyframes pkfloat{
+  0%{ transform:translateY(110vh) rotate(0deg); opacity:0; }
+  8%{ opacity:1; } 92%{ opacity:1; }
+  100%{ transform:translateY(-16vh) rotate(8deg); opacity:0; }
+}
+.math-background::after{
+  content:""; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(var(--c1-rgb),.04) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--c1-rgb),.04) 1px, transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 50%, #000 20%, transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 50%, #000 20%, transparent 75%);
+}
+.dynamic-light{
+  position:absolute; width:44vw; height:44vw; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, rgba(var(--c1-rgb),.08), transparent 65%);
+  top:-18vw; right:-14vw; animation:pkdraft 11s ease-in-out infinite;
+}
+.dynamic-light.secondary{
+  background:radial-gradient(circle, rgba(var(--c2-rgb),.07), transparent 65%);
+  top:auto; right:auto; bottom:-20vw; left:-16vw; animation-delay:-5s;
+}
+@keyframes pkdraft{ 0%,100%{ transform:translate(0,0) scale(1);} 50%{ transform:translate(-5vw,4vw) scale(1.12);} }
+
+/* ---------- smart board frame ---------- */
+.game-board-wrapper{ width:min(860px,94vw); position:relative; z-index:2; }
+.game-board-smart{
+  position:relative; border:1px solid rgba(var(--c1-rgb),.3); border-radius:8px;
+  background:linear-gradient(165deg, rgba(6,16,22,.94), rgba(2,7,11,.96));
+  box-shadow:0 0 60px -14px rgba(var(--c1-rgb),.35), inset 0 0 50px rgba(var(--c1-rgb),.03);
+  overflow:hidden; min-height:560px; display:flex; flex-direction:column;
+}
+.game-board-smart::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; padding:1px; pointer-events:none;
+  background:conic-gradient(from var(--pkx-beam,0deg), transparent 0 300deg, var(--c1) 335deg, #fff 350deg, transparent 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  opacity:.5; animation:pkx-beam 6s linear infinite;
+}
+@property --pkx-beam{ syntax:'<angle>'; initial-value:0deg; inherits:false; }
+@keyframes pkx-beam{ to{ --pkx-beam:360deg; } }
+.cyber-grid{
+  position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background-image:linear-gradient(rgba(var(--c1-rgb),.05) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--c1-rgb),.05) 1px, transparent 1px);
+  background-size:36px 36px;
+}
+.scanlines{
+  position:absolute; inset:0; pointer-events:none; mix-blend-mode:overlay;
+  background:repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0 1px, transparent 1px 3px);
+}
+
+/* ---------- screens ---------- */
+#title-screen, #setting-screen, #play-screen, #result-screen{
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:2.6rem 2rem; width:100%; flex:1;
+}
+#title-screen{ min-height:560px; }
+#setting-screen, #play-screen, #result-screen{ display:none; }
+#setting-screen.on, #play-screen.on, #result-screen.on{ display:flex; animation:pkx-in .55s cubic-bezier(.16,1,.3,1); }
+@keyframes pkx-in{ 0%{ opacity:0; transform:translateY(26px) scale(.985); filter:blur(6px);} 100%{ opacity:1; transform:none; filter:blur(0);} }
+
+.cyber-title{
+  font-family:var(--fd); font-weight:900; font-size:clamp(2rem,6vw,3.4rem); letter-spacing:.12em; color:#fff;
+  text-shadow:0 0 30px rgba(var(--c1-rgb),.6), 0 0 80px rgba(var(--c1-rgb),.3);
+  position:relative;
+}
+.cyber-title::before,.cyber-title::after{
+  content:attr(data-t); position:absolute; left:0; top:0; width:100%; overflow:hidden;
+}
+.cyber-title::before{ color:var(--c2); clip-path:inset(12% 0 76% 0); animation:pkx-gl1 2.8s infinite steps(1); opacity:.8; }
+.cyber-title::after{ color:var(--c1); clip-path:inset(70% 0 8% 0); animation:pkx-gl2 3.4s infinite steps(1); opacity:.8; }
+@keyframes pkx-gl1{ 0%,92%{ transform:none; opacity:0;} 93%{ transform:translate(-4px,2px); opacity:.8;} 96%{ transform:translate(3px,-1px); opacity:.8;} 97%,100%{ opacity:0;} }
+@keyframes pkx-gl2{ 0%,88%{ transform:none; opacity:0;} 89%{ transform:translate(4px,-2px); opacity:.8;} 92%{ transform:translate(-3px,1px); opacity:.8;} 93%,100%{ opacity:0;} }
+.subtitle{
+  margin-top:1rem; font-family:var(--fm); letter-spacing:.42em; color:var(--dim); font-size:.8rem;
+  display:flex; align-items:center; gap:1em;
+}
+.subtitle::before,.subtitle::after{ content:""; width:44px; height:1px; background:linear-gradient(90deg, transparent, var(--c1)); }
+.subtitle::after{ background:linear-gradient(90deg, var(--c1), transparent); }
+.cyber-title-small{ font-family:var(--fd); font-weight:800; font-size:1.15rem; letter-spacing:.14em; color:#fff; text-shadow:0 0 16px rgba(var(--c1-rgb),.6); }
+.subtitle-small{ margin-top:.3rem; font-family:var(--fm); font-size:.66rem; letter-spacing:.34em; color:var(--dim); }
+.game-header-smart{ text-align:center; margin-bottom:1.6rem; }
+
+/* ---------- buttons ---------- */
+.start-button, .start-game-button, .modal-button, .return-button, .next-problem-button{
+  font-family:var(--fd); font-weight:700; letter-spacing:.3em; position:relative; overflow:hidden;
+  color:var(--c1); background:rgba(var(--c1-rgb),.06); border:1px solid rgba(var(--c1-rgb),.55);
+  padding:1rem 3rem; font-size:.95rem;
+  transition:color .25s, box-shadow .3s, transform .25s, border-color .25s;
+}
+.start-button::before, .start-game-button::before, .modal-button::before, .return-button::before, .next-problem-button::before{
+  content:""; position:absolute; inset:0; background:var(--c1);
+  transform:scaleX(0); transform-origin:right; transition:transform .35s cubic-bezier(.77,0,.18,1); z-index:0;
+}
+.start-button:hover, .start-game-button:hover, .modal-button:hover, .return-button:hover, .next-problem-button:hover{
+  color:#001311; border-color:var(--c1); transform:translateY(-3px);
+  box-shadow:0 0 30px -4px rgba(var(--c1-rgb),.65);
+}
+.start-button:hover::before, .start-game-button:hover::before, .modal-button:hover::before, .return-button:hover::before, .next-problem-button:hover::before{
+  transform:scaleX(1); transform-origin:left;
+}
+.start-button:active, .start-game-button:active, .modal-button:active, .return-button:active, .next-problem-button:active{ transform:translateY(1px) scale(.97); }
+.start-button span, .start-game-button span, .modal-button span, .return-button span, .next-problem-button span{ position:relative; z-index:1; }
+.start-button{ margin-top:2.6rem; animation:pkx-blink-soft 2s infinite; }
+@keyframes pkx-blink-soft{ 0%,100%{ box-shadow:0 0 14px rgba(var(--c1-rgb),.25);} 50%{ box-shadow:0 0 34px rgba(var(--c1-rgb),.55);} }
+.next-problem-button{ padding:.7rem 2.2rem; font-size:.8rem; margin-top:1.2rem; }
+.return-button{ padding:.6rem 1.6rem; font-size:.72rem; letter-spacing:.2em; color:var(--dim); border-color:rgba(95,125,128,.6); }
+.return-button:hover{ color:#001311; background:var(--dim); border-color:var(--dim); box-shadow:0 0 18px rgba(95,125,128,.5); }
+.return-button::before{ background:var(--dim); }
+#return-to-settings-button{
+  position:absolute; top:14px; left:14px; padding:.45rem .8rem; font-size:.62rem;
+  border-color:rgba(255,45,111,.5); color:var(--c2);
+}
+#return-to-settings-button::before{ background:var(--c2); }
+#return-to-settings-button:hover{ color:#fff; border-color:var(--c2); box-shadow:0 0 18px rgba(255,45,111,.5); }
+
+/* ---------- settings ---------- */
+.game-content{
+  font-family:var(--fd); font-size:.8rem; letter-spacing:.4em; color:var(--c1);
+  margin-bottom:1.6rem; display:flex; align-items:center; gap:.8em;
+}
+.game-content::before,.game-content::after{ content:""; width:8px; height:8px; background:var(--c1); transform:rotate(45deg); box-shadow:0 0 8px var(--c1); }
+.game-info-wrapper{ display:flex; flex-direction:column; gap:1.05rem; width:min(430px,88vw); }
+.game-options{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.game-options > label{
+  font-family:var(--fd); font-size:.68rem; letter-spacing:.24em; color:var(--dim);
+  width:7.2em; flex:none; text-align:right;
+}
+.button-group{ display:flex; gap:7px; flex-wrap:wrap; }
+.option-button, .option-select{
+  font-family:var(--fm); font-size:.82rem; letter-spacing:.08em; color:#9fd8d0;
+  background:rgba(var(--c1-rgb),.04); border:1px solid rgba(var(--c1-rgb),.25);
+  padding:.5em 1.2em; transition:all .22s;
+}
+.option-button{ position:relative; overflow:hidden; }
+.option-button:hover{ color:var(--c1); border-color:rgba(var(--c1-rgb),.7); transform:translateY(-2px); box-shadow:0 0 14px -3px rgba(var(--c1-rgb),.5); }
+.option-button.active{
+  color:#001311; background:var(--c1); border-color:var(--c1); font-weight:700;
+  box-shadow:0 0 20px -2px rgba(var(--c1-rgb),.7);
+}
+.option-select{ outline:none; }
+.option-select:focus{ border-color:var(--c1); box-shadow:0 0 14px -3px rgba(var(--c1-rgb),.6); }
+.option-select option{ background:#04121a; color:var(--txt); }
+.start-game-button-wrapper{ margin-top:2rem; }
+
+/* ---------- play HUD ---------- */
+.game-status{
+  position:absolute; top:14px; right:16px; font-family:var(--fm); font-size:.64rem;
+  letter-spacing:.2em; color:var(--dim);
+}
+.game-status b{ color:var(--c1); font-weight:400; }
+.timer-display{
+  width:min(430px,86vw); height:12px; margin-bottom:1.4rem; position:relative;
+  border:1px solid rgba(var(--c1-rgb),.4); background:rgba(var(--c1-rgb),.05);
+}
+.timer-display i{
+  position:absolute; inset:1px auto 1px 1px; width:100%;
+  background:linear-gradient(90deg, var(--c1), rgba(var(--c1-rgb),.5));
+  box-shadow:0 0 12px rgba(var(--c1-rgb),.7);
+}
+.timer-display.danger i{ background:linear-gradient(90deg, var(--bad), rgba(255,38,38,.6)); box-shadow:0 0 12px rgba(255,38,38,.8); }
+.timer-display b{
+  position:absolute; right:-52px; top:50%; transform:translateY(-50%);
+  font-family:var(--fm); font-weight:400; font-size:.9rem; color:var(--c1);
+}
+.timer-display.danger b{ color:var(--bad); animation:pkx-blink-soft .5s infinite; }
+.question-counter{
+  font-family:var(--fd); font-size:.74rem; letter-spacing:.3em; color:var(--dim); margin-bottom:.6rem;
+}
+.question-counter b{ color:var(--c1); font-size:1rem; }
+.coop-score-display{
+  font-family:var(--fd); font-size:.9rem; letter-spacing:.24em; color:var(--c1);
+  margin-bottom:1rem; text-shadow:0 0 14px rgba(var(--c1-rgb),.6);
+}
+.coop-score-display small{ color:var(--warn); font-family:var(--fm); margin-left:1em; letter-spacing:.14em; }
+
+/* ---------- problem ---------- */
+.problem-display{
+  font-family:var(--fd); font-weight:700; font-size:clamp(1.7rem,4.6vw,2.7rem); letter-spacing:.06em;
+  color:#fff; text-align:center; min-height:1.4em; margin:.4rem 0 1.6rem;
+  text-shadow:0 0 26px rgba(var(--c1-rgb),.45);
+  animation:pkx-problem .35s cubic-bezier(.16,1,.3,1);
+}
+@keyframes pkx-problem{ 0%{ opacity:0; transform:translateY(14px); filter:blur(5px);} 100%{ opacity:1; transform:none; filter:blur(0);} }
+#answer-input{
+  width:min(360px,84vw); text-align:center;
+  font-family:var(--fm); font-size:1.4rem; letter-spacing:.1em; color:#fff;
+  background:rgba(var(--c1-rgb),.04); border:1px solid rgba(var(--c1-rgb),.4);
+  padding:.7em 1em; outline:none; caret-color:var(--c1);
+  transition:border-color .25s, box-shadow .25s;
+}
+#answer-input:focus{ border-color:var(--c1); box-shadow:0 0 0 1px rgba(var(--c1-rgb),.5), 0 0 26px -6px rgba(var(--c1-rgb),.6); }
+.answer-status{
+  margin-top:1rem; min-height:1.6em; font-family:var(--fm); font-size:.86rem; letter-spacing:.18em;
+}
+.answer-status.ok{ color:var(--ok); text-shadow:0 0 12px rgba(61,255,122,.7); animation:pkx-pop .4s cubic-bezier(.34,1.56,.64,1); }
+.answer-status.ng{ color:var(--bad); text-shadow:0 0 12px rgba(255,38,38,.7); animation:pkx-shake .4s; }
+@keyframes pkx-pop{ 0%{ transform:scale(.8); opacity:.4;} 100%{ transform:scale(1); opacity:1;} }
+@keyframes pkx-shake{ 0%,100%{transform:none} 20%{transform:translateX(-8px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(3px)} }
+body.pkx-flash-ok #game-container::after,
+body.pkx-flash-ng #game-container::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:50;
+  animation:pkx-fade .4s forwards;
+}
+body.pkx-flash-ok::after{ background:radial-gradient(ellipse at center, rgba(61,255,122,.14), transparent 70%); }
+body.pkx-flash-ng::after{ background:radial-gradient(ellipse at center, rgba(255,38,38,.16), transparent 70%); }
+@keyframes pkx-fade{ 0%{ opacity:1;} 100%{ opacity:0;} }
+
+/* ---------- countdown ---------- */
+#countdown-overlay{
+  position:absolute; inset:0; z-index:30; display:none; align-items:center; justify-content:center;
+  background:rgba(1,4,7,.82); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+}
+#countdown-overlay.on{ display:flex; }
+.countdown-number{
+  font-family:var(--fd); font-weight:900; font-size:clamp(5rem,18vw,9rem); color:var(--c1);
+  text-shadow:0 0 50px rgba(var(--c1-rgb),.8); animation:pkx-count .92s cubic-bezier(.16,1,.3,1);
+}
+@keyframes pkx-count{ 0%{ transform:scale(2.4); opacity:0; filter:blur(14px);} 30%{ opacity:1; filter:blur(0);} 100%{ transform:scale(.9); opacity:.15;} }
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:absolute; inset:0; z-index:40; display:none; align-items:center; justify-content:center;
+  background:rgba(1,4,7,.86); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+}
+.modal-overlay.on{ display:flex; animation:pkx-in .3s ease-out; }
+.modal-content{
+  width:min(430px,92vw); border:1px solid rgba(var(--c1-rgb),.5); background:#031014;
+  padding:1.8rem 1.9rem; box-shadow:0 0 50px -10px rgba(var(--c1-rgb),.4);
+  text-align:center;
+}
+.modal-content h3{ font-family:var(--fd); font-size:.86rem; letter-spacing:.2em; color:#fff; margin-bottom:1.2rem; }
+.settings-list-container{
+  text-align:left; font-family:var(--fm); font-size:.8rem; color:#9fd8d0;
+  border:1px dashed rgba(var(--c1-rgb),.3); padding:1rem 1.2rem; margin-bottom:1.4rem;
+  display:flex; flex-direction:column; gap:.45rem;
+}
+.settings-list-container b{ color:var(--c1); font-weight:400; float:right; }
+.settings-list-container span{ display:flex; justify-content:space-between; }
+.modal-content .button-group{ justify-content:center; gap:12px; }
+.modal-button{ padding:.7rem 2.4rem; font-size:.8rem; }
+.modal-button.confirm-no{ color:var(--c2); border-color:rgba(var(--c2-rgb),.6); }
+.modal-button.confirm-no::before{ background:var(--c2); }
+.modal-button.confirm-no:hover{ border-color:var(--c2); box-shadow:0 0 26px -4px rgba(var(--c2-rgb),.6); }
+
+/* ---------- result ---------- */
+.cyber-widget-container{ width:min(480px,92vw); }
+.cyber-widget-frame{
+  border:1px solid rgba(var(--c1-rgb),.5); background:rgba(3,16,20,.9);
+  box-shadow:0 0 44px -10px rgba(var(--c1-rgb),.4), inset 0 0 30px rgba(var(--c1-rgb),.03);
+  position:relative; overflow:hidden;
+}
+.cyber-widget-frame::before{
+  content:""; position:absolute; top:0; left:-80%; width:50%; height:100%; pointer-events:none;
+  background:linear-gradient(100deg, transparent, rgba(var(--c1-rgb),.08), transparent);
+  transform:skewX(-18deg); animation:pkx-sheen 3.2s ease-in-out infinite;
+}
+@keyframes pkx-sheen{ 0%{ left:-80%; } 55%,100%{ left:140%; } }
+.cyber-widget-header{
+  font-family:var(--fd); font-weight:800; letter-spacing:.42em; text-align:center;
+  padding:.9rem; color:#001311; background:var(--c1);
+  box-shadow:0 0 24px rgba(var(--c1-rgb),.5);
+}
+.cyber-widget-content{
+  padding:1.4rem 1.6rem; font-family:var(--fm); font-size:.86rem; line-height:2.1; color:#9fd8d0;
+  display:flex; flex-direction:column; gap:.15rem;
+}
+.cyber-widget-content b{ color:var(--c1); font-weight:400; float:right; font-size:1rem; }
+.cyber-widget-content span{ display:flex; justify-content:space-between; gap:2em; }
+.cyber-widget-content .win{ color:var(--ok); } .cyber-widget-content .lose{ color:var(--bad); }
+.cyber-widget-footer{ border-top:1px dashed rgba(var(--c1-rgb),.3); padding:1rem; text-align:center; }
+.cyber-title-box{
+  font-family:var(--fd); font-weight:900; font-size:1.5rem; letter-spacing:.24em; color:#fff;
+  text-shadow:0 0 26px rgba(var(--c1-rgb),.8); animation:pkx-pop .7s cubic-bezier(.34,1.56,.64,1) .3s backwards;
+}
+.result-buttons{ display:flex; gap:14px; margin-top:1.4rem; justify-content:center; flex-wrap:wrap; }
+
+/* ---------- end animation ---------- */
+#end-animation-overlay{
+  position:absolute; inset:0; z-index:45; display:none; align-items:center; justify-content:center;
+  background:rgba(1,4,7,.92); overflow:hidden;
+}
+#end-animation-overlay.on{ display:flex; }
+.end-wave{
+  position:absolute; left:50%; top:50%; width:12px; height:12px; margin:-6px;
+  border:2px solid var(--c1); border-radius:50%; animation:pkx-wave 1.6s ease-out infinite;
+}
+.end-wave:nth-child(2){ animation-delay:.4s; border-color:rgba(var(--c1-rgb),.6); }
+.end-wave:nth-child(3){ animation-delay:.8s; border-color:rgba(var(--c1-rgb),.3); }
+@keyframes pkx-wave{ 0%{ transform:scale(1); opacity:.9;} 100%{ transform:scale(90); opacity:0;} }
+.end-animation-text{
+  position:relative; font-family:var(--fd); font-weight:900; letter-spacing:.5em; color:#fff;
+  font-size:clamp(1.2rem,4vw,2rem); text-shadow:0 0 34px rgba(var(--c1-rgb),.9);
+  animation:pkx-pop .8s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:640px){
+  .game-options > label{ width:100%; text-align:left; }
+  .timer-display b{ right:6px; top:auto; bottom:-20px; transform:none; }
+  #return-to-settings-button{ top:8px; left:8px; }
+  .game-status{ right:10px; }
+}
+</style>
 </head>
 <body>
     <div id="game-container">
         <div class="math-background" id="math-background"></div>
         <div class="dynamic-light"></div>
         <div class="dynamic-light secondary"></div>
-        
+
         <div id="countdown-overlay">
             <span id="countdown-number" class="countdown-number">3</span>
         </div>
 
         <div id="title-screen">
-            <h1 class="cyber-title">数速バトル</h1>
+            <h1 class="cyber-title" data-t="数速バトル">数速バトル</h1>
             <div class="subtitle">- <ruby>極限<rt>limit</rt></ruby><ruby>発散<rt>break</rt></ruby>せよ -</div>
-            <button class="start-button" onclick="startGameTransition()">ACCESS</button>
+            <button class="start-button" onclick="startGameTransition()"><span>ACCESS</span></button>
         </div>
-        
-        <div id="game-screen">
+
+        <div id="game-screen" style="display:none">
             <div class="game-board-wrapper">
 <div class="game-board-smart">
 
                     <div class="cyber-grid"></div>
                     <div class="scanlines"></div>
 
-                    
+
+
                     <div class="game-header-smart">
                         <h1 class="cyber-title-small">数速バトル</h1>
                         <div class="subtitle-small">- <ruby>極限<rt>limit</rt></ruby><ruby>発散<rt>break</rt></ruby>せよ -</div>
                     </div>
-                    
+
                     <div class="game-main-smart" id="setting-screen">
                         <p class="game-content">ゲーム設定</p>
                         <div class="game-info-wrapper">
@@ -65,7 +378,7 @@
                                     <button class="option-button" data-mode="battle">対戦</button>
                                 </div>
                             </div>
-                            
+
                             <div class="game-options">
                                 <label>難易度:</label>
                                 <div class="button-group" id="difficulty-buttons">
@@ -74,7 +387,7 @@
                                     <button class="option-button" data-difficulty="hard">Hard</button>
                                 </div>
                             </div>
-                            
+
                             <div class="game-options coop-options">
                                 <label>制限時間:</label>
                                 <select class="option-select" id="time-limit-select">
@@ -83,7 +396,7 @@
                                     <option value="180">180秒</option>
                                 </select>
                             </div>
-                            
+
                             <div class="game-options battle-options" style="display:none;">
                                 <label>問題数:</label>
                                 <select class="option-select" id="question-count-select">
@@ -92,7 +405,7 @@
                                     <option value="20">20問</option>
                                 </select>
                             </div>
-                            
+
                             <div class="game-options field-options">
                                 <label>分野:</label>
                                 <select class="option-select" id="field-select">
@@ -105,66 +418,58 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="start-game-button-wrapper">
-                            <button class="start-game-button" id="start-game-button">START</button>
+                            <button class="start-game-button" id="start-game-button"><span>START</span></button>
                         </div>
                     </div>
 
-                    
+
 
                     <div class="game-main-smart" id="play-screen">
-<button class="return-button" id="return-to-settings-button" aria-label="設定に戻る"></button>
+<button class="return-button" id="return-to-settings-button" aria-label="設定に戻る"><span>✕ 設定</span></button>
                         <div class="game-status" id="game-status"></div>
-                        <div class="timer-display" id="timer-display" style="display:none;"></div>
+                        <div class="timer-display" id="timer-display" style="display:none;"><i id="timer-bar"></i><b id="timer-num"></b></div>
                         <div class="question-counter" id="question-counter" style="display:none;"></div>
                         <div class="coop-score-display" id="coop-score-display"></div>
-                        
+
                         <div class="problem-display" id="problem-display"></div>
-                        
+
                         <input type="text" id="answer-input" placeholder="解答を入力" autocomplete="off">
                         <div id="answer-status" class="answer-status"></div>
-                        
+
                         <div class="button-group">
-                            <button class="next-problem-button" id="next-problem-button" style="display:none;">次の問題</button>
+                            <button class="next-problem-button" id="next-problem-button" style="display:none;"><span>次の問題 →</span></button>
                             </div>
                     </div>
-                    
-<!-- 結果画面部分を以下のように変更 -->
+
 <div class="game-main-smart" id="result-screen" style="display:none;">
     <div class="cyber-widget-container">
         <div class="cyber-widget-frame">
-            <!-- ヘッダー -->
             <div class="cyber-widget-header">RESULT</div>
-            
-            <!-- コンテンツ（動的に生成） -->
             <div class="cyber-widget-content" id="result-message"></div>
-            
-            <!-- フッター -->
             <div class="cyber-widget-footer">
                 <div class="cyber-title-box" id="result-title"></div>
             </div>
         </div>
     </div>
-    
-    <!-- ボタングループ -->
     <div class="result-buttons">
-        <button class="return-button" id="return-from-result-button">設定に戻る</button>
-        <button class="return-button" id="retry-button">リトライ</button>
+        <button class="return-button" id="return-from-result-button"><span>設定に戻る</span></button>
+        <button class="return-button" id="retry-button"><span>リトライ</span></button>
     </div>
 </div>
 
                     </div>
                 </div>
             </div>
-            
+
             <div id="confirmation-modal" class="modal-overlay">
                 <div class="modal-content">
                     <h3>以下の設定でゲームを開始しますか？</h3>
                     <div id="settings-list-container" class="settings-list-container"></div>
                     <div class="button-group">
-                        <button class="modal-button confirm-yes" id="confirm-yes-button">YES</button>
-                        <button class="modal-button confirm-no" id="confirm-no-button">NO</button>
+                        <button class="modal-button confirm-yes" id="confirm-yes-button"><span>YES</span></button>
+                        <button class="modal-button confirm-no" id="confirm-no-button"><span>NO</span></button>
                     </div>
                 </div>
             </div>
@@ -177,8 +482,457 @@
   <div class="end-animation-text">MISSION COMPLETE</div>
 </div>
 
+<!-- PORTAL_KIT v4 -->
+<script>window.PORTAL_KIT={title:'数速バトル',code:'GAME_01',accent:'#00ffe0',accentRgb:'0,255,224',mode:'arcade',bg:'off',skipIntro:false};</script>
+<link rel="stylesheet" href="./kit/portal.css">
+<script src="./kit/portal.js"></script>
+<script>
+"use strict";
+/* ============================================================
+   数速バトル — full embedded rebuild (v4)
+   Original externals (修正.css / script.js / audio) were missing
+   from the repo; game is now self-contained with synth SFX.
+============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const SND = window.PK.sfx;
 
-    
-    <script src="script.js"></script>
+/* ---------------- synth SFX ---------------- */
+const GameSFX = (()=>{
+  function tone(o){
+    if(!SND.enabled) return;
+    try{
+      const AC = window.AudioContext||window.webkitAudioContext;
+      SND.ctx = SND.ctx || null;
+    }catch(e){}
+  }
+  // use PK.sfx primitives where possible; local engine for the rest
+  let ctx=null, master=null;
+  function ac(){
+    if(ctx) return true;
+    try{
+      const AC = window.AudioContext||window.webkitAudioContext;
+      ctx = new AC(); master = ctx.createGain(); master.gain.value=.18; master.connect(ctx.destination);
+      return true;
+    }catch(e){ return false; }
+  }
+  function t({f=440,fe,type='square',a=.005,d=.12,v=.4,delay=0}){
+    if(!SND.enabled||!ac()) return;
+    const now = ctx.currentTime+delay;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,now);
+    if(fe) o.frequency.exponentialRampToValueAtTime(Math.max(1,fe), now+a+d);
+    g.gain.setValueAtTime(.0001,now);
+    g.gain.exponentialRampToValueAtTime(v,now+a);
+    g.gain.exponentialRampToValueAtTime(.0001,now+a+d);
+    o.connect(g); g.connect(master); o.start(now); o.stop(now+a+d+.05);
+  }
+  return {
+    resume(){ if(ctx&&ctx.state==='suspended') ctx.resume(); },
+    key(){ t({f:1200+Math.random()*300, d:.03, v:.08}); },
+    ok(){ t({f:660,type:'sine',d:.1,v:.3}); t({f:990,type:'sine',d:.16,v:.3,delay:.08}); },
+    ng(){ t({f:220,fe:140,d:.2,v:.32}); },
+    count(){ t({f:520,type:'sine',d:.14,v:.3}); },
+    go(){ t({f:880,type:'sine',d:.3,v:.36}); t({f:1320,type:'sine',d:.3,v:.2,delay:.05}); },
+    glitch(){ t({f:300,fe:2400,type:'sawtooth',d:.2,v:.14}); },
+    finish(){ [523,659,784,1047,1319].forEach((f,i)=>t({f,type:'sine',d:.34,v:.26,delay:i*.1})); },
+    hover(){ t({f:1500,fe:900,d:.025,v:.05}); },
+    click(){ t({f:900,fe:120,type:'sawtooth',d:.12,v:.2}); },
+  };
+})();
+
+/* ---------------- state ---------------- */
+const S = {
+  mode:'coop', difficulty:'easy', field:'arithmetic',
+  timeLimit:60, questionCount:5,
+  score:0, correct:0, wrong:0, streak:0, bestStreak:0,
+  qIndex:0, current:null, phase:'title',
+  timerId:null, timeLeft:0, acceptAnswer:true,
+  cpuCorrect:0, startedAt:0,
+};
+
+const FIELD_NAMES = { arithmetic:'四則演算', factorization:'因数分解', equations:'方程式', geometry:'図形', probability:'確率', 'prime-factorization':'素因数分解' };
+const DIFF_NAMES = { easy:'Easy', normal:'Normal', hard:'Hard' };
+const MODE_NAMES = { coop:'協力', battle:'対戦' };
+const PER_Q_TIME = { easy:20, normal:15, hard:11 };
+const CPU_RATE   = { easy:.5, normal:.65, hard:.8 };
+const RANKS = [
+  [1.0,'S — 計算神'], [.85,'A — 電子頭脳'], [.7,'B — 熟練演算者'],
+  [.5,'C — 実戦部隊'], [.25,'D — 見習いオペレーター'], [-1,'E — これから'],
+];
+
+/* ---------------- floating bg symbols ---------------- */
+(function bg(){
+  const box = $('#math-background');
+  const glyphs = ['+','−','×','÷','=','√','π','x²','y′','Σ','∞','%','( )','≠','7','3'];
+  for(let i=0;i<22;i++){
+    const el = document.createElement('i');
+    el.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+    el.style.left = Math.random()*100+'%';
+    el.style.fontSize = (14+Math.random()*22)+'px';
+    el.style.animationDuration = (11+Math.random()*16)+'s';
+    el.style.animationDelay = (-Math.random()*20)+'s';
+    box.appendChild(el);
+  }
+})();
+
+/* ---------------- problem generators ---------------- */
+const ri = (a,b)=> a + Math.floor(Math.random()*(b-a+1));
+const gcd = (a,b)=> b ? gcd(b, a%b) : a;
+
+function genArith(d){
+  if(d==='easy'){ const a=ri(2,20), b=ri(2,20); const ops=['+','−','×']; const op=ops[ri(0,2)];
+    return q(op==='+'?`${a}＋${b}`:op==='−'?`${Math.max(a,b)}−${Math.min(a,b)}`:`${a}×${b}`,
+      op==='+'?a+b:op==='-'||op==='−'?Math.abs(a-b):a*b, `${a} ${op} ${b}`); }
+  if(d==='normal'){ const a=ri(11,49), b=ri(3,9), c=ri(2,20); const first=Math.random()<.5;
+    if(first){ const v=a+b*c; return q(`${a}＋${b}×${c}`, v, '乗法優先'); }
+    const v=(a+b)*c; return q(`（${a}＋${b}）×${c}`, v, '括弧優先'); }
+  let a=ri(12,40), b=ri(2,9), c=ri(2,9), e=ri(2,15);
+  let v=a-b*c+e, tries=0;
+  while(v<0 && tries<20){ a=ri(30,60); e=ri(12,40); v=a-b*c+e; tries++; }
+  if(v<0){ b=ri(2,4); v=a-b*c+e; }
+  return q(`${a}−${b}×${c}＋${e}`, v, '混演算');
+}
+function genFactor(d){
+  const span = d==='easy'?[1,6]:d==='normal'?[2,9]:[3,12];
+  let a=ri(span[0],span[1]), b=ri(span[0],span[1]);
+  if(d!=='easy' && Math.random()<.4) a=-a;
+  const s = a+b, p = a*b;
+  const xco = v => (v<0?'−':'+') + (Math.abs(v)===1 ? '' : Math.abs(v));
+  const cst = v => (v<0?'−':'+') + Math.abs(v);
+  const fac = v => (v<0?'−':'+') + Math.abs(v);
+  const poly = `x²${xco(s)}x${cst(p)}`;
+  return q(`${poly}  を因数分解`, `(x${fac(a)})(x${fac(b)})`, '答えは (x±n)(x±n) 形式', true);
+}
+function genEquation(d){
+  const a = d==='hard'?ri(3,12):ri(2,6);
+  const x = d==='easy'?ri(1,10):ri(2,15);
+  const b = ri(-15,15), c = a*x+b;
+  const bs = b>=0?`＋${b}`:`−${-b}`;
+  return q(`${a}x ${bs} ＝ ${c}`, String(x), 'x の値');
+}
+function genGeometry(d){
+  if(d==='easy'){ const w=ri(3,12), h=ri(2,9); return q(`縦${h}cm×横${w}cm の長方形の面積（cm²）`, String(w*h), '数値のみ'); }
+  if(d==='normal'){ if(Math.random()<.5){ const b2=ri(4,16)*2, h=ri(3,9); return q(`底辺${b2}cm、高さ${h}cm の三角形の面積（cm²）`, String(b2*h/2), '数値のみ'); }
+    const s=ri(6,15); return q(`一辺${s}cm の正方形の面積（cm²）`, String(s*s), '数値のみ'); }
+  const a=ri(4,12);
+  let b2=ri(4,14);
+  const h=ri(2,8);
+  if((a+b2)*h % 2) b2++;
+  return q(`上底${a}cm、下底${b2}cm、高さ${h}cm の台形の面積（cm²）`, String((a+b2)*h/2), '数値のみ');
+}
+function genProbability(d){
+  if(d==='easy'){ const target=ri(1,6); return q(`サイコロを1回振って ${target} が出る確率（約分した分数）`, `1/6`, '分数で入力 (例 1/6)', false, '1/6'); }
+  if(d==='normal'){
+    const k = ri(2,6);
+    const g = gcd(k,6);
+    const want = `${k/g}/${6/g}`;
+    return q(`サイコロを1回振って、出た目が ${k} 以下になる確率（約分した分数）`, want, '分数で入力 (例 1/3)', false, want);
+  }
+  const s = ri(2,12);
+  const cnt = s<=7 ? s-1 : 13-s;
+  const g2 = gcd(cnt,36);
+  const want = `${cnt/g2}/${36/g2}`;
+  return q(`サイコロを2回振って、出た目の和が ${s} になる確率（約分した分数）`, want, '分数で入力 (例 1/9)', false, want);
+}
+function genPrime(d){
+  const primes=[2,3,5,7,11,13,17,19,23,29];
+  const count = d==='easy'?2:d==='normal'?3:4;
+  let n=1; const used=[];
+  for(let i=0;i<count;i++){ const p=primes[ri(0,d==='hard'?9:5)]; used.push(p); n*=p; }
+  if(d==='hard' && Math.random()<.5){ used.push(2); n*=2; }
+  used.sort((a,b)=>a-b);
+  const ans = used.join('×');
+  return q(`${n} を素因数分解`, ans, '例: 2×2×3', true);
+}
+function q(text, answer, hint, factorMode, alt){
+  return { text, answer, hint, factorMode:!!factorMode, alt:alt||null };
+}
+function nextProblem(){
+  const d = S.difficulty;
+  switch(S.field){
+    case 'arithmetic': return genArith(d);
+    case 'factorization': return genFactor(d);
+    case 'equations': return genEquation(d);
+    case 'geometry': return genGeometry(d);
+    case 'probability': return genProbability(d);
+    case 'prime-factorization': return genPrime(d);
+  }
+}
+
+/* ---------------- answer normalization ---------------- */
+function norm(str){
+  let s = String(str).trim()
+    .replace(/[０-９ａ-ｚＡ-Ｚ]/g, c => String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/[（【\[]/g,'(').replace(/[）】\]]/g,')')
+    .replace(/[×✕✖xX・·]/g,'*')
+    .replace(/[÷]/g,'/').replace(/[−–—]/g,'-')
+    .replace(/\s+/g,'').toLowerCase();
+  return s;
+}
+function checkAnswer(input, prob){
+  const got = norm(input);
+  const answers = [norm(prob.answer)];
+  if(prob.alt) answers.push(norm(prob.alt));
+  if(prob.factorMode){
+    // (x+a)(x+b): order-insensitive
+    const m = got.match(/^\(x([+-]\d*)\)\(x([+-]\d*)\)$/);
+    if(m){
+      const pair = [m[1]===''?'1':m[1]==='-'?'-1':m[1], m[2]===''?'1':m[2]==='-'?'-1':m[2]].sort().join('|');
+      for(const ans of answers){
+        const mm = ans.match(/^\(x([+-]\d*)\)\(x([+-]\d*)\)$/);
+        if(mm){
+          const target = [mm[1]===''?'1':mm[1]==='-'?'-1':mm[1], mm[2]===''?'1':mm[2]==='-'?'-1':mm[2]].sort().join('|');
+          if(pair === target) return true;
+        }
+      }
+    }
+  }
+  // prime factorization: order-insensitive (2×3×5 == 5×3×2)
+  if(/^\d+(\*\d+)+$/.test(got)){
+    const gs = got.split('*').map(Number).sort((a,b)=>a-b).join('*');
+    for(const ans of answers){
+      if(/^\d+(\*\d+)+$/.test(ans) && gs === ans.split('*').map(Number).sort((a,b)=>a-b).join('*')) return true;
+    }
+  }
+  return answers.includes(got);
+}
+
+/* ---------------- screens ---------------- */
+function show(id){
+  ['setting-screen','play-screen','result-screen'].forEach(x=>$('#'+x).classList.toggle('on', x===id));
+  const st = $('#game-status');
+  if(id==='play-screen'){
+    st.innerHTML = `${MODE_NAMES[S.mode]} <b>//</b> ${DIFF_NAMES[S.difficulty]} <b>//</b> ${FIELD_NAMES[S.field]}`;
+  }
+}
+function startGameTransition(){
+  GameSFX.glitch();
+  $('#title-screen').style.display='none';
+  $('#game-screen').style.display='block';
+  show('setting-screen');
+}
+window.startGameTransition = startGameTransition;
+
+/* settings interactions */
+$('#mode-buttons').addEventListener('click', e=>{
+  const b = e.target.closest('.option-button'); if(!b) return;
+  $$('#mode-buttons .option-button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  S.mode = b.dataset.mode;
+  $('.coop-options').style.display = S.mode==='coop'?'':'none';
+  $('.battle-options').style.display = S.mode==='battle'?'':'none';
+  GameSFX.click();
+});
+$('#difficulty-buttons').addEventListener('click', e=>{
+  const b = e.target.closest('.option-button'); if(!b) return;
+  $$('#difficulty-buttons .option-button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  S.difficulty = b.dataset.difficulty;
+  GameSFX.click();
+});
+$('#time-limit-select').addEventListener('change', e=>{ S.timeLimit = +e.target.value; GameSFX.click(); });
+$('#question-count-select').addEventListener('change', e=>{ S.questionCount = +e.target.value; GameSFX.click(); });
+$('#field-select').addEventListener('change', e=>{ S.field = e.target.value; GameSFX.click(); });
+
+/* confirm modal */
+$('#start-game-button').addEventListener('click', ()=>{
+  S.timeLimit = +$('#time-limit-select').value;
+  S.questionCount = +$('#question-count-select').value;
+  S.field = $('#field-select').value;
+  const list = $('#settings-list-container');
+  list.innerHTML =
+    `<span>モード <b>${MODE_NAMES[S.mode]}</b></span>`+
+    `<span>難易度 <b>${DIFF_NAMES[S.difficulty]}</b></span>`+
+    `<span>分野 <b>${FIELD_NAMES[S.field]}</b></span>`+
+    (S.mode==='coop'
+      ? `<span>制限時間 <b>${S.timeLimit}秒</b></span>`
+      : `<span>問題数 <b>${S.questionCount}問</b></span>`);
+  $('#confirmation-modal').classList.add('on');
+  GameSFX.click();
+});
+$('#confirm-no-button').addEventListener('click', ()=>{ $('#confirmation-modal').classList.remove('on'); GameSFX.ng(); });
+$('#confirm-yes-button').addEventListener('click', ()=>{
+  $('#confirmation-modal').classList.remove('on');
+  countdown(()=>beginPlay());
+});
+$('#return-to-settings-button').addEventListener('click', ()=>{ stopTimer(); show('setting-screen'); GameSFX.ng(); });
+
+/* ---------------- countdown ---------------- */
+function countdown(cb){
+  const ov = $('#countdown-overlay'), num = $('#countdown-number');
+  ov.classList.add('on');
+  let n = 3;
+  const tick = ()=>{
+    if(n > 0){
+      num.textContent = n;
+      num.style.animation='none'; void num.offsetWidth; num.style.animation='';
+      GameSFX.count();
+      n--; setTimeout(tick, 900);
+    } else {
+      num.textContent = 'GO';
+      num.style.animation='none'; void num.offsetWidth; num.style.animation='';
+      GameSFX.go();
+      setTimeout(()=>{ ov.classList.remove('on'); cb(); }, 650);
+    }
+  };
+  tick();
+}
+
+/* ---------------- play flow ---------------- */
+function beginPlay(){
+  S.score=0; S.correct=0; S.wrong=0; S.streak=0; S.bestStreak=0;
+  S.qIndex=0; S.cpuCorrect=0; S.startedAt=Date.now(); S.acceptAnswer=true;
+  show('play-screen');
+  $('#timer-display').style.display = S.mode==='coop' ? '' : 'none';
+  $('#question-counter').style.display = S.mode==='battle' ? '' : 'none';
+  $('#coop-score-display').style.display = S.mode==='coop' ? '' : 'none';
+  if(S.mode==='coop'){
+    S.timeLeft = S.timeLimit;
+    updateTimer();
+    S.timerId = setInterval(()=>{
+      S.timeLeft--;
+      updateTimer();
+      if(S.timeLeft <= 0) endGame();
+    }, 1000);
+  }
+  loadProblem();
+}
+function updateTimer(){
+  const box = $('#timer-display');
+  box.classList.toggle('danger', S.timeLeft <= 10);
+  $('#timer-num').textContent = S.timeLeft;
+  $('#timer-bar').style.width = (S.timeLeft/S.timeLimit*100)+'%';
+}
+function stopTimer(){ if(S.timerId){ clearInterval(S.timerId); S.timerId=null; } }
+function loadProblem(){
+  S.current = nextProblem();
+  S.qIndex++;
+  S.acceptAnswer = true;
+  const pd = $('#problem-display');
+  pd.textContent = S.current.text;
+  pd.style.animation='none'; void pd.offsetWidth; pd.style.animation='';
+  $('#answer-status').textContent=''; $('#answer-status').className='answer-status';
+  $('#answer-input').value=''; $('#answer-input').disabled=false;
+  $('#next-problem-button').style.display='none';
+  $('#answer-input').focus();
+  if(S.mode==='battle'){
+    $('#question-counter').innerHTML = `QUESTION <b>${S.qIndex}</b> / ${S.questionCount}`;
+    S.timeLeft = PER_Q_TIME[S.difficulty];
+    $('#timer-display').style.display='';
+    updateTimer();
+    stopTimer();
+    S.timerId = setInterval(()=>{
+      S.timeLeft--; updateTimer();
+      if(S.timeLeft <= 0) judge('');
+    }, 1000);
+  } else {
+    $('#coop-score-display').innerHTML = `SCORE <b style="font-size:1.15rem">${S.score}</b><small>STREAK ×${S.streak}</small>`;
+  }
+}
+function judge(rawInput){
+  if(!S.acceptAnswer) return;
+  S.acceptAnswer = false;
+  if(S.mode==='battle') stopTimer();
+  const okFlag = checkAnswer(rawInput, S.current);
+  const st = $('#answer-status');
+  $('#answer-input').disabled = true;
+  if(okFlag){
+    S.correct++;
+    S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
+    if(S.mode==='coop'){
+      S.score += 100 + Math.min(S.streak-1, 10)*20;
+      $('#coop-score-display').innerHTML = `SCORE <b style="font-size:1.15rem">${S.score}</b><small>STREAK ×${S.streak}</small>`;
+    } else {
+      $('#coop-score-display').style.display='';
+      $('#coop-score-display').innerHTML = `<span class="ok" style="color:var(--ok)">CORRECT — 良し!</span>`;
+    }
+    st.textContent = '✔ CORRECT';
+    st.className='answer-status ok';
+    flash('ok'); GameSFX.ok();
+  } else {
+    S.wrong++; S.streak=0;
+    if(S.mode==='battle') $('#coop-score-display').style.display='';
+    $('#coop-score-display').innerHTML = `<span class="ng" style="color:var(--bad)">MISS — 正解: ${S.current.answer}</span>`;
+    st.textContent = `✘ MISS — ANSWER: ${S.current.answer}`;
+    st.className='answer-status ng';
+    flash('ng'); GameSFX.ng();
+  }
+  if(S.mode==='battle' && Math.random() < CPU_RATE[S.difficulty]) S.cpuCorrect++;
+  if(S.mode==='battle'){
+    $('#next-problem-button').style.display='';
+    $('#next-problem-button').focus();
+    if(S.qIndex >= S.questionCount){
+      $('#next-problem-button').querySelector('span').textContent = '結果へ →';
+    } else {
+      $('#next-problem-button').querySelector('span').textContent = '次の問題 →';
+    }
+  } else {
+    setTimeout(()=>{ if(S.timerId && $('#play-screen').classList.contains('on')) loadProblem(); }, 650);
+  }
+}
+function flash(kind){
+  document.body.classList.add('pkx-flash-'+kind);
+  setTimeout(()=>document.body.classList.remove('pkx-flash-'+kind), 420);
+}
+$('#answer-input').addEventListener('input', ()=>GameSFX.key());
+$('#answer-input').addEventListener('keydown', e=>{
+  if(e.key==='Enter') judge(e.target.value);
+});
+$('#next-problem-button').addEventListener('click', ()=>{
+  GameSFX.click();
+  $('#next-problem-button').querySelector('span').textContent = '次の問題 →';
+  if(S.qIndex >= S.questionCount) endGame(); else loadProblem();
+});
+
+/* ---------------- results ---------------- */
+function endGame(){
+  stopTimer();
+  const elapsed = (Date.now()-S.startedAt)/1000;
+  const ov = $('#end-animation-overlay');
+  ov.classList.add('on');
+  GameSFX.finish();
+  setTimeout(()=>{
+    ov.classList.remove('on');
+    const total = S.correct + S.wrong;
+    const acc = total ? S.correct/total : 0;
+    let rank = RANKS[RANKS.length-1][1];
+    for(const [th,name] of RANKS){ if(acc >= th){ rank = name; break; } }
+    const rpm = S.mode==='coop' ? (S.correct/(S.timeLimit||1)*60).toFixed(1) : (total? (S.correct/(elapsed/60)).toFixed(1):'0');
+    const key = 'mathbattle_best_'+S.field;
+    let best = 0, newRecord = false;
+    try{ best = +(localStorage.getItem(key)||0); }catch(e){}
+    if(S.score > best){ newRecord = true; try{ localStorage.setItem(key, String(S.score)); }catch(e){} }
+    const msg = $('#result-message');
+    if(S.mode==='coop'){
+      msg.innerHTML =
+        `<span>スコア <b>${S.score}${newRecord?' <span class="win">NEW RECORD!</span>':''}</b></span>`+
+        `<span>正解数 <b>${S.correct} 問</b></span>`+
+        `<span>ミス <b>${S.wrong}</b></span>`+
+        `<span>最大ストリーク <b>×${S.bestStreak}</b></span>`+
+        `<span>正解率 <b>${Math.round(acc*100)}%</b></span>`+
+        `<span>毎分正解数 <b>${rpm}</b></span>`+
+        `<span>フィールド最高記録 <b>${Math.max(best,S.score)}</b></span>`;
+    } else {
+      const youWin = S.correct > S.cpuCorrect;
+      const draw = S.correct === S.cpuCorrect;
+      msg.innerHTML =
+        `<span>あなた <b class="${draw?'':youWin?'win':'lose'}">${S.correct} 問</b></span>`+
+        `<span>CPU <b class="${draw?'':youWin?'lose':'win'}">${S.cpuCorrect} 問</b></span>`+
+        `<span>最大ストリーク <b>×${S.bestStreak}</b></span>`+
+        `<span>正解率 <b>${Math.round(acc*100)}%</b></span>`+
+        `<span class="${draw?'':youWin?'win':'lose'}" style="justify-content:center;font-size:1rem;margin-top:.4rem"><b>${draw?'DRAW — 引き分け':youWin?'YOU WIN — 勝利':'CPU WINS — 敗北'}</b></span>`;
+    }
+    $('#result-title').textContent = newRecord && acc>=.85 ? rank+' ★' : rank;
+    show('result-screen');
+  }, 1700);
+}
+$('#return-from-result-button').addEventListener('click', ()=>{ show('setting-screen'); GameSFX.click(); });
+$('#retry-button').addEventListener('click', ()=>{ GameSFX.click(); countdown(()=>beginPlay()); });
+
+document.addEventListener('pointerover', e=>{
+  if(e.target.closest && e.target.closest('button,select')) GameSFX.hover();
+}, {passive:true});
+</script>
 </body>
 </html>
