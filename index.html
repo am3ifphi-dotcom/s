@@ -1785,9 +1785,12 @@ function finishBoot(){
   setTimeout(()=>$('#fx-flash').classList.remove('go'), 600);
   document.body.classList.add('booted');
   AudioFX.init();
-  if(!AudioFX.enabled){
+  let pref = null; try{ pref = localStorage.getItem('portal_sfx'); }catch(e){}
+  if(pref !== '0' && !AudioFX.enabled){
     const on = AudioFX.toggle();
     if(on){ $('#audioToggle').textContent='SFX: ON'; $('#audioToggle').classList.add('on'); }
+  } else if(pref === '0'){
+    AudioFX.enabled = false;
   }
   AudioFX.whoosh();
   setTimeout(()=>scramble($('#nameSub'), 'A.K.A. 蛙鳴'), 1400);
@@ -2086,6 +2089,26 @@ const Terminal = (()=>{
   });
   return { open, close, toggle, print };
 })();
+
+/* ============================================================
+   LINK-OUT SHUTTER — internal .html links close the curtain
+============================================================ */
+document.addEventListener('click', e=>{
+  const a = e.target.closest && e.target.closest('a[href]');
+  if(!a) return;
+  const href = a.getAttribute('href');
+  if(!href || a.target === '_blank' || e.metaKey || e.ctrlKey) return;
+  if(!/\.html?$/.test(href.split('#')[0].split('?')[0])) return;
+  e.preventDefault();
+  const sh = $('#shutter');
+  sh.classList.add('active');
+  AudioFX.whoosh();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>sh.classList.add('close')));
+  setTimeout(()=>{ location.href = href; }, 420);
+});
+window.addEventListener('pageshow', e=>{
+  if(e.persisted){ const sh = $('#shutter'); sh.classList.remove('close','active'); state.transitionLock = false; }
+});
 
 /* ============================================================
    INIT / CONSOLE ART
